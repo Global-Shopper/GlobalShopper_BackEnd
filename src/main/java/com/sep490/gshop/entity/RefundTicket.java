@@ -2,6 +2,8 @@ package com.sep490.gshop.entity;
 
 import com.sep490.gshop.common.RefundStatus;
 import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -17,4 +19,8 @@ public class RefundTicket extends BaseEntity {
     private String reason;
     private double amount;
     private RefundStatus status;
+
+    @OneToOne
+    @JoinColumn(name = "order_id", nullable = false)
+    private Order order;
 }
