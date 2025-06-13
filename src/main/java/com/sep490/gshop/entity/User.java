@@ -19,7 +19,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class User {
+public class User extends BaseEntity {
 
     @Id
     private UUID id;
@@ -50,19 +50,5 @@ public class User {
     private String avatar;
 
     private boolean isActive = true;
-
-    private long createdDate;
-    private long updatedDate;
-
-    @PrePersist
-    protected void onCreate() {
-        this.createdDate = Instant.now().toEpochMilli();
-        this.updatedDate = Instant.now().toEpochMilli();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedDate = Instant.now().toEpochMilli();
-    }
 
 }
