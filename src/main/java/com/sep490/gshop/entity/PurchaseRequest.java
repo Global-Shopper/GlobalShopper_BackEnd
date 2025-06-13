@@ -31,4 +31,8 @@ public class PurchaseRequest extends BaseEntity {
 
     @OneToOne(mappedBy = "purchaseRequest", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Quotation quotation;
+
+    @ManyToOne
+    @JoinColumn(name = "admin_id", nullable = false)
+    private Admin admin;
 }

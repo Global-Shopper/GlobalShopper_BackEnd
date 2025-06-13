@@ -34,6 +34,8 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.1'
+
+	implementation 'org.modelmapper:modelmapper:3.2.2'
 }
 
 tasks.named('test') {

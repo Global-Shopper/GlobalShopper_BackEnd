@@ -1,13 +1,9 @@
 package com.sep490.gshop.entity;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Entity
@@ -15,6 +11,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class Customer extends User {
 
     @OneToOne(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -22,5 +19,8 @@ public class Customer extends User {
 
     @OneToOne(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
     private Wallet wallet;
+
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ShippingAddress> shippingAddresses;
 }
 
