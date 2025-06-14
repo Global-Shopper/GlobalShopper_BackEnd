@@ -1,4 +1,4 @@
-﻿package com.sep490.gshop.payload.request;
+package com.sep490.gshop.payload.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;

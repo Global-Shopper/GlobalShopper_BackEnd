@@ -1,4 +1,4 @@
-﻿package com.sep490.gshop.repository;
+package com.sep490.gshop.repository;
 
 import com.sep490.gshop.entity.Feedback;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -1,4 +1,4 @@
-﻿package com.sep490.gshop.business.implement;
+package com.sep490.gshop.business.implement;
 
 import com.sep490.gshop.business.FeedbackBusiness;
 import com.sep490.gshop.entity.Feedback;

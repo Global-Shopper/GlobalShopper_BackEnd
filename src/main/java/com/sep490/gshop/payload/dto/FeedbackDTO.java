@@ -1,4 +1,4 @@
-﻿package com.sep490.gshop.payload.dto;
+package com.sep490.gshop.payload.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
