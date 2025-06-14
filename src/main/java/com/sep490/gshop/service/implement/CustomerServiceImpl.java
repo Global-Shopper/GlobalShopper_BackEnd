@@ -7,6 +7,7 @@ import com.sep490.gshop.entity.Wallet;
 import com.sep490.gshop.payload.dto.CustomerDTO;
 import com.sep490.gshop.payload.request.CustomerRequest;
 import com.sep490.gshop.service.CustomerService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +56,18 @@ public class CustomerServiceImpl implements CustomerService {
             return createdCustomer;
         } catch (Exception e) {
             throw new RuntimeException("Failed to create customer", e);
+        }
+    }
+
+    @Override
+    public CustomerDTO FindCustomerById(UUID id) {
+        try {
+            log.debug("createCustomer() CustomerServiceImpl Start | id: {}", id);
+            var foundEntity = customerBusiness.getById(id).orElseThrow(() -> new EntityNotFoundException("Customer is not found"));
+            log.debug("createCustomer() CustomerServiceImpl End | Customer found: {}", foundEntity);
+            return modelMapper.map(foundEntity, CustomerDTO.class);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 }
