@@ -12,4 +12,10 @@ public interface CustomerService {
     CustomerDTO createCustomer(CustomerRequest customerRequest);
 
     CustomerDTO FindCustomerById(UUID id);
+
+    CustomerDTO getCustomerById(String id);
+
+    CustomerDTO updateCustomer(String id, CustomerRequest customerRequest);
+
+    boolean deleteCustomer(String id);
 }
