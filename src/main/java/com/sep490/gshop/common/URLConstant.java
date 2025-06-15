@@ -5,4 +5,5 @@ public class URLConstant {
     public static final String HEALTH_CHECK = "healthcheck";
     public static final String CUSTOMER = "customer";
     public static final String WALLET = "wallet";
+    public static final String USER = "user";
 }
