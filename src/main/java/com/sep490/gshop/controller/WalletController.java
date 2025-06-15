@@ -46,4 +46,24 @@ public class WalletController {
         log.info("createWallet() WalletController end | Created Wallet: {}", createdWallet);
         return ResponseEntity.ok().body(createdWallet);
     }
+
+    @PutMapping("{id}")
+    public ResponseEntity<WalletDTO> updateWallet(@PathVariable String id, @RequestBody WalletRequest walletRequest) {
+        log.info("updateWallet() WalletController start | id: {}, walletRequest: {}", id, walletRequest);
+        WalletDTO updatedWallet = walletService.updateWallet(id, walletRequest);
+        log.info("updateWallet() WalletController end | Updated Wallet: {}", updatedWallet);
+        return ResponseEntity.ok().body(updatedWallet);
+    }
+
+    @DeleteMapping("{id}")
+    public ResponseEntity<String> deleteWallet(@PathVariable String id) {
+        log.info("deleteWallet() WalletController start | id: {}", id);
+        boolean check = walletService.deleteWallet(id);
+        log.info("deleteWallet() WalletController end | Wallet with id: {} deleted", id);
+        if (check) {
+            return ResponseEntity.ok("Xoá thành công");
+        } else {
+            return ResponseEntity.status(404).body("Xoá không thành công");
+        }
+    }
 }

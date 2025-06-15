@@ -11,4 +11,8 @@ public interface WalletService {
     WalletDTO createWallet(WalletRequest walletRequest);
 
     WalletDTO getWalletById(String id);
+
+    WalletDTO updateWallet(String id, WalletRequest walletRequest);
+
+    boolean deleteWallet(String id);
 }

@@ -21,9 +21,9 @@ import java.util.UUID;
 @Log4j2
 public class WalletServiceImpl implements WalletService {
 
-    private WalletBusiness walletBusiness;
-    private CustomerBusiness customerBusiness;
-    private ModelMapper modelMapper;
+    private final WalletBusiness walletBusiness;
+    private final CustomerBusiness customerBusiness;
+    private final ModelMapper modelMapper;
 
     @Autowired
     public WalletServiceImpl(WalletBusiness walletBusiness, CustomerBusiness customerBusiness, ModelMapper modelMapper) {
@@ -78,6 +78,45 @@ public class WalletServiceImpl implements WalletService {
             return walletDTO;
         } catch (Exception e) {
             log.error("getWalletById() WalletServiceImpl Error | message: {}", e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    @Override
+    public WalletDTO updateWallet(String id, WalletRequest walletRequest) {
+        try {
+            log.debug("updateWallet() WalletServiceImpl start | id: {}, walletRequest: {}", id, walletRequest);
+            Wallet existingWallet = walletBusiness.getById(UUID.fromString(id))
+                    .orElseThrow(() -> new AppException(404, "Wallet not found"));
+            Customer customer = customerBusiness.getById(UUID.fromString(walletRequest.getUserId()))
+                    .orElseThrow(() -> new AppException(404, "Customer not found"));
+            existingWallet.setCustomer(customer);
+            existingWallet.setBalance(walletRequest.getBalance());
+            Wallet updatedWallet = walletBusiness.update(existingWallet);
+            WalletDTO updatedWalletDTO = modelMapper.map(updatedWallet, WalletDTO.class);
+            log.debug("updateWallet() WalletServiceImpl end | Updated Wallet: {}", updatedWalletDTO);
+            return updatedWalletDTO;
+        } catch (Exception e) {
+            log.error("updateWallet() WalletServiceImpl Error | message: {}", e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    @Override
+    public boolean deleteWallet(String id) {
+        try {
+            log.debug("deleteWallet() WalletServiceImpl start | id: {}", id);
+            Wallet wallet = walletBusiness.getById(UUID.fromString(id))
+                    .orElseThrow(() -> new AppException(404, "Wallet not found"));
+            Customer customer = customerBusiness.getById(wallet.getCustomer().getId())
+                    .orElseThrow(() -> new AppException(404, "Customer not found"));
+            customer.setWallet(null);
+            customerBusiness.update(customer);
+            boolean check = walletBusiness.delete(UUID.fromString(id));
+            log.debug("deleteWallet() WalletServiceImpl end | Wallet with id: {} deleted", id);
+            return check;
+        } catch (Exception e) {
+            log.error("deleteWallet() WalletServiceImpl Error | message: {}", e.getMessage(), e);
             throw e;
         }
     }
