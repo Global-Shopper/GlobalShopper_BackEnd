@@ -2,13 +2,12 @@ package com.sep490.gshop.entity;
 
 import com.sep490.gshop.common.RefundStatus;
 import com.sep490.gshop.entity.subclass.BankAccountSnapshot;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Entity
 @Table(name = "refund_tickets")
@@ -16,7 +15,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RefundTicket extends BaseEntity {
-    private String evidence;
+    @ElementCollection
+    private List<String> evidence;
     private String reason;
     private double amount;
     private RefundStatus status;
@@ -27,7 +27,7 @@ public class RefundTicket extends BaseEntity {
     private Order order;
 
 
-    public RefundTicket(String evidence, String reason, double amount, RefundStatus status, BankAccountSnapshot bankAccount){
+    public RefundTicket(List<String> evidence, String reason, double amount, RefundStatus status, BankAccountSnapshot bankAccount){
         this.evidence = evidence;
         this.reason = reason;
         this.amount = amount;
