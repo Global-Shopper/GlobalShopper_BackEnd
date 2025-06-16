@@ -12,12 +12,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Embeddable
 public class BankAccountSnapshot {
-    private String accountNumber;
+    private String bankAccountNumber;
     private String providerName;
     private String accountHolderName;
 
     public BankAccountSnapshot(BankAccount bankAccount){
-        this.accountNumber = bankAccount.getAccountNumber();
+        this.bankAccountNumber = bankAccount.getBankAccountNumber();
         this.providerName = bankAccount.getProviderName();
         this.accountHolderName = bankAccount.getAccountHolderName();
     }

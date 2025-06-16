@@ -14,6 +14,7 @@ public class Feedback extends BaseEntity{
     @Column(columnDefinition = "TEXT")
     private String comment;
     private int rating;
+    private boolean isDeleted;
 
     @OneToOne
     @JoinColumn(name = "order_id", nullable = false)

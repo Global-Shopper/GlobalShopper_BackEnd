@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BankAccount extends BaseEntity{
-    private String accountNumber;
+    private String bankAccountNumber;
     private String providerName;
     private String accountHolderName;
     private String status;
