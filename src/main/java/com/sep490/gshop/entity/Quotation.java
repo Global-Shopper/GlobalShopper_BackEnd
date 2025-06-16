@@ -18,6 +18,8 @@ public class Quotation extends BaseEntity{
     private String taxDetails;
     @Column(columnDefinition = "TEXT")
     private String note;
+    private boolean isAccepted;
+
     @OneToOne
     @JoinColumn(name = "request_item_id", nullable = false)
     private RequestItem requestItem;

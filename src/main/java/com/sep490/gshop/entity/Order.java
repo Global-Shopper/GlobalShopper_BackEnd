@@ -22,7 +22,7 @@ public class Order extends BaseEntity {
     private String note;
     private OrderStatus status;
     private double totalPrice;
-
+    private double shippingFee;
     @ManyToOne
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
