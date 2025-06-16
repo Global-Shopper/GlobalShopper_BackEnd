@@ -21,6 +21,7 @@ public class ProductSnapshot {
     private String image;
     private String origin;
     private double rating;
+    private double price;
     private String seller;
 
     public ProductSnapshot(Product product) {
@@ -32,6 +33,7 @@ public class ProductSnapshot {
         this.origin = product.getOrigin();
         this.rating = product.getRating();
         this.seller = product.getSeller();
+        this.price = product.getPrice();
     }
 
 }
