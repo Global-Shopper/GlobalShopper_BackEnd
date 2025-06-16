@@ -22,6 +22,6 @@ public class Wallet extends BaseEntity {
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
-    @OneToMany(mappedBy = "wallets")
-    private List<BankAccount> linkedAccounts;
+    @OneToMany(mappedBy = "wallet", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<BankAccount> backAccounts;
 }

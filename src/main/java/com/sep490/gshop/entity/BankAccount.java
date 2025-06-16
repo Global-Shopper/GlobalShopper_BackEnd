@@ -18,10 +18,13 @@ public class BankAccount extends BaseEntity{
     private String providerName;
     private String accountHolderName;
     private String status;
-    private long linkedAt;
     private boolean isDefault;
 
     @ManyToOne
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
+
+    @ManyToOne
+    @JoinColumn(name = "wallet_id", nullable = false)
+    private Wallet wallet;
 }

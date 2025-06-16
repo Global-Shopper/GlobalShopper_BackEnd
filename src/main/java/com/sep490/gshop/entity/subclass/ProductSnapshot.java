@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.UUID;
 
 @Embeddable
@@ -18,9 +19,8 @@ public class ProductSnapshot {
     private String name;
     private String brand;
     private String description;
-    private String image;
+    private List<String> images;
     private String origin;
-    private double rating;
     private double price;
     private String seller;
 
@@ -29,9 +29,8 @@ public class ProductSnapshot {
         this.name = product.getName();
         this.brand = product.getBrand();
         this.description = product.getDescription();
-        this.image = product.getImage();
+        this.images = product.getImages();
         this.origin = product.getOrigin();
-        this.rating = product.getRating();
         this.seller = product.getSeller();
         this.price = product.getPrice();
     }
