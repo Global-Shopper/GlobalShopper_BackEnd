@@ -6,20 +6,19 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-@EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = "shipping_addresses")
+@Table(name = "bank_accounts")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ShippingAddress extends BaseEntity {
-    private String name;
-    private String tag; //Ex: home, office,...
-    private String phoneNumber;
-    private String location;
+public class BankAccount extends BaseEntity{
+    private String accountNumber;
+    private String providerName;
+    private String accountHolderName;
+    private String status;
+    private long linkedAt;
     private boolean isDefault;
 
     @ManyToOne

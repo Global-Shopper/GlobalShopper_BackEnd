@@ -1,12 +1,11 @@
 package com.sep490.gshop.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Entity
 @Table(name = "products")
@@ -19,10 +18,12 @@ public class Product extends BaseEntity {
     private double price;
     private String brand;
     private String description;
-    private String image;
+    @ElementCollection
+    private List<String> images;
     private String origin;
-    private double rating;
+    private String URL;
     private String seller;
+    private String ecommercePlatform;
 
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)

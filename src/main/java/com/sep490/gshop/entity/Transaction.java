@@ -22,4 +22,5 @@ public class Transaction extends BaseEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String description;
 
+    private String purpose;
 }
