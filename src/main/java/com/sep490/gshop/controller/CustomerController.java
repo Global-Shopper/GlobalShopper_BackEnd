@@ -8,10 +8,7 @@ import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -41,6 +38,37 @@ public class CustomerController {
         CustomerDTO result = customerService.createCustomer(customerRequest);
         log.info("createCustomer() CustomerController end | {}", result);
         return ResponseEntity.ok().body(result);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<CustomerDTO> getCustomerById(@PathVariable String id) {
+        log.info("getCustomerById() CustomerController start | id: {}", id);
+        CustomerDTO result = customerService.getCustomerById(id);
+        log.info("getCustomerById() CustomerController end | {}", result);
+        return ResponseEntity.ok().body(result);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<CustomerDTO> updateCustomer(
+            @PathVariable String id,
+            @Valid @RequestBody CustomerRequest customerRequest) {
+        log.info("updateCustomer() CustomerController start | id: {}, customerRequest: {}", id, customerRequest);
+        CustomerDTO result = customerService.updateCustomer(id, customerRequest);
+        log.info("updateCustomer() CustomerController end | {}", result);
+        return ResponseEntity.ok().body(result);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCustomer(@PathVariable String id) {
+        log.info("deleteCustomer() CustomerController start | id: {}", id);
+        boolean check = customerService.deleteCustomer(id);
+        if (check) {
+            log.info("deleteCustomer() CustomerController end | Customer with id {} deleted successfully", id);
+            return ResponseEntity.noContent().build();
+        } else {
+            log.error("deleteCustomer() CustomerController end | Customer with id {} not found", id);
+            return ResponseEntity.notFound().build();
+        }
     }
 
 }

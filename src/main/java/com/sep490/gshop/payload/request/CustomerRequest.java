@@ -28,4 +28,6 @@ public class CustomerRequest {
     @Size(max = 255, message = "Address must be at most 255 characters")
     private String address;
 
+    private String avatar;
+
 }

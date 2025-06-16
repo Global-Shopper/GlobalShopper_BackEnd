@@ -2,6 +2,7 @@ package com.sep490.gshop.service.implement;
 
 import com.sep490.gshop.business.CustomerBusiness;
 import com.sep490.gshop.common.UserRole;
+import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.Customer;
 import com.sep490.gshop.entity.Wallet;
 import com.sep490.gshop.payload.dto.CustomerDTO;
@@ -40,7 +41,8 @@ public class CustomerServiceImpl implements CustomerService {
             log.debug("getAllCustomers() CustomerServiceImpl End | Customers size: {}", customers.size());
             return customers;
         } catch (Exception e) {
-            throw new RuntimeException("Failed to retrieve customers", e);
+            log.error("getAllCustomers() CustomerServiceImpl Error | message: {}", e.getMessage(), e);
+            throw e;
         }
     }
 
@@ -55,7 +57,8 @@ public class CustomerServiceImpl implements CustomerService {
             log.debug("createCustomer() CustomerServiceImpl End | Created Customer: {}", createdCustomer);
             return createdCustomer;
         } catch (Exception e) {
-            throw new RuntimeException("Failed to create customer", e);
+            log.error("createCustomer() CustomerServiceImpl Error | message: {}", e.getMessage(), e);
+            throw e;
         }
     }
 
@@ -68,6 +71,65 @@ public class CustomerServiceImpl implements CustomerService {
             return modelMapper.map(foundEntity, CustomerDTO.class);
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public CustomerDTO getCustomerById(String id) {
+        try {
+            log.debug("getCustomerById() CustomerServiceImpl Start | id: {}", id);
+            UUID customerId = UUID.fromString(id);
+            Customer customer = customerBusiness.getById(customerId)
+                    .orElseThrow(() -> new AppException(404, "Không tìm thấy khách hàng với ID: " + id));
+            CustomerDTO customerDTO = modelMapper.map(customer, CustomerDTO.class);
+            log.debug("getCustomerById() CustomerServiceImpl End | Customer found: {}", customerDTO);
+            return customerDTO;
+        } catch (Exception e) {
+            log.debug("getCustomerById() CustomerServiceImpl Error | id: {}, message: {}", id, e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
+    public CustomerDTO updateCustomer(String id, CustomerRequest customerRequest) {
+        try {
+            log.debug("updateCustomer() CustomerServiceImpl Start | id: {}, customerRequest: {}", id, customerRequest);
+            UUID customerId = UUID.fromString(id);
+            Customer existingCustomer = customerBusiness.getById(customerId)
+                    .orElseThrow(() -> new AppException(404, "Không tìm thấy khách hàng với ID: " + id));
+
+            existingCustomer.setId(customerId);
+            existingCustomer.setName(customerRequest.getName());
+            existingCustomer.setEmail(customerRequest.getEmail());
+            existingCustomer.setPhone(customerRequest.getPhone());
+            existingCustomer.setAddress(customerRequest.getAddress());
+            existingCustomer.setAvatar(customerRequest.getAvatar());
+            existingCustomer.setRole(UserRole.CUSTOMER);
+
+            CustomerDTO updatedCustomer = modelMapper.map(customerBusiness.update(existingCustomer), CustomerDTO.class);
+            log.debug("updateCustomer() CustomerServiceImpl End | Updated Customer: {}", updatedCustomer);
+            return updatedCustomer;
+        } catch (Exception e) {
+            log.error("updateCustomer() CustomerServiceImpl Error | id: {}, message: {}", id, e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    @Override
+    public boolean deleteCustomer(String id) {
+        try {
+            log.debug("deleteCustomer() CustomerServiceImpl Start | id: {}", id);
+            UUID customerId = UUID.fromString(id);
+            boolean isDeleted = customerBusiness.delete(customerId);
+            if (isDeleted) {
+                log.debug("deleteCustomer() CustomerServiceImpl End | Customer with id {} deleted successfully", id);
+            } else {
+                log.error("deleteCustomer() CustomerServiceImpl End | Customer with id {} not found", id);
+            }
+            return isDeleted;
+        } catch (Exception e) {
+            log.error("deleteCustomer() CustomerServiceImpl Error | id: {}, message: {}", id, e.getMessage(), e);
+            throw e;
         }
     }
 }

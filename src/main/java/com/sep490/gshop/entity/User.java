@@ -46,7 +46,7 @@ public class User extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
-    @Size(max = 255, message = "Avatar URL must be at most 255 characters")
+    @Column(columnDefinition = "TEXT")
     private String avatar;
 
     private boolean isActive = true;
