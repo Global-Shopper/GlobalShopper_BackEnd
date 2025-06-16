@@ -19,7 +19,7 @@ public class Quotation extends BaseEntity{
     private String taxDetails;
     @Column(columnDefinition = "TEXT")
     private String note;
-
+    //Sua lai cho nay
     @OneToOne
     @JoinColumn(name = "purchase_request_id", nullable = false)
     private PurchaseRequest purchaseRequest;

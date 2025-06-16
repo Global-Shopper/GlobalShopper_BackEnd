@@ -15,11 +15,15 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class OrderDTO {
-    private  String id;
+    private String id;
     private String trackingNumber;
     private String orderCode;
     private String note;
     private OrderStatus status;
     private double totalPrice;
+
+    private CustomerDTO customer;
+    private List<OrderItemDTO> orderItems;
+    private AddressSnapshotDTO shippingAddress;
 
 }

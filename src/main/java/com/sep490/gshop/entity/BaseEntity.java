@@ -1,12 +1,10 @@
 package com.sep490.gshop.entity;
 
-import jakarta.persistence.Id;
-import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -17,6 +15,8 @@ import java.util.UUID;
 @AllArgsConstructor
 public class BaseEntity {
     @Id
+    @UuidGenerator
+    @GeneratedValue
     private UUID id;
 
     protected long createdAt;
