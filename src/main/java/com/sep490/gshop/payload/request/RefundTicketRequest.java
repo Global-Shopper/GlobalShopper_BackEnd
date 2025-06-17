@@ -6,12 +6,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class RefundTicketRequest {
     @NotBlank(message = "Evidence is required")
-    private String evidence;
+    private List<String> evidence;
+
     @NotBlank(message = "Reason is required")
     private String reason;
     @NotBlank(message = "OrderId is required")
