@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
 @Table(name = "purchase_requests")
 @Data
@@ -27,5 +29,5 @@ public class PurchaseRequest extends BaseEntity {
     private Admin admin;
 
     @OneToMany(mappedBy = "purchaseRequest", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private java.util.List<RequestItem> requestItems;
+    private List<RequestItem> requestItems;
 }

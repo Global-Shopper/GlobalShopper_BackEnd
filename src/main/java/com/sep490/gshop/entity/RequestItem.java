@@ -27,6 +27,6 @@ public class RequestItem extends BaseEntity {
     private PurchaseRequest purchaseRequest;
 
     @ManyToOne
-    @JoinColumn(name = "sub_request_id", nullable = false)
+    @JoinColumn(name = "sub_request_id")
     private SubRequest subRequest;
 }

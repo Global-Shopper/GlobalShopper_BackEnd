@@ -21,7 +21,8 @@ public class Product extends BaseEntity {
     @ElementCollection
     private List<String> images;
     private String origin;
-    private String URL;
+    @Column(columnDefinition = "TEXT")
+    private String productURL;
     private String seller;
     private String ecommercePlatform;
 
