@@ -10,4 +10,12 @@ public class UserBusinessImpl extends BaseBusinessImpl<User, UserRepository> imp
     protected UserBusinessImpl(UserRepository repository) {
         super(repository);
     }
+
+    @Override
+    public User getUserByEmail(String email) {
+        if (email == null || email.isEmpty()) {
+            return null;
+        }
+        return repository.findByEmailIgnoreCase(email).orElse(null);
+    }
 }
