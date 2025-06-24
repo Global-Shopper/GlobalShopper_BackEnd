@@ -25,9 +25,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-@Component
+@Service
 @Log4j2
 public class AuthServiceImpl implements AuthService {
 
@@ -77,7 +77,7 @@ public class AuthServiceImpl implements AuthService {
             }
 
         } catch (Exception e) {
-            log.error("Login failed for email: {}", email, e);
+            log.error("login() AuthServiceImpl Exception | email: {}, message: {}", email, e.getMessage());
             throw e;
         }
     }
@@ -107,7 +107,7 @@ public class AuthServiceImpl implements AuthService {
                     .errorCode(ErrorCode.EMAIL_UNCONFIRMED)
                     .build();
         } catch (Exception e) {
-            log.error("Register failed for email: {}", registerRequest.getEmail(), e);
+            log.error("register() AuthServiceImpl Exception | email: {}, message: {}", registerRequest.getEmail(), e.getMessage());
             throw e;
         }
     }
@@ -141,7 +141,7 @@ public class AuthServiceImpl implements AuthService {
                 throw new AppException(400, "Email đã được xác thực trước đó");
             }
         } catch (Exception e) {
-            log.error("Verify OTP failed for email: {}", email, e);
+            log.error("verifyOtp() AuthServiceImpl Exception | email: {}, message: {}", email, e.getMessage());
             throw e;
         }
     }
