@@ -1,7 +1,6 @@
 package com.sep490.gshop.payload.request;
 
-import com.sep490.gshop.common.GenderEnum;
-import com.sep490.gshop.common.UserRole;
+import com.sep490.gshop.common.enums.GenderEnum;
 import jakarta.persistence.Column;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;

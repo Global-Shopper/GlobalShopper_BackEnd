@@ -1,6 +1,6 @@
 package com.sep490.gshop.controller;
 
-import com.sep490.gshop.common.URLConstant;
+import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.payload.dto.OrderDTO;
 import com.sep490.gshop.payload.request.OrderRequest;
 import com.sep490.gshop.service.OrderService;

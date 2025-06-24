@@ -1,10 +1,9 @@
 package com.sep490.gshop.service.implement;
 
 import com.sep490.gshop.business.CustomerBusiness;
-import com.sep490.gshop.common.UserRole;
+import com.sep490.gshop.common.enums.UserRole;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.Customer;
-import com.sep490.gshop.entity.Wallet;
 import com.sep490.gshop.payload.dto.CustomerDTO;
 import com.sep490.gshop.payload.request.CustomerRequest;
 import com.sep490.gshop.service.CustomerService;
@@ -14,7 +13,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.management.relation.Role;
 import java.util.List;
 import java.util.UUID;
 

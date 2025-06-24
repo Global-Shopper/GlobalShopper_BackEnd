@@ -1,6 +1,6 @@
 package com.sep490.gshop.entity;
 
-import com.sep490.gshop.common.OrderStatus;
+import com.sep490.gshop.common.enums.OrderStatus;
 import com.sep490.gshop.entity.subclass.AddressSnapshot;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

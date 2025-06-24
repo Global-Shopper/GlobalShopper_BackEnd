@@ -15,4 +15,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorMessage(HttpStatus.BAD_REQUEST.value(),new Date(), ex.getMessage()));
     }
+
+    @ExceptionHandler(AppException.class)
+    public ResponseEntity<ErrorMessage> handleAppException(AppException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorMessage(ex.getCode(), new Date(), ex.getMessage()));
+    }
+
+    @ExceptionHandler(RedirectException.class)
+    public ResponseEntity<RedirectMessage> handleRedirectException(RedirectException ex) {
+        return ResponseEntity.status(ex.getHttpCode())
+                .body(new RedirectMessage(ex.getMessage(), ex.getErrorCode()));
+    }
 }

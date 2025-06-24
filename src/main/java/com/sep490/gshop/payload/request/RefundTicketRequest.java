@@ -1,6 +1,5 @@
 package com.sep490.gshop.payload.request;
 
-import com.sep490.gshop.common.RefundStatus;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;

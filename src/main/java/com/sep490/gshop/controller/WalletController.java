@@ -1,6 +1,6 @@
 package com.sep490.gshop.controller;
 
-import com.sep490.gshop.common.URLConstant;
+import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.payload.dto.WalletDTO;
 import com.sep490.gshop.payload.request.WalletRequest;
 import com.sep490.gshop.service.WalletService;
