@@ -10,6 +10,7 @@ import com.sep490.gshop.payload.dto.UserDTO;
 import com.sep490.gshop.payload.request.RegisterRequest;
 import com.sep490.gshop.payload.response.AuthUserResponse;
 import com.sep490.gshop.service.AuthService;
+import com.sep490.gshop.service.EmailService;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,14 +27,17 @@ public class AuthServiceImpl implements AuthService {
 
     private UserBusiness userBusiness;
     private PasswordEncoder passwordEncoder;
+    private EmailService emailService;
     private AuthenticationManager authenticationManager;
     private JwtUtils jwtUtils;
     private ModelMapper modelMapper;
 
+
     @Autowired
-    public AuthServiceImpl(UserBusiness userBusiness, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtUtils jwtUtils, ModelMapper modelMapper) {
+    public AuthServiceImpl(UserBusiness userBusiness, PasswordEncoder passwordEncoder, EmailService emailService, AuthenticationManager authenticationManager, JwtUtils jwtUtils, ModelMapper modelMapper) {
         this.userBusiness = userBusiness;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
         this.authenticationManager = authenticationManager;
         this.jwtUtils = jwtUtils;
         this.modelMapper = modelMapper;
@@ -81,6 +85,9 @@ public class AuthServiceImpl implements AuthService {
             user.setGender(registerRequest.getGender());
             user.setRole(UserRole.CUSTOMER);
             user = userBusiness.create(user);
+            emailService.sendEmail(registerRequest.getEmail(),
+                    "Chào mừng bạn đến với GShop",
+                    "Cảm ơn "+ registerRequest.getName() + " đã đăng ký tài khoản tại GShop. Chúng tôi hy vọng bạn sẽ có những trải nghiệm tuyệt vời!");
             UserDTO userDTO = modelMapper.map(user, UserDTO.class);
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(registerRequest.getEmail(),registerRequest.getPassword() ));
