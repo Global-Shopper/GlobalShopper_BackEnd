@@ -45,6 +45,9 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-mail:3.5.3")
 
 	implementation 'com.github.ben-manes.caffeine:caffeine:3.2.1'
+	implementation 'com.cloudinary:cloudinary-http5:2.3.0'
+
+
 }
 
 tasks.named('test') {

@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
 @Table(name = "request_items")
 @Data
@@ -19,8 +21,6 @@ public class RequestItem extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @OneToOne(mappedBy = "requestItem", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Quotation quotation;
 
     @ManyToOne
     @JoinColumn(name = "purchase_request_id", nullable = false)

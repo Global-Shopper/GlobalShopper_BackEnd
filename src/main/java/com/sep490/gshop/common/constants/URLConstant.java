@@ -12,5 +12,6 @@ public class URLConstant {
     public static final String SHIPPINGADDRESS = "shipping-address";
     public static final String ORDER = "orders";
     public static final String AUTH = "auth";
+    public static final String ADMIN = "admin";
 
 }

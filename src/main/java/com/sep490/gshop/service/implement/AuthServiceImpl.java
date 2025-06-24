@@ -66,14 +66,16 @@ public class AuthServiceImpl implements AuthService {
             if (!user.isEmailVerified()) {
                 sendOTP(user.getEmail(), user.getName());
                 throw new RedirectException("Vui lòng xác thực email trước khi đăng nhập", 401, ErrorCode.EMAIL_UNCONFIRMED);
+            } else {
+                Authentication authentication = authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(email, password));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                String jwt = jwtUtils.generateJwtToken(authentication);
+                UserDTO userDTO = modelMapper.map(user, UserDTO.class);
+                log.debug("login() AuthServiceImpl End |");
+                return new AuthUserResponse(jwt,userDTO);
             }
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(email, password));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            String jwt = jwtUtils.generateJwtToken(authentication);
-            UserDTO userDTO = modelMapper.map(user, UserDTO.class);
-            log.debug("login() AuthServiceImpl End |");
-            return new AuthUserResponse(jwt,userDTO);
+
         } catch (Exception e) {
             log.error("Login failed for email: {}", email, e);
             throw e;
@@ -125,18 +127,19 @@ public class AuthServiceImpl implements AuthService {
                 }
                 if (!cachedOtp.equals(otp)) {
                     throw new AppException(400, "Mã OTP không đúng");
+                } else {
+                    user.setEmailVerified(true);
+                    typedCacheService.remove(CacheType.OTP, email);
+                    user = userBusiness.update(user);
+                    log.debug("verifyOtp() AuthServiceImpl End | Email verified successfully");
+                    UserDTO userDTO = modelMapper.map(user, UserDTO.class);
+                    String jwt = jwtUtils.generateJwtToken(user);
+                    return new AuthUserResponse(jwt, userDTO);
                 }
-                user.setEmailVerified(true);
-                typedCacheService.remove(CacheType.OTP, email);
-                user = userBusiness.update(user);
-                log.debug("verifyOtp() AuthServiceImpl End | Email verified successfully");
             } else {
                 log.debug("verifyOtp() AuthServiceImpl End | Email already verified");
                 throw new AppException(400, "Email đã được xác thực trước đó");
             }
-            UserDTO userDTO = modelMapper.map(user, UserDTO.class);
-            String jwt = jwtUtils.generateJwtToken(user);
-            return new AuthUserResponse(jwt, userDTO);
         } catch (Exception e) {
             log.error("Verify OTP failed for email: {}", email, e);
             throw e;
