@@ -43,6 +43,9 @@ dependencies {
 	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
 	implementation("org.springframework.boot:spring-boot-starter-mail:3.5.3")
+	implementation 'com.cloudinary:cloudinary-http5:2.3.0'
+
+
 }
 
 tasks.named('test') {
