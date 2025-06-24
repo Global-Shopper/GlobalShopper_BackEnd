@@ -12,16 +12,16 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Quotation extends BaseEntity{
     private double basePrice;
-    private double shippingFee;
     private double serviceFee;
     private double tax;
     @Column(columnDefinition = "TEXT")
     private String taxDetails;
     @Column(columnDefinition = "TEXT")
     private String note;
+    private boolean isAccepted;
 
     @OneToOne
-    @JoinColumn(name = "purchase_request_id", nullable = false)
-    private PurchaseRequest purchaseRequest;
+    @JoinColumn(name = "request_item_id", nullable = false)
+    private RequestItem requestItem;
 
 }

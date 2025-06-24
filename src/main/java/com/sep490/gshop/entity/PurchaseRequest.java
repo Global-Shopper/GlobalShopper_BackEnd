@@ -5,19 +5,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
 @Table(name = "purchase_requests")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class PurchaseRequest extends BaseEntity {
-    @Column(columnDefinition = "TEXT")
-    private String productURL;
-    private String productName;
-    private String contactInfo;
-    private String productSpecification;
-    @Column(columnDefinition = "TEXT")
-    private String description;
 
     private long expiredAt;
 
@@ -29,10 +24,10 @@ public class PurchaseRequest extends BaseEntity {
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
-    @OneToOne(mappedBy = "purchaseRequest", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Quotation quotation;
-
     @ManyToOne
     @JoinColumn(name = "admin_id", nullable = false)
     private Admin admin;
+
+    @OneToMany(mappedBy = "purchaseRequest", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<RequestItem> requestItems;
 }

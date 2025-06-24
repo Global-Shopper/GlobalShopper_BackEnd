@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
 @Table(name = "wallets")
 @Data
@@ -20,4 +22,6 @@ public class Wallet extends BaseEntity {
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
+    @OneToMany(mappedBy = "wallet", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<BankAccount> backAccounts;
 }

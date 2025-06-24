@@ -17,6 +17,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ShippingAddress extends BaseEntity {
     private String name;
+    private String tag; //Ex: home, office,...
     private String phoneNumber;
     private String location;
     private boolean isDefault;
