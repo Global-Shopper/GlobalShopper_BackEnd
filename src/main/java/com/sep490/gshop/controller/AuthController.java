@@ -25,7 +25,7 @@ public class AuthController {
     }
 
     @PostMapping("login")
-    public AuthUserResponse login(@Valid LoginRequest loginRequest) {
+    public AuthUserResponse login(@Valid @RequestBody LoginRequest loginRequest) {
         log.info("login() AuthController start | email: {}", loginRequest.getEmail());
         AuthUserResponse jwt = authService.login(loginRequest.getEmail(), loginRequest.getPassword());
         log.info("login() AuthController end | jwt: {}", jwt);
@@ -38,7 +38,7 @@ public class AuthController {
     }
 
     @PostMapping("register")
-    public RedirectMessage register(@Valid RegisterRequest registerRequest) {
+    public RedirectMessage register(@Valid @RequestBody RegisterRequest registerRequest) {
         log.info("register() AuthController start | email: {}", registerRequest.getEmail());
         RedirectMessage response = authService.register(registerRequest);
         log.info("register() AuthController end | response: {}", response);

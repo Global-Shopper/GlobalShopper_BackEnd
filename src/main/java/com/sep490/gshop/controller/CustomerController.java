@@ -33,7 +33,7 @@ public class CustomerController {
     }
 
     @PostMapping
-    public ResponseEntity<CustomerDTO> createCustomer(@Valid CustomerRequest customerRequest) {
+    public ResponseEntity<CustomerDTO> createCustomer(@Valid @RequestBody CustomerRequest customerRequest) {
         log.info("createCustomer() CustomerController start | customerDTO: {}", customerRequest);
         CustomerDTO result = customerService.createCustomer(customerRequest);
         log.info("createCustomer() CustomerController end | {}", result);

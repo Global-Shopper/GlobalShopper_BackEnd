@@ -4,6 +4,7 @@ import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.payload.dto.WalletDTO;
 import com.sep490.gshop.payload.request.WalletRequest;
 import com.sep490.gshop.service.WalletService;
+import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -40,7 +41,7 @@ public class WalletController {
     }
 
     @PostMapping
-    public ResponseEntity<WalletDTO> createWallet(WalletRequest walletRequest) {
+    public ResponseEntity<WalletDTO> createWallet(@Valid @RequestBody WalletRequest walletRequest) {
         log.info("createWallet() WalletController start | walletDTO: {}", walletRequest);
         WalletDTO createdWallet = walletService.createWallet(walletRequest);
         log.info("createWallet() WalletController end | Created Wallet: {}", createdWallet);
