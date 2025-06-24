@@ -1,6 +1,6 @@
 package com.sep490.gshop.entity;
 
-import com.sep490.gshop.common.RefundStatus;
+import com.sep490.gshop.common.enums.RefundStatus;
 import com.sep490.gshop.entity.subclass.BankAccountSnapshot;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

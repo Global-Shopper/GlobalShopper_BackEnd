@@ -1,6 +1,7 @@
 package com.sep490.gshop.config.security.jwt;
 
 import com.sep490.gshop.config.security.services.UserDetailsImpl;
+import com.sep490.gshop.entity.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -36,6 +37,20 @@ public class JwtUtils {
         .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
         .signWith(key(), SignatureAlgorithm.HS256)
         .compact();
+  }
+
+  public String generateJwtToken(User user) {
+    Claims claims = Jwts.claims().setSubject(user.getEmail());
+    claims.put("role", user.getRole());
+    claims.put("id", user.getId());
+    claims.put("email", user.getEmail());
+    claims.put("name", user.getName());
+    return Jwts.builder()
+            .setClaims(claims)
+            .setIssuedAt(new Date())
+            .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
+            .signWith(key(), SignatureAlgorithm.HS256)
+            .compact();
   }
   
   private Key key() {

@@ -1,7 +1,7 @@
 package com.sep490.gshop.service.implement;
 
 import com.sep490.gshop.business.*;
-import com.sep490.gshop.common.OrderStatus;
+import com.sep490.gshop.common.enums.OrderStatus;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.*;
 import com.sep490.gshop.entity.subclass.AddressSnapshot;

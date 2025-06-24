@@ -1,7 +1,7 @@
 package com.sep490.gshop.config.security.services;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.sep490.gshop.common.UserRole;
+import com.sep490.gshop.common.enums.UserRole;
 import com.sep490.gshop.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Data;

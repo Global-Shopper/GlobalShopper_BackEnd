@@ -1,6 +1,6 @@
 package com.sep490.gshop.payload.dto;
 
-import com.sep490.gshop.common.RefundStatus;
+import com.sep490.gshop.common.enums.RefundStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

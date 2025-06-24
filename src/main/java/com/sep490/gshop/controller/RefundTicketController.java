@@ -1,6 +1,6 @@
 package com.sep490.gshop.controller;
 
-import com.sep490.gshop.common.URLConstant;
+import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.payload.dto.RefundTicketDTO;
 import com.sep490.gshop.payload.request.RefundTicketRequest;
 import com.sep490.gshop.service.RefundTicketService;

@@ -1,8 +1,12 @@
 package com.sep490.gshop.service.implement;
 
 import com.sep490.gshop.business.UserBusiness;
-import com.sep490.gshop.common.UserRole;
+import com.sep490.gshop.common.constants.ErrorCode;
+import com.sep490.gshop.common.enums.CacheType;
+import com.sep490.gshop.common.enums.UserRole;
 import com.sep490.gshop.config.handler.AppException;
+import com.sep490.gshop.config.handler.RedirectException;
+import com.sep490.gshop.config.handler.RedirectMessage;
 import com.sep490.gshop.config.security.jwt.JwtUtils;
 import com.sep490.gshop.entity.Customer;
 import com.sep490.gshop.entity.User;
@@ -11,6 +15,8 @@ import com.sep490.gshop.payload.request.RegisterRequest;
 import com.sep490.gshop.payload.response.AuthUserResponse;
 import com.sep490.gshop.service.AuthService;
 import com.sep490.gshop.service.EmailService;
+import com.sep490.gshop.service.TypedCacheService;
+import com.sep490.gshop.utils.RandomUtil;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,15 +38,18 @@ public class AuthServiceImpl implements AuthService {
     private JwtUtils jwtUtils;
     private ModelMapper modelMapper;
 
+    private TypedCacheService<String,String> typedCacheService;
+
 
     @Autowired
-    public AuthServiceImpl(UserBusiness userBusiness, PasswordEncoder passwordEncoder, EmailService emailService, AuthenticationManager authenticationManager, JwtUtils jwtUtils, ModelMapper modelMapper) {
+    public AuthServiceImpl(UserBusiness userBusiness, PasswordEncoder passwordEncoder, EmailService emailService, AuthenticationManager authenticationManager, JwtUtils jwtUtils, ModelMapper modelMapper, TypedCacheService<String,String> typedCacheService) {
         this.userBusiness = userBusiness;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.authenticationManager = authenticationManager;
         this.jwtUtils = jwtUtils;
         this.modelMapper = modelMapper;
+        this.typedCacheService = typedCacheService;
     }
 
     @Override
@@ -53,6 +62,10 @@ public class AuthServiceImpl implements AuthService {
             }
             if (!passwordEncoder.matches(password, user.getPassword())) {
                 throw new AppException(401, "Mật khẩu không đúng");
+            }
+            if (!user.isEmailVerified()) {
+                sendOTP(user.getEmail(), user.getName());
+                throw new RedirectException("Vui lòng xác thực email trước khi đăng nhập", 401, ErrorCode.EMAIL_UNCONFIRMED);
             }
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, password));
@@ -68,7 +81,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public AuthUserResponse register(RegisterRequest registerRequest) {
+    public RedirectMessage register(RegisterRequest registerRequest) {
         try {
             log.debug("register() AuthServiceImpl Start | email: {}", registerRequest.getEmail());
             User user = userBusiness.getUserByEmail(registerRequest.getEmail());
@@ -85,19 +98,56 @@ public class AuthServiceImpl implements AuthService {
             user.setGender(registerRequest.getGender());
             user.setRole(UserRole.CUSTOMER);
             user = userBusiness.create(user);
-            emailService.sendEmail(registerRequest.getEmail(),
-                    "Chào mừng bạn đến với GShop",
-                    "Cảm ơn "+ registerRequest.getName() + " đã đăng ký tài khoản tại GShop. Chúng tôi hy vọng bạn sẽ có những trải nghiệm tuyệt vời!");
-            UserDTO userDTO = modelMapper.map(user, UserDTO.class);
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(registerRequest.getEmail(),registerRequest.getPassword() ));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            String jwt = jwtUtils.generateJwtToken(authentication);
+            sendOTP(user.getEmail(), user.getName());
             log.debug("register() AuthServiceImpl End |");
-            return new AuthUserResponse(jwt, userDTO);
+            return RedirectMessage.builder()
+                    .message("Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản")
+                    .errorCode(ErrorCode.EMAIL_UNCONFIRMED)
+                    .build();
         } catch (Exception e) {
             log.error("Register failed for email: {}", registerRequest.getEmail(), e);
             throw e;
         }
+    }
+
+    @Override
+    public AuthUserResponse verifyOtp(String email, String otp) {
+        try {
+            log.debug("verifyOtp() AuthServiceImpl Start | email: {}", email);
+            User user = userBusiness.getUserByEmail(email);
+            if (user == null) {
+                throw new AppException(404, "Email không tồn tại");
+            }
+            if (!user.isEmailVerified()) {
+                String cachedOtp = typedCacheService.get(CacheType.OTP,email);
+                if (cachedOtp == null) {
+                    throw new AppException(400, "Mã OTP đã hết hạn hoặc không tồn tại");
+                }
+                if (!cachedOtp.equals(otp)) {
+                    throw new AppException(400, "Mã OTP không đúng");
+                }
+                user.setEmailVerified(true);
+                typedCacheService.remove(CacheType.OTP, email);
+                user = userBusiness.update(user);
+                log.debug("verifyOtp() AuthServiceImpl End | Email verified successfully");
+            } else {
+                log.debug("verifyOtp() AuthServiceImpl End | Email already verified");
+                throw new AppException(400, "Email đã được xác thực trước đó");
+            }
+            UserDTO userDTO = modelMapper.map(user, UserDTO.class);
+            String jwt = jwtUtils.generateJwtToken(user);
+            return new AuthUserResponse(jwt, userDTO);
+        } catch (Exception e) {
+            log.error("Verify OTP failed for email: {}", email, e);
+            throw e;
+        }
+    }
+
+    private void sendOTP(String email, String name){
+        String otp = RandomUtil.randomNumber(6);
+        typedCacheService.put(CacheType.OTP, email, otp);
+        emailService.sendEmail(email,
+                "Chào mừng bạn đến với GShop",
+                "Cảm ơn "+ name + " đã đăng ký tài khoản tại GShop. Mã OTP của bạn là: " + otp );
     }
 }

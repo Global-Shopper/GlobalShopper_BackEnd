@@ -1,9 +1,8 @@
 package com.sep490.gshop.entity;
 
-import com.sep490.gshop.common.GenderEnum;
-import com.sep490.gshop.common.UserRole;
+import com.sep490.gshop.common.enums.GenderEnum;
+import com.sep490.gshop.common.enums.UserRole;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -39,5 +38,7 @@ public class User extends BaseEntity {
     private String avatar;
 
     private boolean isActive = true;
+
+    private boolean isEmailVerified = false;
 
 }

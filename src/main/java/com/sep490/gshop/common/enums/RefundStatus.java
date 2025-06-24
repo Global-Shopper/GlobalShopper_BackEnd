@@ -1,4 +1,4 @@
-package com.sep490.gshop.common;
+package com.sep490.gshop.common.enums;
 
 public enum RefundStatus {
     PENDING, // Refund request has been created but not yet processed

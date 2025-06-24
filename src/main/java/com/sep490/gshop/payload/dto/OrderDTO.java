@@ -1,10 +1,6 @@
 package com.sep490.gshop.payload.dto;
 
-import com.sep490.gshop.common.OrderStatus;
-import com.sep490.gshop.entity.Customer;
-import com.sep490.gshop.entity.OrderItem;
-import com.sep490.gshop.entity.subclass.AddressSnapshot;
-import jakarta.persistence.*;
+import com.sep490.gshop.common.enums.OrderStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

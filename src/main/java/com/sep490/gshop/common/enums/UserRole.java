@@ -1,4 +1,4 @@
-package com.sep490.gshop.common;
+package com.sep490.gshop.common.enums;
 
 public enum UserRole {
     CUSTOMER,

@@ -1,4 +1,4 @@
-package com.sep490.gshop.common;
+package com.sep490.gshop.common.constants;
 
 public class URLConstant {
     private URLConstant() {}

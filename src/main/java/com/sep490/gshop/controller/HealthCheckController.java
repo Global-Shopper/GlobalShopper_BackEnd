@@ -1,6 +1,6 @@
 package com.sep490.gshop.controller;
 
-import com.sep490.gshop.common.URLConstant;
+import com.sep490.gshop.common.constants.URLConstant;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

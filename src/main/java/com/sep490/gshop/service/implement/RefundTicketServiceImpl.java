@@ -2,7 +2,7 @@ package com.sep490.gshop.service.implement;
 
 import com.sep490.gshop.business.OrderBusiness;
 import com.sep490.gshop.business.RefundTicketBusiness;
-import com.sep490.gshop.common.RefundStatus;
+import com.sep490.gshop.common.enums.RefundStatus;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.Order;
 import com.sep490.gshop.entity.RefundTicket;

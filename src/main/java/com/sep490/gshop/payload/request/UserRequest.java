@@ -1,6 +1,6 @@
 package com.sep490.gshop.payload.request;
 
-import com.sep490.gshop.common.UserRole;
+import com.sep490.gshop.common.enums.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
