@@ -10,4 +10,6 @@ public interface AuthService {
     RedirectMessage register(RegisterRequest registerRequest);
 
     AuthUserResponse verifyOtp(String email, String otp);
+
+    RedirectMessage resendOtp(String email);
 }
