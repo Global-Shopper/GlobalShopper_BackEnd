@@ -2,6 +2,7 @@ package com.sep490.gshop.controller;
 
 import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.config.handler.RedirectMessage;
+import com.sep490.gshop.payload.request.ForgotPasswordRequest;
 import com.sep490.gshop.payload.request.LoginRequest;
 import com.sep490.gshop.payload.request.RegisterRequest;
 import com.sep490.gshop.payload.response.AuthUserResponse;
@@ -61,4 +62,18 @@ public class AuthController {
         return response;
     }
 
+    @GetMapping("/forgot-password")
+    public RedirectMessage forgotPassword(@PathVariable String email) {
+        log.info("forgotPassword() AuthController start | email: {}", email);
+        RedirectMessage response = authService.forgotPassword(email);
+        log.info("forgotPassword() AuthController end | email: {}", response);
+        return response;
+    }
+    @PutMapping("/forgot-password/reset")
+    public AuthUserResponse forgotPasswordReset(@RequestBody ForgotPasswordRequest forgotPasswordRequest,@RequestBody String otp) {
+        log.info("forgotPasswordReset() AuthController start | email: {}", forgotPasswordRequest.getEmail());
+        var response = authService.resetPassword(forgotPasswordRequest, otp);
+        log.info("forgotPasswordReset() AuthController end | response: {}", response);
+        return response;
+    }
 }

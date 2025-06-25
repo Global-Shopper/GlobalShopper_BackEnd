@@ -11,6 +11,7 @@ import com.sep490.gshop.config.security.jwt.JwtUtils;
 import com.sep490.gshop.entity.Customer;
 import com.sep490.gshop.entity.User;
 import com.sep490.gshop.payload.dto.UserDTO;
+import com.sep490.gshop.payload.request.ForgotPasswordRequest;
 import com.sep490.gshop.payload.request.RegisterRequest;
 import com.sep490.gshop.payload.response.AuthUserResponse;
 import com.sep490.gshop.service.AuthService;
@@ -195,11 +196,76 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    @Override
+    public RedirectMessage forgotPassword(String email) {
+        try {
+            log.debug("forgotPassword() AuthServiceImpl Start | email: {}", email);
+
+            var resp = userBusiness.getUserByEmail(email);
+            if (resp == null) {
+                throw new AppException(400, "Email chưa được đăng ký hoặc không tồn tại");
+            }
+
+            sendOTP(resp.getEmail(), resp.getName());
+            return RedirectMessage.builder()
+                    .message("Mã OTP đã được gửi. Vui lòng kiểm tra email")
+                    .errorCode(ErrorCode.EMAIL_UNCONFIRMED)
+                    .build();
+        }catch (Exception e) {
+            log.error("forgotPassword() AuthServiceImpl Exception | email: {}, message: {}", email, e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
+    public AuthUserResponse resetPassword(ForgotPasswordRequest request, String otp) {
+        try {
+            log.debug("resetPassword() AuthServiceImpl Start | email: {}", request.getEmail());
+            Integer failCount = failCountCache.get(CacheType.OTP_ATTEMPT, request.getEmail());
+            if (failCount != null && failCount >= MAX_RETRY) {
+                throw new AppException(429,"Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau 10 phút.");
+            }
+            User user = userBusiness.getUserByEmail(request.getEmail());
+            if (user == null) {
+                throw new AppException(404, "Email không tồn tại");
+            }
+            if (!user.isEmailVerified()) {
+                String cachedOtp = typedCacheService.get(CacheType.OTP,request.getEmail());
+                if (cachedOtp == null) {
+                    throw new AppException(400, "Mã OTP đã hết hạn hoặc không tồn tại");
+                }
+                if (!cachedOtp.equals(otp)) {
+                    failCountCache.put(CacheType.OTP_ATTEMPT, request.getEmail(), (failCount == null ? 1 : failCount + 1));
+                    throw new AppException(400, "Mã OTP không đúng");
+                } else {
+                    if(request.getNewPassword().equals(user.getPassword())) {
+                        throw new AppException(400,"Mật khẩu mới trùng với mật khẩu cũ");
+                    }
+                    user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+                    typedCacheService.remove(CacheType.OTP, request.getEmail());
+                    failCountCache.remove(CacheType.OTP_ATTEMPT, request.getEmail());
+                    user = userBusiness.update(user);
+                    UserDTO userDTO = modelMapper.map(user, UserDTO.class);
+                    String jwt = jwtUtils.generateJwtToken(user);
+                    log.debug("resetPassword() AuthServiceImpl End | Email verified successfully");
+                    return new AuthUserResponse(jwt, userDTO);
+                }
+            } else {
+                log.debug("resetPassword() AuthServiceImpl End | Email already verified");
+                throw new AppException(400, "Email đã được xác thực trước đó");
+            }
+        } catch (Exception e) {
+            log.error("resetPassword() AuthServiceImpl Exception | email: {}, message: {}", request.getEmail(), e.getMessage());
+            throw e;
+        }
+    }
+
+
     private void sendOTP(String email, String name){
         String otp = RandomUtil.randomNumber(6);
         typedCacheService.put(CacheType.OTP, email, otp);
         emailService.sendEmail(email,
                 "Chào mừng bạn đến với GShop",
-                "Cảm ơn "+ name + " đã đăng ký tài khoản tại GShop. Mã OTP của bạn là: " + otp );
+                "Cảm ơn "+ name + " đã sử dụng dịch vụ tại GShop. Mã OTP của bạn là: " + otp );
     }
 }
