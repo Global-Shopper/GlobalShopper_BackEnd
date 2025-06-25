@@ -1,5 +1,6 @@
 package com.sep490.gshop.config.handler;
 
+import com.sep490.gshop.payload.response.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -26,5 +27,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity<RedirectMessage> handleRedirectException(RedirectException ex) {
         return ResponseEntity.status(ex.getHttpCode())
                 .body(new RedirectMessage(ex.getMessage(), ex.getErrorCode()));
+    }
+
+    @ExceptionHandler(ErrorException.class)
+    public ResponseEntity<ErrorResponse> handleErrorException(ErrorException ex) {
+        return ResponseEntity.status(ex.getHttpCode())
+                .body(ErrorResponse.builder()
+                        .errorCode(ex.getErrorCode())
+                        .message(ex.getMessage())
+                        .timestamp(new Date())
+                        .build());
     }
 }
