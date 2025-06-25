@@ -74,9 +74,10 @@ public class AuthServiceImpl implements AuthService {
             if (!user.isEmailVerified()) {
                 String cachedOtp = typedCacheService.get(CacheType.OTP, email);
                 if (cachedOtp != null) {
-                    throw AppException.builder()
+                    throw ErrorException.builder()
                             .message("Hệ thống đã gửi mã OTP đến email của bạn. Vui lòng xác thực email trước khi đăng nhập!")
-                            .code(HttpStatus.UNAUTHORIZED.value())
+                            .httpCode(401)
+                            .errorCode(ErrorCode.EMAIL_UNCONFIRMED)
                             .build();
                 }
                 sendOTP(user.getEmail(), user.getName(), CacheType.OTP);
