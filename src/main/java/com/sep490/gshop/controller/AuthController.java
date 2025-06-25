@@ -63,14 +63,14 @@ public class AuthController {
     }
 
     @GetMapping("/forgot-password")
-    public RedirectMessage forgotPassword(@PathVariable String email) {
+    public RedirectMessage forgotPassword(@RequestParam String email) {
         log.info("forgotPassword() AuthController start | email: {}", email);
         RedirectMessage response = authService.forgotPassword(email);
         log.info("forgotPassword() AuthController end | email: {}", response);
         return response;
     }
     @PutMapping("/forgot-password/reset")
-    public AuthUserResponse forgotPasswordReset(@RequestBody ForgotPasswordRequest forgotPasswordRequest,@RequestBody String otp) {
+    public AuthUserResponse forgotPasswordReset(@RequestBody ForgotPasswordRequest forgotPasswordRequest,@RequestParam String otp) {
         log.info("forgotPasswordReset() AuthController start | email: {}", forgotPasswordRequest.getEmail());
         var response = authService.resetPassword(forgotPasswordRequest, otp);
         log.info("forgotPasswordReset() AuthController end | response: {}", response);

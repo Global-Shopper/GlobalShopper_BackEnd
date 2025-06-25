@@ -74,7 +74,7 @@ public class AuthServiceImpl implements AuthService {
                 if (cachedOtp != null) {
                     throw new RedirectException("Hệ thống đã gửi mã OTP đến email của bạn. Vui lòng xác thực email trước khi đăng nhập!", 401, ErrorCode.EMAIL_UNCONFIRMED);
                 }
-                sendOTP(user.getEmail(), user.getName());
+                sendOTP(user.getEmail(), user.getName(), CacheType.OTP);
                 throw new RedirectException("Vui lòng xác thực email trước khi đăng nhập", 401, ErrorCode.EMAIL_UNCONFIRMED);
             } else {
                 Authentication authentication = authenticationManager.authenticate(
@@ -110,7 +110,7 @@ public class AuthServiceImpl implements AuthService {
             user.setGender(registerRequest.getGender());
             user.setRole(UserRole.CUSTOMER);
             user = userBusiness.create(user);
-            sendOTP(user.getEmail(), user.getName());
+            sendOTP(user.getEmail(), user.getName(), CacheType.OTP);
             log.debug("register() AuthServiceImpl End |");
             return RedirectMessage.builder()
                     .message("Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản")
@@ -183,7 +183,7 @@ public class AuthServiceImpl implements AuthService {
                     log.debug("resendOtp() AuthServiceImpl End | Mã OTP đã được gửi trước đó");
                 throw new RedirectException("Hệ thống đã gửi mã OTP đến email của bạn. Vui lòng xác thực email trước khi đăng nhập!", 401, ErrorCode.EMAIL_UNCONFIRMED);
                 }
-                sendOTP(user.getEmail(), user.getName());
+                sendOTP(user.getEmail(), user.getName(), CacheType.OTP);
                 log.debug("resendOtp() AuthServiceImpl End | Mã OTP đã được gửi lại");
                 return RedirectMessage.builder()
                         .message("Mã OTP đã được gửi lại. Vui lòng kiểm tra email")
@@ -206,7 +206,7 @@ public class AuthServiceImpl implements AuthService {
                 throw new AppException(400, "Email chưa được đăng ký hoặc không tồn tại");
             }
 
-            sendOTP(resp.getEmail(), resp.getName());
+            sendOTP(resp.getEmail(), resp.getName(), CacheType.OTP_RESET_PASSWORD);
             return RedirectMessage.builder()
                     .message("Mã OTP đã được gửi. Vui lòng kiểm tra email")
                     .errorCode(ErrorCode.EMAIL_UNCONFIRMED)
@@ -230,7 +230,7 @@ public class AuthServiceImpl implements AuthService {
                 throw new AppException(404, "Email không tồn tại");
             }
             if (!user.isEmailVerified()) {
-                String cachedOtp = typedCacheService.get(CacheType.OTP,request.getEmail());
+                String cachedOtp = typedCacheService.get(CacheType.OTP_RESET_PASSWORD,request.getEmail());
                 if (cachedOtp == null) {
                     throw new AppException(400, "Mã OTP đã hết hạn hoặc không tồn tại");
                 }
@@ -242,7 +242,7 @@ public class AuthServiceImpl implements AuthService {
                         throw new AppException(400,"Mật khẩu mới trùng với mật khẩu cũ");
                     }
                     user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-                    typedCacheService.remove(CacheType.OTP, request.getEmail());
+                    typedCacheService.remove(CacheType.OTP_RESET_PASSWORD, request.getEmail());
                     failCountCache.remove(CacheType.OTP_ATTEMPT, request.getEmail());
                     user = userBusiness.update(user);
                     UserDTO userDTO = modelMapper.map(user, UserDTO.class);
@@ -261,9 +261,9 @@ public class AuthServiceImpl implements AuthService {
     }
 
 
-    private void sendOTP(String email, String name){
+    private void sendOTP(String email, String name, CacheType cacheType) {
         String otp = RandomUtil.randomNumber(6);
-        typedCacheService.put(CacheType.OTP, email, otp);
+        typedCacheService.put(cacheType, email, otp);
         emailService.sendEmail(email,
                 "Chào mừng bạn đến với GShop",
                 "Cảm ơn "+ name + " đã sử dụng dịch vụ tại GShop. Mã OTP của bạn là: " + otp );
