@@ -71,7 +71,7 @@ public class AuthServiceImpl implements AuthService {
             if (!user.isEmailVerified()) {
                 String cachedOtp = typedCacheService.get(CacheType.OTP, email);
                 if (cachedOtp != null) {
-                    throw new AppException(400, "Email đã được gửi mã OTP. Vui lòng xác thực email trước khi đăng nhập");
+                    throw new RedirectException("Hệ thống đã gửi mã OTP đến email của bạn. Vui lòng xác thực email trước khi đăng nhập!", 401, ErrorCode.EMAIL_UNCONFIRMED);
                 }
                 sendOTP(user.getEmail(), user.getName());
                 throw new RedirectException("Vui lòng xác thực email trước khi đăng nhập", 401, ErrorCode.EMAIL_UNCONFIRMED);
@@ -180,7 +180,7 @@ public class AuthServiceImpl implements AuthService {
                 String cachedOtp = typedCacheService.get(CacheType.OTP, email);
             if (cachedOtp != null) {
                     log.debug("resendOtp() AuthServiceImpl End | Mã OTP đã được gửi trước đó");
-                    throw new AppException(400, "Mã OTP đã được gửi trước đó. Vui lòng kiểm tra email");
+                throw new RedirectException("Hệ thống đã gửi mã OTP đến email của bạn. Vui lòng xác thực email trước khi đăng nhập!", 401, ErrorCode.EMAIL_UNCONFIRMED);
                 }
                 sendOTP(user.getEmail(), user.getName());
                 log.debug("resendOtp() AuthServiceImpl End | Mã OTP đã được gửi lại");
