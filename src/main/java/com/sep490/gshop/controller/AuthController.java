@@ -53,4 +53,12 @@ public class AuthController {
         return response;
     }
 
+    @GetMapping("/resend-otp")
+    public RedirectMessage resendOtp(String email) {
+        log.info("resendOtp() AuthController start | email: {}", email);
+        RedirectMessage response = authService.resendOtp(email);
+        log.info("resendOtp() AuthController end | response: {}", response);
+        return response;
+    }
+
 }

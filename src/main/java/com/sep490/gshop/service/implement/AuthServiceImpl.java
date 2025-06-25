@@ -31,6 +31,8 @@ import org.springframework.stereotype.Service;
 @Log4j2
 public class AuthServiceImpl implements AuthService {
 
+    private static final int MAX_RETRY = 5;
+
     private UserBusiness userBusiness;
     private PasswordEncoder passwordEncoder;
     private EmailService emailService;
@@ -40,9 +42,11 @@ public class AuthServiceImpl implements AuthService {
 
     private TypedCacheService<String,String> typedCacheService;
 
+    private TypedCacheService<String,Integer> failCountCache;
+
 
     @Autowired
-    public AuthServiceImpl(UserBusiness userBusiness, PasswordEncoder passwordEncoder, EmailService emailService, AuthenticationManager authenticationManager, JwtUtils jwtUtils, ModelMapper modelMapper, TypedCacheService<String,String> typedCacheService) {
+    public AuthServiceImpl(UserBusiness userBusiness, PasswordEncoder passwordEncoder, EmailService emailService, AuthenticationManager authenticationManager, JwtUtils jwtUtils, ModelMapper modelMapper, TypedCacheService<String,String> typedCacheService, TypedCacheService<String, Integer> failCountCache) {
         this.userBusiness = userBusiness;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
@@ -50,6 +54,7 @@ public class AuthServiceImpl implements AuthService {
         this.jwtUtils = jwtUtils;
         this.modelMapper = modelMapper;
         this.typedCacheService = typedCacheService;
+        this.failCountCache = failCountCache;
     }
 
     @Override
@@ -64,6 +69,10 @@ public class AuthServiceImpl implements AuthService {
                 throw new AppException(401, "Mật khẩu không đúng");
             }
             if (!user.isEmailVerified()) {
+                String cachedOtp = typedCacheService.get(CacheType.OTP, email);
+                if (cachedOtp != null) {
+                    throw new AppException(400, "Email đã được gửi mã OTP. Vui lòng xác thực email trước khi đăng nhập");
+                }
                 sendOTP(user.getEmail(), user.getName());
                 throw new RedirectException("Vui lòng xác thực email trước khi đăng nhập", 401, ErrorCode.EMAIL_UNCONFIRMED);
             } else {
@@ -116,6 +125,10 @@ public class AuthServiceImpl implements AuthService {
     public AuthUserResponse verifyOtp(String email, String otp) {
         try {
             log.debug("verifyOtp() AuthServiceImpl Start | email: {}", email);
+            Integer failCount = failCountCache.get(CacheType.OTP_ATTEMPT, email);
+            if (failCount != null && failCount >= MAX_RETRY) {
+                throw new AppException(429,"Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau 10 phút.");
+            }
             User user = userBusiness.getUserByEmail(email);
             if (user == null) {
                 throw new AppException(404, "Email không tồn tại");
@@ -126,14 +139,16 @@ public class AuthServiceImpl implements AuthService {
                     throw new AppException(400, "Mã OTP đã hết hạn hoặc không tồn tại");
                 }
                 if (!cachedOtp.equals(otp)) {
+                    failCountCache.put(CacheType.OTP_ATTEMPT, email, (failCount == null ? 1 : failCount + 1));
                     throw new AppException(400, "Mã OTP không đúng");
                 } else {
                     user.setEmailVerified(true);
                     typedCacheService.remove(CacheType.OTP, email);
+                    failCountCache.remove(CacheType.OTP_ATTEMPT, email);
                     user = userBusiness.update(user);
-                    log.debug("verifyOtp() AuthServiceImpl End | Email verified successfully");
                     UserDTO userDTO = modelMapper.map(user, UserDTO.class);
                     String jwt = jwtUtils.generateJwtToken(user);
+                    log.debug("verifyOtp() AuthServiceImpl End | Email verified successfully");
                     return new AuthUserResponse(jwt, userDTO);
                 }
             } else {
@@ -142,6 +157,40 @@ public class AuthServiceImpl implements AuthService {
             }
         } catch (Exception e) {
             log.error("verifyOtp() AuthServiceImpl Exception | email: {}, message: {}", email, e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
+    public RedirectMessage resendOtp(String email) {
+        try {
+            log.debug("resendOtp() AuthServiceImpl Start | email: {}", email);
+            Integer failCount = failCountCache.get(CacheType.OTP_ATTEMPT, email);
+            if (failCount != null && failCount >= MAX_RETRY) {
+                throw new AppException(429,"Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau 10 phút.");
+            }
+            User user = userBusiness.getUserByEmail(email);
+            if (user == null) {
+                throw new AppException(404, "Email không tồn tại");
+            }
+            if (user.isEmailVerified()) {
+                log.debug("resendOtp() AuthServiceImpl End | Email already verified");
+                throw new AppException(400, "Email đã được xác thực trước đó");
+            } else {
+                String cachedOtp = typedCacheService.get(CacheType.OTP, email);
+            if (cachedOtp != null) {
+                    log.debug("resendOtp() AuthServiceImpl End | Mã OTP đã được gửi trước đó");
+                    throw new AppException(400, "Mã OTP đã được gửi trước đó. Vui lòng kiểm tra email");
+                }
+                sendOTP(user.getEmail(), user.getName());
+                log.debug("resendOtp() AuthServiceImpl End | Mã OTP đã được gửi lại");
+                return RedirectMessage.builder()
+                        .message("Mã OTP đã được gửi lại. Vui lòng kiểm tra email")
+                        .errorCode(ErrorCode.EMAIL_UNCONFIRMED)
+                        .build();
+            }
+        } catch (Exception e) {
+            log.error("resendOtp() AuthServiceImpl Exception | email: {}, message: {}", email, e.getMessage());
             throw e;
         }
     }
