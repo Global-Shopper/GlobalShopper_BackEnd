@@ -175,7 +175,7 @@ public class AuthServiceImpl implements AuthService {
             }
             if (user.isEmailVerified()) {
                 log.debug("resendOtp() AuthServiceImpl End | Email already verified");
-                throw new AppException(400, "Email đã được xác thực trước đó");
+                throw new AppException(200, "Email đã được xác thực trước đó! Bạn có thể đăng nhập ngay bây giờ.");
             } else {
                 String cachedOtp = typedCacheService.get(CacheType.OTP, email);
             if (cachedOtp != null) {
