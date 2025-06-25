@@ -1,11 +1,13 @@
 package com.sep490.gshop.config.handler;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.*;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
-public class RedirectException extends RuntimeException {
+@Builder
+public class ErrorException extends RuntimeException {
     private String message;
     private int httpCode;
     private int errorCode;
