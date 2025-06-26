@@ -31,6 +31,7 @@ public class TypedCacheServiceImpl<K, V> implements TypedCacheService<K, V> {
     @Override
     public V get(CacheType type, K key) {
         return getCache(type).getIfPresent(key);
+
     }
 
     @Override
