@@ -13,13 +13,8 @@ public interface AuthService {
 
     AuthUserResponse verifyOtp(String email, String otp);
 
-<<<<<<< refactor/change-status-code
     ErrorMessage resendOtp(String email);
-=======
-    RedirectMessage resendOtp(String email);
     RedirectMessage resendOtpForgotPassword(String email);
-
->>>>>>> develop
 
     RedirectMessage forgotPassword(String email);
 

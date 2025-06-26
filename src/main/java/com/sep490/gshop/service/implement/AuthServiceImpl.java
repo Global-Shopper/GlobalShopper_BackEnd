@@ -249,13 +249,25 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public RedirectMessage forgotPassword(String email) {
         try {
-            log.debug("forgotPassword() AuthServiceImpl Start | email: {}", email);
+            log.debug("resendOtp() AuthServiceImpl Start | email: {}", email);
+            Integer failCount = failCountCache.get(CacheType.OTP_ATTEMPT, email);
+            if (failCount != null && failCount >= MAX_RETRY) {
+                String timeRemain = DateTimeUtil.secondToTime(failCountCache.getTimeRemaining(CacheType.OTP_ATTEMPT, email));
+                throw new AppException(429,"Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau " + timeRemain + ".");
+            }
 
             var resp = userBusiness.getUserByEmail(email);
             if (resp == null) {
                 throw new AppException(400, "Email chưa được đăng ký hoặc không tồn tại");
             }
-
+            String cachedOtp = typedCacheService.get(CacheType.OTP_RESET_PASSWORD, email);
+            if (cachedOtp != null) {
+                log.debug("resendOtpForgotPassword() AuthServiceImpl End | Mã OTP đã được gửi trước đó");
+                throw AppException.builder()
+                        .message("Hệ thống đã gửi mã OTP đến email của bạn. Vui lòng xác thực email trước khi đăng nhập!")
+                        .code(HttpStatus.UNAUTHORIZED.value())
+                        .build();
+            }
             sendOTP(resp.getEmail(), resp.getName(), CacheType.OTP_RESET_PASSWORD);
             return RedirectMessage.builder()
                     .message("Mã OTP đã được gửi. Vui lòng kiểm tra email")
