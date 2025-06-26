@@ -15,7 +15,7 @@ public interface AuthService {
     ErrorMessage forgotPassword(String email);
 
     ResetPasswordValidResponse verifyOtpResetPassword(String otp, String email);
-
+    AuthUserResponse verifyOtp(String email, String otp);
     AuthUserResponse resetPassword(String newPassword, String token);
 
 }

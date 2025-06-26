@@ -295,6 +295,50 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    @Override
+    public AuthUserResponse verifyOtp(String email, String otp) {
+        try {
+            log.debug("verifyOtp() AuthServiceImpl Start | email: {}", email);
+            Integer failCount = failCountCache.get(CacheType.OTP_ATTEMPT, email);
+            if (failCount != null && failCount >= MAX_RETRY) {
+                String timeRemain = DateTimeUtil.secondToTime(failCountCache.getTimeRemaining(CacheType.OTP_ATTEMPT, email));
+                throw new AppException(429,"Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau " + timeRemain + ".");
+            }
+            User user = userBusiness.getUserByEmail(email);
+            if (user == null) {
+                throw new AppException(404, "Email không tồn tại");
+            }
+            if (!user.isEmailVerified()) {
+                String cachedOtp = typedCacheService.get(CacheType.OTP,email);
+                if (cachedOtp == null) {
+                    throw new AppException(400, "Mã OTP không đúng hoặc hết hạn");
+                }
+                if (!cachedOtp.equals(otp)) {
+                    failCountCache.put(CacheType.OTP_ATTEMPT, email, (failCount == null ? 1 : failCount + 1));
+                    throw new AppException(400, "Mã OTP không đúng hoặc hết hạn");
+                } else {
+                    user.setEmailVerified(true);
+                    typedCacheService.remove(CacheType.OTP, email);
+                    failCountCache.remove(CacheType.OTP_ATTEMPT, email);
+                    user = userBusiness.update(user);
+                    UserDTO userDTO = modelMapper.map(user, UserDTO.class);
+                    String jwt = jwtUtils.generateJwtToken(user);
+                    log.debug("verifyOtp() AuthServiceImpl End | Email verified successfully");
+                    return new AuthUserResponse(jwt, userDTO);
+                }
+            } else {
+                log.debug("verifyOtp() AuthServiceImpl End | Email already verified");
+                throw ErrorException.builder()
+                        .message("Email đã được xác thực trước đó! Bạn có thể đăng nhập ngay bây giờ.")
+                        .httpCode(400)
+                        .errorCode(ErrorCode.ALREADY_VERIFIED)
+                        .build();
+            }
+        } catch (Exception e) {
+            log.error("verifyOtp() AuthServiceImpl Exception | email: {}, message: {}", email, e.getMessage());
+            throw e;
+        }
+    }
 
     @Override
     public AuthUserResponse resetPassword(String newPassword, String token) {

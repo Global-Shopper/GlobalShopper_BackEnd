@@ -48,6 +48,14 @@ public class AuthController {
         return response;
     }
 
+    @PostMapping("/verify-otp")
+    public AuthUserResponse verifyOtp(String email, String otp) {
+        log.info("verifyOtp() AuthController start | email: {}", email);
+        AuthUserResponse response = authService.verifyOtp(email, otp);
+        log.info("verifyOtp() AuthController end | response: {}", response);
+        return response;
+    }
+
     @GetMapping("/resend-otp")
     public ErrorMessage resendOtp(String email) {
         log.info("resendOtp() AuthController start | email: {}", email);
@@ -63,7 +71,7 @@ public class AuthController {
         return response;
     }
 
-    @GetMapping("/forgot-password/verify")
+    @PostMapping("/forgot-password/verify")
     public ResetPasswordValidResponse verifyForgotPasswordOtp(@RequestParam String otp, @RequestParam String email) {
         log.info("verifyForgotPasswordOtp() start | email: {}", email);
         ResetPasswordValidResponse response = authService.verifyOtpResetPassword(otp, email);
