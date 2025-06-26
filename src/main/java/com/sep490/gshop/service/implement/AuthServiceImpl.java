@@ -212,6 +212,38 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    public RedirectMessage resendOtpForgotPassword(String email){
+        try {
+            log.debug("resendOtpForgotPassword() AuthServiceImpl Start | email: {}", email);
+            Integer failCount = failCountCache.get(CacheType.OTP_ATTEMPT, email);
+            if (failCount != null && failCount >= MAX_RETRY) {
+                throw new AppException(429,"Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau 10 phút.");
+            }
+            User user = userBusiness.getUserByEmail(email);
+            if (user == null) {
+                throw new AppException(404, "Email không tồn tại");
+            }
+                String cachedOtp = typedCacheService.get(CacheType.OTP_RESET_PASSWORD, email);
+                if (cachedOtp != null) {
+                    log.debug("resendOtpForgotPassword() AuthServiceImpl End | Mã OTP đã được gửi trước đó");
+                    throw AppException.builder()
+                            .message("Hệ thống đã gửi mã OTP đến email của bạn. Vui lòng xác thực email trước khi đăng nhập!")
+                            .code(HttpStatus.UNAUTHORIZED.value())
+                            .build();
+                }
+                sendOTP(user.getEmail(), user.getName(), CacheType.OTP_RESET_PASSWORD);
+                log.debug("resendOtpForgotPassword() AuthServiceImpl End | Mã OTP đã được gửi lại");
+                return RedirectMessage.builder()
+                        .message("Mã OTP đã được gửi lại. Vui lòng kiểm tra email")
+                        .errorCode(ErrorCode.EMAIL_UNCONFIRMED)
+                        .build();
+        } catch (Exception e) {
+            log.error("resendOtpForgotPassword() AuthServiceImpl Exception | email: {}, message: {}", email, e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
     public RedirectMessage forgotPassword(String email) {
         try {
             log.debug("forgotPassword() AuthServiceImpl Start | email: {}", email);
