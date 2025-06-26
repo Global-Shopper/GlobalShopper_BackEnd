@@ -19,7 +19,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AppException.class)
     public ResponseEntity<ErrorMessage> handleAppException(AppException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        return ResponseEntity.status(ex.getCode())
                 .body(new ErrorMessage(ex.getCode(), new Date(), ex.getMessage()));
     }
 
