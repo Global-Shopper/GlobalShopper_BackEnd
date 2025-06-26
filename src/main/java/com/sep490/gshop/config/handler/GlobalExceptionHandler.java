@@ -23,12 +23,6 @@ public class GlobalExceptionHandler {
                 .body(new ErrorMessage(ex.getCode(), new Date(), ex.getMessage()));
     }
 
-    @ExceptionHandler(RedirectException.class)
-    public ResponseEntity<RedirectMessage> handleRedirectException(RedirectException ex) {
-        return ResponseEntity.status(ex.getHttpCode())
-                .body(new RedirectMessage(ex.getMessage(), ex.getErrorCode()));
-    }
-
     @ExceptionHandler(ErrorException.class)
     public ResponseEntity<ErrorResponse> handleErrorException(ErrorException ex) {
         return ResponseEntity.status(ex.getHttpCode())

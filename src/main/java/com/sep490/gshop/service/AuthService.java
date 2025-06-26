@@ -1,18 +1,17 @@
 package com.sep490.gshop.service;
 
-import com.sep490.gshop.config.handler.ErrorMessage;
-import com.sep490.gshop.config.handler.RedirectMessage;
 import com.sep490.gshop.payload.request.RegisterRequest;
 import com.sep490.gshop.payload.response.AuthUserResponse;
+import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.ResetPasswordValidResponse;
 
 public interface AuthService {
     AuthUserResponse login(String email, String password);
 
-    RedirectMessage register(RegisterRequest registerRequest);
+    MessageResponse register(RegisterRequest registerRequest);
 
-    ErrorMessage resendOtp(String email);
-    ErrorMessage forgotPassword(String email);
+    MessageResponse resendOtp(String email);
+    MessageResponse forgotPassword(String email);
 
     ResetPasswordValidResponse verifyOtpResetPassword(String otp, String email);
     AuthUserResponse verifyOtp(String email, String otp);
