@@ -2,6 +2,7 @@ package com.sep490.gshop.config.security.jwt;
 
 import com.sep490.gshop.config.security.services.UserDetailsImpl;
 import com.sep490.gshop.entity.User;
+import com.sep490.gshop.utils.DateTimeUtil;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -23,6 +24,7 @@ public class JwtUtils {
   @Value("${global-shopper.jwt.expiration-ms}")
   private int jwtExpirationMs;
 
+  private int jwtTempExpirationInMs = 300000;
   public String generateJwtToken(Authentication authentication) {
 
     UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
@@ -52,7 +54,18 @@ public class JwtUtils {
             .signWith(key(), SignatureAlgorithm.HS256)
             .compact();
   }
-  
+
+  public String generateTempToken(String email) {
+
+    return Jwts.builder()
+            .setSubject(email)
+            .setIssuedAt(new Date())
+            .setExpiration(new Date((new Date()).getTime() + jwtTempExpirationInMs))
+            .signWith(key(), SignatureAlgorithm.HS256)
+            .compact();
+  }
+
+
   private Key key() {
     return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
   }
@@ -61,7 +74,20 @@ public class JwtUtils {
     return Jwts.parserBuilder().setSigningKey(key()).build()
                .parseClaimsJws(token).getBody().getSubject();
   }
+  public String getEmailFromToken(String token) {
+    try {
+      Claims claims = Jwts.parserBuilder()
+              .setSigningKey(key())
+              .build()
+              .parseClaimsJws(token)
+              .getBody();
 
+      return claims.getSubject();
+    } catch (Exception e) {
+      e.printStackTrace();
+      return null;
+    }
+  }
   public boolean validateJwtToken(String authToken) {
     try {
       Jwts.parserBuilder().setSigningKey(key()).build().parse(authToken);

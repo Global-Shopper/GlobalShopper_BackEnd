@@ -3,10 +3,11 @@ package com.sep490.gshop.controller;
 import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.config.handler.ErrorMessage;
 import com.sep490.gshop.config.handler.RedirectMessage;
-import com.sep490.gshop.payload.request.ForgotPasswordRequest;
 import com.sep490.gshop.payload.request.LoginRequest;
 import com.sep490.gshop.payload.request.RegisterRequest;
+import com.sep490.gshop.payload.request.ResetPasswordRequest;
 import com.sep490.gshop.payload.response.AuthUserResponse;
+import com.sep490.gshop.payload.response.ResetPasswordValidResponse;
 import com.sep490.gshop.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
@@ -47,14 +48,6 @@ public class AuthController {
         return response;
     }
 
-    @PostMapping("/verify-otp")
-    public AuthUserResponse verifyOtp(String email, String otp) {
-        log.info("verifyOtp() AuthController start | email: {}", email);
-        AuthUserResponse response = authService.verifyOtp(email, otp);
-        log.info("verifyOtp() AuthController end | response: {}", response);
-        return response;
-    }
-
     @GetMapping("/resend-otp")
     public ErrorMessage resendOtp(String email) {
         log.info("resendOtp() AuthController start | email: {}", email);
@@ -62,19 +55,28 @@ public class AuthController {
         log.info("resendOtp() AuthController end | response: {}", response);
         return response;
     }
-
     @GetMapping("/forgot-password")
-    public RedirectMessage forgotPassword(@RequestParam String email) {
-        log.info("forgotPassword() AuthController start | email: {}", email);
-        RedirectMessage response = authService.forgotPassword(email);
-        log.info("forgotPassword() AuthController end | email: {}", response);
+    public ErrorMessage requestForgotPassword(@RequestParam String email) {
+        log.info("requestForgotPassword() start | email: {}", email);
+        ErrorMessage response = authService.forgotPassword(email);
+        log.info("requestForgotPassword() end | response: {}", response);
         return response;
     }
+
+    @GetMapping("/forgot-password/verify")
+    public ResetPasswordValidResponse verifyForgotPasswordOtp(@RequestParam String otp, @RequestParam String email) {
+        log.info("verifyForgotPasswordOtp() start | email: {}", email);
+        ResetPasswordValidResponse response = authService.verifyOtpResetPassword(otp, email);
+        log.info("verifyForgotPasswordOtp() end | response: {}", response);
+        return response;
+    }
+
     @PutMapping("/forgot-password/reset")
-    public AuthUserResponse forgotPasswordReset(@RequestBody ForgotPasswordRequest forgotPasswordRequest,@RequestParam String otp) {
-        log.info("forgotPasswordReset() AuthController start | email: {}", forgotPasswordRequest.getEmail());
-        var response = authService.resetPassword(forgotPasswordRequest, otp);
-        log.info("forgotPasswordReset() AuthController end | response: {}", response);
+    public AuthUserResponse resetForgotPassword(@RequestBody ResetPasswordRequest resetPasswordRequest) {
+        log.info("resetForgotPassword() start");
+        AuthUserResponse response = authService.resetPassword(resetPasswordRequest.getPassword(), resetPasswordRequest.getToken());
+        log.info("resetForgotPassword() end | response: {}", response);
         return response;
     }
+
 }
