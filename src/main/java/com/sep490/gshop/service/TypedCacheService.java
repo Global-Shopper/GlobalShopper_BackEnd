@@ -7,4 +7,5 @@ public interface TypedCacheService<K, V> {
     V get(CacheType type, K key);
     void remove(CacheType type, K key);
     boolean contains(CacheType type, K key);
+    long getTimeRemaining(CacheType type, K key);
 }

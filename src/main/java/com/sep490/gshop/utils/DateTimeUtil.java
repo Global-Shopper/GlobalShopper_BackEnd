@@ -13,4 +13,12 @@ public class DateTimeUtil {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
         return dateTime.format(formatter);
     }
+
+    public static long getCurrentEpochMilli() {
+        return Instant.now().toEpochMilli();
+    }
+    public static long getCurrentEpochSecond() {
+        return Instant.now().getEpochSecond();
+    }
+
 }
