@@ -1,5 +1,6 @@
 package com.sep490.gshop.config.handler;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.sep490.gshop.common.constants.ErrorCode;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
