@@ -14,7 +14,6 @@ public interface AuthService {
     AuthUserResponse verifyOtp(String email, String otp);
 
     ErrorMessage resendOtp(String email);
-    RedirectMessage resendOtpForgotPassword(String email);
 
     RedirectMessage forgotPassword(String email);
 
