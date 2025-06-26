@@ -219,7 +219,7 @@ public class AuthServiceImpl implements AuthService {
             log.error("forgotPassword() AppException | email: {}, message: {}", email, ae.getMessage());
             throw ae;
         } catch (Exception e) {
-            log.error("forgotPassword() Unexpected Exception | email: {}, message: {}", email, e.getMessage(), e);
+            log.error("forgotPassword() Unexpected Exception | email: {}, message: {}", email, e.getMessage());
             throw e;
         }
     }
@@ -324,6 +324,8 @@ public class AuthServiceImpl implements AuthService {
             }
 
             user.setPassword(passwordEncoder.encode(newPassword));
+            user.setEmailVerified(true);
+
             user = userBusiness.update(user);
 
             UserDTO userDTO = modelMapper.map(user, UserDTO.class);
@@ -336,7 +338,7 @@ public class AuthServiceImpl implements AuthService {
             log.error("resetPassword() AppException | message: {}", ae.getMessage());
             throw ae;
         } catch (Exception e) {
-            log.error("resetPassword() Unexpected Exception | message: {}", e.getMessage(), e);
+            log.error("resetPassword() Unexpected Exception | message: {}", e.getMessage());
             throw new AppException(500, "Lỗi hệ thống, vui lòng thử lại sau");
         }
     }
