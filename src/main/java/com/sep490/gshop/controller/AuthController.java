@@ -1,6 +1,7 @@
 package com.sep490.gshop.controller;
 
 import com.sep490.gshop.common.constants.URLConstant;
+import com.sep490.gshop.config.handler.ErrorMessage;
 import com.sep490.gshop.config.handler.RedirectMessage;
 import com.sep490.gshop.payload.request.ForgotPasswordRequest;
 import com.sep490.gshop.payload.request.LoginRequest;
@@ -55,9 +56,9 @@ public class AuthController {
     }
 
     @GetMapping("/resend-otp")
-    public RedirectMessage resendOtp(String email) {
+    public ErrorMessage resendOtp(String email) {
         log.info("resendOtp() AuthController start | email: {}", email);
-        RedirectMessage response = authService.resendOtp(email);
+        ErrorMessage response = authService.resendOtp(email);
         log.info("resendOtp() AuthController end | response: {}", response);
         return response;
     }

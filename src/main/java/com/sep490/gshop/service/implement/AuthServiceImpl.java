@@ -4,10 +4,7 @@ import com.sep490.gshop.business.UserBusiness;
 import com.sep490.gshop.common.constants.ErrorCode;
 import com.sep490.gshop.common.enums.CacheType;
 import com.sep490.gshop.common.enums.UserRole;
-import com.sep490.gshop.config.handler.AppException;
-import com.sep490.gshop.config.handler.ErrorException;
-import com.sep490.gshop.config.handler.RedirectException;
-import com.sep490.gshop.config.handler.RedirectMessage;
+import com.sep490.gshop.config.handler.*;
 import com.sep490.gshop.config.security.jwt.JwtUtils;
 import com.sep490.gshop.entity.Customer;
 import com.sep490.gshop.entity.User;
@@ -176,7 +173,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public RedirectMessage resendOtp(String email) {
+    public ErrorMessage resendOtp(String email) {
         try {
             log.debug("resendOtp() AuthServiceImpl Start | email: {}", email);
             Integer failCount = failCountCache.get(CacheType.OTP_ATTEMPT, email);
@@ -205,10 +202,8 @@ public class AuthServiceImpl implements AuthService {
                 }
                 sendOTP(user.getEmail(), user.getName(), CacheType.OTP);
                 log.debug("resendOtp() AuthServiceImpl End | Mã OTP đã được gửi lại");
-                return RedirectMessage.builder()
-                        .message("Mã OTP đã được gửi lại. Vui lòng kiểm tra email")
-                        .errorCode(ErrorCode.EMAIL_UNCONFIRMED)
-                        .build();
+                return new  ErrorMessage(HttpStatus.OK.value(), new java.util.Date(), "Mã OTP đã được gửi lại. Vui lòng kiểm tra email");
+
             }
         } catch (Exception e) {
             log.error("resendOtp() AuthServiceImpl Exception | email: {}, message: {}", email, e.getMessage());
