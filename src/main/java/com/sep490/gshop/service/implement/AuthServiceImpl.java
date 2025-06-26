@@ -229,9 +229,9 @@ public class AuthServiceImpl implements AuthService {
                 throw new AppException(400, "Email chưa được đăng ký hoặc không tồn tại");
             }
             String cachedOtp = typedCacheService.get(CacheType.OTP_RESET_PASSWORD, email);
-            var timeRemain = typedCacheService.getTimeRemaining(CacheType.OTP, email);
-            if (cachedOtp != null && timeRemain > 60*(CacheType.OTP.getTtlMinutes() - 1)) {
-                var timeRemainStr = DateTimeUtil.secondToTime(timeRemain - 60*(CacheType.OTP.getTtlMinutes() - 1));
+            var timeRemain = typedCacheService.getTimeRemaining(CacheType.OTP_RESET_PASSWORD, email);
+            if (cachedOtp != null && timeRemain > 60*(CacheType.OTP_RESET_PASSWORD.getTtlMinutes() - 1)) {
+                var timeRemainStr = DateTimeUtil.secondToTime(timeRemain - 60*(CacheType.OTP_RESET_PASSWORD.getTtlMinutes() - 1));
                 log.debug("resendOtpForgotPassword() AuthServiceImpl End | Mã OTP đã được gửi trước đó");
                 throw AppException.builder()
                         .message("Vui lòng đợi " + timeRemainStr + " để gửi lại mã OTP mới")
