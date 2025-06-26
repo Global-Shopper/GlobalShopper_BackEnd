@@ -18,6 +18,7 @@ import com.sep490.gshop.payload.response.AuthUserResponse;
 import com.sep490.gshop.service.AuthService;
 import com.sep490.gshop.service.EmailService;
 import com.sep490.gshop.service.TypedCacheService;
+import com.sep490.gshop.utils.DateTimeUtil;
 import com.sep490.gshop.utils.RandomUtil;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
@@ -137,7 +138,8 @@ public class AuthServiceImpl implements AuthService {
             log.debug("verifyOtp() AuthServiceImpl Start | email: {}", email);
             Integer failCount = failCountCache.get(CacheType.OTP_ATTEMPT, email);
             if (failCount != null && failCount >= MAX_RETRY) {
-                throw new AppException(429,"Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau 10 phút.");
+                String timeRemain = DateTimeUtil.secondToTime(failCountCache.getTimeRemaining(CacheType.OTP_ATTEMPT, email));
+                throw new AppException(429,"Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau " + timeRemain + ".");
             }
             User user = userBusiness.getUserByEmail(email);
             if (user == null) {
@@ -181,7 +183,8 @@ public class AuthServiceImpl implements AuthService {
             log.debug("resendOtp() AuthServiceImpl Start | email: {}", email);
             Integer failCount = failCountCache.get(CacheType.OTP_ATTEMPT, email);
             if (failCount != null && failCount >= MAX_RETRY) {
-                throw new AppException(429,"Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau 10 phút.");
+                String timeRemain = DateTimeUtil.secondToTime(failCountCache.getTimeRemaining(CacheType.OTP_ATTEMPT, email));
+                throw new AppException(429,"Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau " + timeRemain + ".");
             }
             User user = userBusiness.getUserByEmail(email);
             if (user == null) {
@@ -196,12 +199,12 @@ public class AuthServiceImpl implements AuthService {
                         .build();
             } else {
                 String cachedOtp = typedCacheService.get(CacheType.OTP, email);
-            if (cachedOtp != null) {
-                    log.debug("resendOtp() AuthServiceImpl End | Mã OTP đã được gửi trước đó");
-                throw AppException.builder()
-                        .message("Hệ thống đã gửi mã OTP đến email của bạn. Vui lòng xác thực email trước khi đăng nhập!")
-                        .code(HttpStatus.UNAUTHORIZED.value())
-                        .build();
+                long timeRemain = typedCacheService.getTimeRemaining(CacheType.OTP, email);
+                if (cachedOtp != null && timeRemain > 60*(CacheType.OTP.getTtlMinutes() - 1)) {
+                    String timeRemainStr = DateTimeUtil.secondToTime(timeRemain - 60*(CacheType.OTP.getTtlMinutes() - 1));
+                    log.debug("resendOtp() AuthServiceImpl End | Mã OTP đã được gửi trước đó và còn hiệu lực");
+                    throw new AppException(400, "Vui lòng đợi " + timeRemainStr + " để gửi lại mã OTP mới");
+
                 }
                 sendOTP(user.getEmail(), user.getName(), CacheType.OTP);
                 log.debug("resendOtp() AuthServiceImpl End | Mã OTP đã được gửi lại");
