@@ -220,7 +220,7 @@ public class AuthServiceImpl implements AuthService {
             throw ae;
         } catch (Exception e) {
             log.error("forgotPassword() Unexpected Exception | email: {}, message: {}", email, e.getMessage(), e);
-            throw new AppException(500, "Lỗi hệ thống, vui lòng thử lại sau");
+            throw e;
         }
     }
 
