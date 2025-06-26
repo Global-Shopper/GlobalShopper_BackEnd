@@ -240,7 +240,7 @@ public class AuthServiceImpl implements AuthService {
             long timeRemain = typedCacheService.getTimeRemaining(CacheType.OTP_RESET_PASSWORD, email);
             long otpTtlSeconds = TimeUnit.MINUTES.toSeconds(CacheType.OTP_RESET_PASSWORD.getTtlMinutes());
 
-            if (cachedOtp != null && timeRemain > 60 && timeRemain > otpTtlSeconds - 60) {
+            if (cachedOtp != null && timeRemain > otpTtlSeconds - 60) {
                 String timeRemainStr = DateTimeUtil.secondToTime(timeRemain - (otpTtlSeconds - 60));
                 log.debug("forgotPassword() AuthServiceImpl End | OTP đã được gửi trước đó");
                 throw new AppException(400, "Vui lòng đợi " + timeRemainStr + " để gửi lại mã OTP mới");
@@ -281,7 +281,7 @@ public class AuthServiceImpl implements AuthService {
                 failCountCache.put(CacheType.OTP_ATTEMPT, email, (failCount == null ? 1 : failCount + 1));
                 throw new AppException(400, "Mã OTP không đúng");
             }
-
+            typedCacheService.remove(CacheType.OTP_RESET_PASSWORD, email);
             failCountCache.remove(CacheType.OTP_ATTEMPT, email);
 
             String tempToken = jwtUtils.generateTempToken(email);
@@ -349,24 +349,10 @@ public class AuthServiceImpl implements AuthService {
             if (email == null || email.isEmpty()) {
                 throw new AppException(401, "Token xác thực không hợp lệ hoặc đã hết hạn");
             }
-
-            Integer failCount = failCountCache.get(CacheType.OTP_ATTEMPT, email);
-            if (failCount != null && failCount >= MAX_RETRY) {
-                throw new AppException(429, "Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau 10 phút.");
-            }
-
             User user = userBusiness.getUserByEmail(email);
             if (user == null) {
                 throw new AppException(404, "Email không tồn tại");
             }
-
-            String cachedOtp = typedCacheService.get(CacheType.OTP_RESET_PASSWORD, email);
-            if (cachedOtp == null) {
-                throw new AppException(400, "Mã OTP đã hết hạn hoặc không tồn tại");
-            }
-
-            typedCacheService.remove(CacheType.OTP_RESET_PASSWORD, email);
-            failCountCache.remove(CacheType.OTP_ATTEMPT, email);
 
             if (passwordEncoder.matches(newPassword, user.getPassword())) {
                 throw new AppException(400, "Mật khẩu mới trùng với mật khẩu cũ");
