@@ -4,14 +4,15 @@ import com.sep490.gshop.business.UserBusiness;
 import com.sep490.gshop.common.constants.ErrorCode;
 import com.sep490.gshop.common.enums.CacheType;
 import com.sep490.gshop.common.enums.UserRole;
-import com.sep490.gshop.config.handler.*;
+import com.sep490.gshop.config.handler.AppException;
+import com.sep490.gshop.config.handler.ErrorException;
 import com.sep490.gshop.config.security.jwt.JwtUtils;
 import com.sep490.gshop.entity.Customer;
 import com.sep490.gshop.entity.User;
 import com.sep490.gshop.payload.dto.UserDTO;
-import com.sep490.gshop.payload.request.ForgotPasswordRequest;
 import com.sep490.gshop.payload.request.RegisterRequest;
 import com.sep490.gshop.payload.response.AuthUserResponse;
+import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.ResetPasswordValidResponse;
 import com.sep490.gshop.service.AuthService;
 import com.sep490.gshop.service.EmailService;
@@ -21,7 +22,6 @@ import com.sep490.gshop.utils.RandomUtil;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -29,27 +29,24 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.sql.Time;
-import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 @Service
 @Log4j2
-
 public class AuthServiceImpl implements AuthService {
 
     private static final int MAX_RETRY = 5;
 
-    private UserBusiness userBusiness;
-    private PasswordEncoder passwordEncoder;
-    private EmailService emailService;
-    private AuthenticationManager authenticationManager;
-    private JwtUtils jwtUtils;
-    private ModelMapper modelMapper;
+    private final UserBusiness userBusiness;
+    private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtils jwtUtils;
+    private final ModelMapper modelMapper;
 
-    private TypedCacheService<String,String> typedCacheService;
+    private final TypedCacheService<String,String> typedCacheService;
 
-    private TypedCacheService<String,Integer> failCountCache;
+    private final TypedCacheService<String,Integer> failCountCache;
 
 
     @Autowired
@@ -106,7 +103,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public RedirectMessage register(RegisterRequest registerRequest) {
+    public MessageResponse register(RegisterRequest registerRequest) {
         try {
             log.debug("register() AuthServiceImpl Start | email: {}", registerRequest.getEmail());
             User user = userBusiness.getUserByEmail(registerRequest.getEmail());
@@ -125,63 +122,19 @@ public class AuthServiceImpl implements AuthService {
             user = userBusiness.create(user);
             sendOTP(user.getEmail(), user.getName(), CacheType.OTP);
             log.debug("register() AuthServiceImpl End |");
-            return RedirectMessage.builder()
+            return MessageResponse.builder()
                     .message("Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản")
-                    .errorCode(ErrorCode.EMAIL_UNCONFIRMED)
+                    .isSuccess(true)
                     .build();
         } catch (Exception e) {
             log.error("register() AuthServiceImpl Exception | email: {}, message: {}", registerRequest.getEmail(), e.getMessage());
             throw e;
         }
     }
-//
-//    @Override
-//    public AuthUserResponse verifyOtp(String email, String otp) {
-//        try {
-//            log.debug("verifyOtp() AuthServiceImpl Start | email: {}", email);
-//            Integer failCount = failCountCache.get(CacheType.OTP_ATTEMPT, email);
-//            if (failCount != null && failCount >= MAX_RETRY) {
-//                String timeRemain = DateTimeUtil.secondToTime(failCountCache.getTimeRemaining(CacheType.OTP_ATTEMPT, email));
-//                throw new AppException(429,"Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau " + timeRemain + ".");
-//            }
-//            User user = userBusiness.getUserByEmail(email);
-//            if (user == null) {
-//                throw new AppException(404, "Email không tồn tại");
-//            }
-//            if (!user.isEmailVerified()) {
-//                String cachedOtp = typedCacheService.get(CacheType.OTP,email);
-//                if (cachedOtp == null) {
-//                    throw new AppException(400, "Mã OTP không đúng hoặc hết hạn");
-//                }
-//                if (!cachedOtp.equals(otp)) {
-//                    failCountCache.put(CacheType.OTP_ATTEMPT, email, (failCount == null ? 1 : failCount + 1));
-//                    throw new AppException(400, "Mã OTP không đúng hoặc hết hạn");
-//                } else {
-//                    user.setEmailVerified(true);
-//                    typedCacheService.remove(CacheType.OTP, email);
-//                    failCountCache.remove(CacheType.OTP_ATTEMPT, email);
-//                    user = userBusiness.update(user);
-//                    UserDTO userDTO = modelMapper.map(user, UserDTO.class);
-//                    String jwt = jwtUtils.generateJwtToken(user);
-//                    log.debug("verifyOtp() AuthServiceImpl End | Email verified successfully");
-//                    return new AuthUserResponse(jwt, userDTO);
-//                }
-//            } else {
-//                log.debug("verifyOtp() AuthServiceImpl End | Email already verified");
-//                throw ErrorException.builder()
-//                        .message("Email đã được xác thực trước đó! Bạn có thể đăng nhập ngay bây giờ.")
-//                        .httpCode(400)
-//                        .errorCode(ErrorCode.ALREADY_VERIFIED)
-//                        .build();
-//            }
-//        } catch (Exception e) {
-//            log.error("verifyOtp() AuthServiceImpl Exception | email: {}, message: {}", email, e.getMessage());
-//            throw e;
-//        }
-//    }
+
 
     @Override
-    public ErrorMessage resendOtp(String email) {
+    public MessageResponse resendOtp(String email) {
         try {
             log.debug("resendOtp() AuthServiceImpl Start | email: {}", email);
             Integer failCount = failCountCache.get(CacheType.OTP_ATTEMPT, email);
@@ -211,8 +164,10 @@ public class AuthServiceImpl implements AuthService {
                 }
                 sendOTP(user.getEmail(), user.getName(), CacheType.OTP);
                 log.debug("resendOtp() AuthServiceImpl End | Mã OTP đã được gửi lại");
-                return new  ErrorMessage(HttpStatus.OK.value(), new java.util.Date(), "Mã OTP đã được gửi lại. Vui lòng kiểm tra email");
-
+                return MessageResponse.builder()
+                        .message("Mã OTP đã được gửi lại. Vui lòng kiểm tra email")
+                        .isSuccess(true)
+                        .build();
             }
         } catch (Exception e) {
             log.error("resendOtp() AuthServiceImpl Exception | email: {}, message: {}", email, e.getMessage());
@@ -221,7 +176,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public ErrorMessage forgotPassword(String email) {
+    public MessageResponse forgotPassword(String email) {
         try {
             log.debug("forgotPassword() AuthServiceImpl Start | email: {}", email);
 
@@ -248,7 +203,10 @@ public class AuthServiceImpl implements AuthService {
 
             sendOTP(user.getEmail(), user.getName(), CacheType.OTP_RESET_PASSWORD);
 
-            return new ErrorMessage(HttpStatus.OK.value(), new Date(), "Mã OTP đã được gửi. Vui lòng kiểm tra email");
+            return MessageResponse.builder()
+                    .message("Mã OTP đã được gửi đến email của bạn. Vui lòng kiểm tra email để đặt lại mật khẩu")
+                    .isSuccess(true)
+                    .build();
 
         } catch (AppException ae) {
             log.error("forgotPassword() AppException | email: {}, message: {}", email, ae.getMessage());
