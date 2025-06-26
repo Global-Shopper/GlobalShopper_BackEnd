@@ -190,13 +190,13 @@ public class AuthServiceImpl implements AuthService {
             if (user == null) {
                 throw new AppException(400, "Email chưa được đăng ký hoặc không tồn tại");
             }
-            if (!user.isEmailVerified()) {
-                throw ErrorException.builder()
-                        .message("Hệ thống đã gửi mã OTP đến email của bạn. Vui lòng xác thực email trước khi sử dụng dịch vụ khác!")
-                        .httpCode(401)
-                        .errorCode(ErrorCode.EMAIL_UNCONFIRMED)
-                        .build();
-            }
+//            if (!user.isEmailVerified()) {
+//                throw ErrorException.builder()
+//                        .message("Hệ thống đã gửi mã OTP đến email của bạn. Vui lòng xác thực email trước khi sử dụng dịch vụ khác!")
+//                        .httpCode(401)
+//                        .errorCode(ErrorCode.EMAIL_UNCONFIRMED)
+//                        .build();
+//            }
 
             String cachedOtp = typedCacheService.get(CacheType.OTP_RESET_PASSWORD, email);
             long timeRemain = typedCacheService.getTimeRemaining(CacheType.OTP_RESET_PASSWORD, email);
