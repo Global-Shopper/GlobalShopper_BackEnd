@@ -343,7 +343,7 @@ public class AuthServiceImpl implements AuthService {
             throw ae;
         } catch (Exception e) {
             log.error("resetPassword() Unexpected Exception | message: {}", e.getMessage());
-            throw new AppException(500, "Lỗi hệ thống, vui lòng thử lại sau");
+            throw e;
         }
     }
 
