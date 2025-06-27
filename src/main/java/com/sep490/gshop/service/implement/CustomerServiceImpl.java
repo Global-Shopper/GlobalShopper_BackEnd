@@ -74,7 +74,7 @@ public class CustomerServiceImpl implements CustomerService {
         log.debug("uploadAvatar() Start | filename: {}, customerId: {}", multipartFile.getOriginalFilename(), customerId);
         try {
             Customer customer = customerBusiness.getById(customerId)
-                    .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy khách hàng với ID: " + customerId));
+                    .orElseThrow(() ->  ErrorException.builder().errorCode(404).message("Customer not found").build());
 
             FileUploadUtil.AssertAllowedExtension(multipartFile, FileUploadUtil.IMAGE_PATTERN);
 
@@ -89,13 +89,7 @@ public class CustomerServiceImpl implements CustomerService {
             log.debug("uploadAvatar() End | avatarUrl: {}", updatedCustomer.getAvatar());
 
             return modelMapper.map(updatedCustomer, CustomerDTO.class);
-        } catch (EntityNotFoundException enfe) {
-            log.error("uploadAvatar() EntityNotFoundException | customerId: {}, message: {}", customerId, enfe.getMessage());
-            throw enfe;
-        } catch (ErrorException ee) {
-            log.error("uploadAvatar() Validation ErrorException | message: {}", ee.getMessage());
-            throw ee;
-        } catch (Exception e) {
+        }  catch (Exception e) {
             log.error("uploadAvatar() Unexpected Exception | message: {}", e.getMessage());
             throw new RuntimeException("Lỗi khi upload avatar: " + e.getMessage());
         }

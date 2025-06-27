@@ -16,7 +16,7 @@ import java.util.UUID;
 
 @RestController
 @Log4j2
-@RequestMapping(URLConstant.SHIPPINGADDRESS)
+@RequestMapping(URLConstant.SHIPPING_ADDRESS)
 public class ShippingAddressController {
     private ShippingAddressService shippingAddressService;
     @Autowired

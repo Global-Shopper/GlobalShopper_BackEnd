@@ -15,7 +15,7 @@ import java.util.UUID;
 
 @RestController
 @Log4j2
-@RequestMapping(URLConstant.REFUNDTICKET)
+@RequestMapping(URLConstant.REFUND_TICKET)
 public class RefundTicketController {
     private RefundTicketService refundTicketService;
     @Autowired

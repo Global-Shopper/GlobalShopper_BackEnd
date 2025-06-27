@@ -312,7 +312,11 @@ public class AuthServiceImpl implements AuthService {
 
             String email = jwtUtils.getEmailFromToken(token);
             if (email == null || email.isEmpty()) {
-                throw new AppException(401, "Token xác thực không hợp lệ hoặc đã hết hạn");
+                throw ErrorException.builder()
+                        .message("Token xác thực không hợp lệ hoặc đã hết hạn.")
+                        .httpCode(400)
+                        .errorCode(ErrorCode.EXPIRED_OTP)
+                        .build();
             }
             User user = userBusiness.getUserByEmail(email);
             if (user == null) {
