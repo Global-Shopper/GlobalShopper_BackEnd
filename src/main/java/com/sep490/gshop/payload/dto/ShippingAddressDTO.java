@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ShippingAddressDTO {
     private String name;
+    private String tag;
     private String phoneNumber;
     private String location;
-    private boolean isDefault;
 }

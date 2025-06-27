@@ -18,13 +18,15 @@ import java.util.UUID;
 @Log4j2
 @RequestMapping(URLConstant.SHIPPING_ADDRESS)
 public class ShippingAddressController {
-    private ShippingAddressService shippingAddressService;
+
+    private final ShippingAddressService shippingAddressService;
+
     @Autowired
     public ShippingAddressController(ShippingAddressService shippingAddressService) {
         this.shippingAddressService = shippingAddressService;
     }
 
-    @Operation(summary = "Create new shipping address")
+    @Operation(summary = "Create new shipping address for current user")
     @PostMapping
     public ResponseEntity<ShippingAddressDTO> createShippingAddress(@RequestBody ShippingAddressRequest request) {
         log.debug("createShippingAddress() Start | request: {}", request);
@@ -33,7 +35,7 @@ public class ShippingAddressController {
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
 
-    @Operation(summary = "Update shipping address")
+    @Operation(summary = "Update shipping address by ID for current user")
     @PutMapping("/{id}")
     public ResponseEntity<ShippingAddressDTO> updateShippingAddress(
             @PathVariable UUID id,
@@ -44,7 +46,7 @@ public class ShippingAddressController {
         return ResponseEntity.ok(dto);
     }
 
-    @Operation(summary = "Get shipping address by ID")
+    @Operation(summary = "Get shipping address by ID for current user")
     @GetMapping("/{id}")
     public ResponseEntity<ShippingAddressDTO> getShippingAddress(@PathVariable UUID id) {
         log.debug("getShippingAddress() Start | id: {}", id);
@@ -53,16 +55,16 @@ public class ShippingAddressController {
         return ResponseEntity.ok(dto);
     }
 
-    @Operation(summary = "Get all shipping address")
+    @Operation(summary = "Get all shipping addresses of current user")
     @GetMapping
     public ResponseEntity<List<ShippingAddressDTO>> getShippingAddresses() {
         log.debug("getShippingAddresses() Start");
-        List<ShippingAddressDTO> list = shippingAddressService.getShippingAddresses();
+        List<ShippingAddressDTO> list = shippingAddressService.getShippingAddressesByCurrentUser();
         log.debug("getShippingAddresses() End | size: {}", list.size());
         return ResponseEntity.ok(list);
     }
 
-    @Operation(summary = "Delete shipping address")
+    @Operation(summary = "Delete shipping address by ID for current user")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteShippingAddress(@PathVariable UUID id) {
         log.debug("deleteShippingAddress() Start | id: {}", id);

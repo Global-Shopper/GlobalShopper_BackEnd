@@ -10,7 +10,7 @@ public interface ShippingAddressService {
     ShippingAddressDTO createShippingAddress(ShippingAddressRequest shippingAddressRequest);
     ShippingAddressDTO updateShippingAddress(ShippingAddressRequest shippingAddressRequest, UUID shippingAddressId);
     ShippingAddressDTO getShippingAddress(UUID shippingAddressId);
+    List<ShippingAddressDTO> getShippingAddressesByCurrentUser();
     List<ShippingAddressDTO> getShippingAddresses();
     boolean deleteShippingAddress(UUID shippingAddressId);
-
 }

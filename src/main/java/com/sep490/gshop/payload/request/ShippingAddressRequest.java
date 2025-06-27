@@ -11,16 +11,18 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ShippingAddressRequest {
-    @NotBlank(message = "Name is required")
-    @Size(max = 50, message = "Name cannot longer than 50 characters")
+    @NotBlank(message = "Tên của người nhận hàng không được bỏ trống")
+    @Size(max = 50, message = "Tên không được dài quá 50 kí tự")
     private String name;
-    @NotBlank(message = "Phone number is require")
+    @NotBlank(message = "Tag không được bỏ trống")
+    private String tag;
+    @NotBlank(message = "Số điện thoại không được bỏ trống")
     @Pattern(
             regexp = "^(?:\\+84|0084|0)(?:3[2-9]|5[2689]|7[06-9]|8[1-689]|9[0-9]|2[0-9]|8[0-9]|5[6-9]|7[0-9]|9[0-46-9])\\d{7,8}$",
-            message = "Invalid phone number format. Ex: +84909123456 or 0912345678"
+            message = "định dạng số điện thoại không đúng, ví dụ: +84909123456 hoặc 0912345678"
     )
     private String phoneNumber;
-    @NotBlank(message = "Location is required")
+    @NotBlank(message = "Địa chỉ không được bỏ trống")
     private String location;
     private boolean isDefault;
 }

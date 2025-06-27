@@ -1,4 +1,5 @@
 package com.sep490.gshop.payload.dto;
 
-public class PurschaseRequestDTO {
+public class PurchaseRequestDTO {
+
 }

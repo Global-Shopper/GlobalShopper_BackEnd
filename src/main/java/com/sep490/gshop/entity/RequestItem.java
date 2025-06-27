@@ -16,8 +16,11 @@ public class RequestItem extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String productURL;
     private String productName;
+    @Column(columnDefinition = "TEXT")
     private String contactInfo;
     private String productSpecification;
+    @ElementCollection
+    private List<String> images;
     @Column(columnDefinition = "TEXT")
     private String description;
 
