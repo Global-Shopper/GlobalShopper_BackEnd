@@ -30,6 +30,8 @@ public class UserDetailsImpl implements UserDetails {
 
   private String email;
 
+  private String avatar;
+
   @JsonIgnore
   private String password;
 
@@ -37,13 +39,14 @@ public class UserDetailsImpl implements UserDetails {
 
   private Map<String, Object> attributes;
 
-  public UserDetailsImpl(UUID id, String name, String username, String email, String password, UserRole role) {
+  public UserDetailsImpl(UUID id, String name, String username, String email, String avatar, String password, UserRole role) {
     this.id = id;
     this.name = name;
     this.username = username;
     this.email = email;
     this.password = password;
     this.role = role;
+    this.avatar = avatar;
   }
 
   public static UserDetailsImpl build(User user) {
@@ -53,6 +56,7 @@ public class UserDetailsImpl implements UserDetails {
         user.getName(),
         user.getEmail(),
         user.getEmail(),
+            user.getAvatar(),
         user.getPassword(),
         user.getRole());
   }

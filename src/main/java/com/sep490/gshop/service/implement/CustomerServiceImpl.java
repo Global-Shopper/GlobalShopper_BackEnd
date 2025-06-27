@@ -3,15 +3,23 @@ package com.sep490.gshop.service.implement;
 import com.sep490.gshop.business.CustomerBusiness;
 import com.sep490.gshop.common.enums.UserRole;
 import com.sep490.gshop.config.handler.AppException;
+import com.sep490.gshop.config.handler.ErrorException;
+import com.sep490.gshop.config.handler.ErrorMessage;
 import com.sep490.gshop.entity.Customer;
+import com.sep490.gshop.entity.User;
 import com.sep490.gshop.payload.dto.CustomerDTO;
 import com.sep490.gshop.payload.request.CustomerRequest;
+import com.sep490.gshop.payload.response.CloudinaryResponse;
+import com.sep490.gshop.service.CloudinaryService;
 import com.sep490.gshop.service.CustomerService;
+import com.sep490.gshop.utils.AuthUtils;
+import com.sep490.gshop.utils.FileUploadUtil;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,11 +30,13 @@ public class CustomerServiceImpl implements CustomerService {
 
     private CustomerBusiness customerBusiness;
     private ModelMapper modelMapper;
-
+    private CloudinaryService cloudinaryService;
     @Autowired
-    public CustomerServiceImpl(CustomerBusiness customerBusiness, ModelMapper modelMapper) {
+    public CustomerServiceImpl(CustomerBusiness customerBusiness, ModelMapper modelMapper, CloudinaryService cloudinaryService) {
         this.customerBusiness = customerBusiness;
         this.modelMapper = modelMapper;
+
+        this.cloudinaryService = cloudinaryService;
     }
 
     @Override
@@ -57,6 +67,37 @@ public class CustomerServiceImpl implements CustomerService {
         } catch (Exception e) {
             log.error("createCustomer() CustomerServiceImpl Error | message: {}", e.getMessage(), e);
             throw e;
+        }
+    }
+    //Sau khi co token se dung current user de get Id, khong get id tay nhu vay
+    public CustomerDTO uploadAvatar(MultipartFile multipartFile, UUID customerId) {
+        log.debug("uploadAvatar() Start | filename: {}, customerId: {}", multipartFile.getOriginalFilename(), customerId);
+        try {
+            Customer customer = customerBusiness.getById(customerId)
+                    .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy khách hàng với ID: " + customerId));
+
+            FileUploadUtil.AssertAllowedExtension(multipartFile, FileUploadUtil.IMAGE_PATTERN);
+
+            String fileName = FileUploadUtil.formatFileName(multipartFile.getOriginalFilename());
+
+            CloudinaryResponse cloudinaryResponse = cloudinaryService.uploadImage(multipartFile, fileName);
+
+            customer.setAvatar(cloudinaryResponse.getResponseURL());
+
+            Customer updatedCustomer = customerBusiness.update(customer);
+
+            log.debug("uploadAvatar() End | avatarUrl: {}", updatedCustomer.getAvatar());
+
+            return modelMapper.map(updatedCustomer, CustomerDTO.class);
+        } catch (EntityNotFoundException enfe) {
+            log.error("uploadAvatar() EntityNotFoundException | customerId: {}, message: {}", customerId, enfe.getMessage());
+            throw enfe;
+        } catch (ErrorException ee) {
+            log.error("uploadAvatar() Validation ErrorException | message: {}", ee.getMessage());
+            throw ee;
+        } catch (Exception e) {
+            log.error("uploadAvatar() Unexpected Exception | message: {}", e.getMessage());
+            throw new RuntimeException("Lỗi khi upload avatar: " + e.getMessage());
         }
     }
 

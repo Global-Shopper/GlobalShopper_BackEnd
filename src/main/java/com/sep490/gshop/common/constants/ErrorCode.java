@@ -5,4 +5,5 @@ public class ErrorCode {
     }
     public static final int EMAIL_UNCONFIRMED = 1001;
     public static final int ALREADY_VERIFIED = 1002;
+    public static final int EXCEED_FILE_SIZE = 2001;
 }
