@@ -65,7 +65,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                                 .productURL(item.getLink())
                                 .quantity(item.getQuantity())
                                 .description(item.getNote())
-                                .variants(StringFormatUtil.listToString(item.getVariants()))
+                                .variants(item.getVariants())
                                 .build())
                         .toList();
                 purchaseRequest.setRequestItems(requestItems);

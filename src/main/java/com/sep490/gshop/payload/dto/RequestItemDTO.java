@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -15,7 +17,7 @@ public class RequestItemDTO {
     private String productURL;
     private String productName;
     private String contactInfo;
-    private String variants;
+    private List<String> variants;
     private String description;
     private int quantity;
 }

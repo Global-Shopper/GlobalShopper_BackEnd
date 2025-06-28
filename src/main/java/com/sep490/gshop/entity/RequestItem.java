@@ -1,5 +1,6 @@
 package com.sep490.gshop.entity;
 
+import com.sep490.gshop.entity.converter.StringListConverter;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,7 +23,8 @@ public class RequestItem extends BaseEntity {
     private String contactInfo;
     @ElementCollection
     private List<String> images;
-    private String variants;
+    @Convert(converter = StringListConverter.class)
+    private List<String> variants;
     @Column(columnDefinition = "TEXT")
     private String description;
     private int quantity;
