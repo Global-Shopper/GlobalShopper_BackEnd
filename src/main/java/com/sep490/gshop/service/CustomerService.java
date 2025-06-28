@@ -19,5 +19,5 @@ public interface CustomerService {
     CustomerDTO updateCustomer(String id, CustomerRequest customerRequest);
 
     boolean deleteCustomer(String id);
-    CustomerDTO uploadAvatar(MultipartFile multipartFile, UUID id);
+    CustomerDTO uploadAvatar(MultipartFile multipartFile);
 }

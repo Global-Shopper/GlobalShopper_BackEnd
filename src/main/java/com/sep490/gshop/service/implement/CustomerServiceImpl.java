@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -69,26 +70,23 @@ public class CustomerServiceImpl implements CustomerService {
             throw e;
         }
     }
-    //Sau khi co token se dung current user de get Id, khong get id tay nhu vay
-    public CustomerDTO uploadAvatar(MultipartFile multipartFile, UUID customerId) {
-        log.debug("uploadAvatar() Start | filename: {}, customerId: {}", multipartFile.getOriginalFilename(), customerId);
+    public CustomerDTO uploadAvatar(MultipartFile multipartFile) {
+        log.debug("uploadAvatar() Start | filename: {}", multipartFile.getOriginalFilename());
         try {
-            Customer customer = customerBusiness.getById(customerId)
-                    .orElseThrow(() ->  ErrorException.builder().errorCode(404).message("Customer not found").build());
-
+            UUID userId = AuthUtils.getCurrentUserId();
+            var customerFound = customerBusiness.getById(userId).orElseThrow(EntityNotFoundException::new);
             FileUploadUtil.AssertAllowedExtension(multipartFile, FileUploadUtil.IMAGE_PATTERN);
 
             String fileName = FileUploadUtil.formatFileName(multipartFile.getOriginalFilename());
 
             CloudinaryResponse cloudinaryResponse = cloudinaryService.uploadImage(multipartFile, fileName);
 
-            customer.setAvatar(cloudinaryResponse.getResponseURL());
+            customerFound.setAvatar(cloudinaryResponse.getResponseURL());
 
-            Customer updatedCustomer = customerBusiness.update(customer);
+            var updatedUser = modelMapper.map(customerBusiness.update(customerFound), CustomerDTO.class);
+            log.debug("uploadAvatar() End | avatarUrl: {}", updatedUser.getAvatar());
 
-            log.debug("uploadAvatar() End | avatarUrl: {}", updatedCustomer.getAvatar());
-
-            return modelMapper.map(updatedCustomer, CustomerDTO.class);
+            return updatedUser;
         }  catch (Exception e) {
             log.error("uploadAvatar() Unexpected Exception | message: {}", e.getMessage());
             throw new RuntimeException("Lỗi khi upload avatar: " + e.getMessage());

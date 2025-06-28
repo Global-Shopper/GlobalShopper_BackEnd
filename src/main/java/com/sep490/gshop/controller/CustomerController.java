@@ -46,10 +46,10 @@ public class CustomerController {
     //Co token se lay user truc tiep khong nhap id, chi de test
     @Operation(summary = "Upload avatar cho khách hàng hiện tại")
     @PostMapping(value = "/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<CustomerDTO> uploadAvatar(@RequestPart("file") MultipartFile file, @RequestParam UUID customerId) {
+    public ResponseEntity<CustomerDTO> uploadAvatar(@RequestPart("file") MultipartFile file) {
         log.debug("uploadAvatar() Controller Start | filename: {}", file.getOriginalFilename());
 
-        CustomerDTO updatedCustomer = customerService.uploadAvatar(file, customerId);
+        CustomerDTO updatedCustomer = customerService.uploadAvatar(file);
 
         log.debug("uploadAvatar() Controller End | avatarUrl: {}", updatedCustomer.getAvatar());
 
