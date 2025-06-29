@@ -149,7 +149,7 @@ public class CustomerServiceImpl implements CustomerService {
             log.debug("updateCustomer() CustomerServiceImpl End | Updated Customer: {}", updatedCustomer);
             return updatedCustomer;
         } catch (Exception e) {
-            log.error("updateCustomer() CustomerServiceImpl Error | message: {}", e.getMessage(), e);
+            log.error("updateCustomer() CustomerServiceImpl Error | message: {}", e.getMessage());
             throw e;
         }
     }
@@ -167,7 +167,7 @@ public class CustomerServiceImpl implements CustomerService {
             }
             return isDeleted;
         } catch (Exception e) {
-            log.error("deleteCustomer() CustomerServiceImpl Error | id: {}, message: {}", id, e.getMessage(), e);
+            log.error("deleteCustomer() CustomerServiceImpl Error | id: {}, message: {}", id, e.getMessage());
             throw e;
         }
     }
