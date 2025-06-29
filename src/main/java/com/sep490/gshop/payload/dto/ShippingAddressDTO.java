@@ -12,4 +12,5 @@ public class ShippingAddressDTO {
     private String tag;
     private String phoneNumber;
     private String location;
+    private boolean isDefault;
 }
