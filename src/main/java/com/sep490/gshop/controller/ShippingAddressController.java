@@ -17,6 +17,7 @@ import java.util.UUID;
 @RestController
 @Log4j2
 @RequestMapping(URLConstant.SHIPPING_ADDRESS)
+@CrossOrigin("*")
 public class ShippingAddressController {
 
     private final ShippingAddressService shippingAddressService;
