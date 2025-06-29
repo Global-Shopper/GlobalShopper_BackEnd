@@ -3,6 +3,7 @@ package com.sep490.gshop.controller;
 import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.payload.dto.CustomerDTO;
 import com.sep490.gshop.payload.request.CustomerRequest;
+import com.sep490.gshop.payload.request.CustomerUpdateRequest;
 import com.sep490.gshop.service.CustomerService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -14,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping(URLConstant.CUSTOMER)
@@ -57,19 +57,18 @@ public class CustomerController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CustomerDTO> getCustomerById(@PathVariable String id) {
-        log.info("getCustomerById() CustomerController start | id: {}", id);
-        CustomerDTO result = customerService.getCustomerById(id);
+    public ResponseEntity<CustomerDTO> getCurrentCustomer() {
+        log.info("getCustomerById() CustomerController start");
+        CustomerDTO result = customerService.getCurrentCustomer();
         log.info("getCustomerById() CustomerController end | {}", result);
         return ResponseEntity.ok().body(result);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<CustomerDTO> updateCustomer(
-            @PathVariable String id,
-            @Valid @RequestBody CustomerRequest customerRequest) {
-        log.info("updateCustomer() CustomerController start | id: {}, customerRequest: {}", id, customerRequest);
-        CustomerDTO result = customerService.updateCustomer(id, customerRequest);
+            @Valid @RequestBody CustomerUpdateRequest customerRequest) {
+        log.info("updateCustomer() CustomerController start | customerRequest: {}", customerRequest);
+        CustomerDTO result = customerService.updateCustomer(customerRequest);
         log.info("updateCustomer() CustomerController end | {}", result);
         return ResponseEntity.ok().body(result);
     }

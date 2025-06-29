@@ -1,14 +1,14 @@
 package com.sep490.gshop.service.implement;
 
 import com.sep490.gshop.business.CustomerBusiness;
+import com.sep490.gshop.business.ShippingAddressBusiness;
 import com.sep490.gshop.common.enums.UserRole;
 import com.sep490.gshop.config.handler.AppException;
-import com.sep490.gshop.config.handler.ErrorException;
-import com.sep490.gshop.config.handler.ErrorMessage;
 import com.sep490.gshop.entity.Customer;
-import com.sep490.gshop.entity.User;
 import com.sep490.gshop.payload.dto.CustomerDTO;
+import com.sep490.gshop.payload.dto.ShippingAddressDTO;
 import com.sep490.gshop.payload.request.CustomerRequest;
+import com.sep490.gshop.payload.request.CustomerUpdateRequest;
 import com.sep490.gshop.payload.response.CloudinaryResponse;
 import com.sep490.gshop.service.CloudinaryService;
 import com.sep490.gshop.service.CustomerService;
@@ -20,9 +20,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -32,12 +30,13 @@ public class CustomerServiceImpl implements CustomerService {
     private CustomerBusiness customerBusiness;
     private ModelMapper modelMapper;
     private CloudinaryService cloudinaryService;
+    private ShippingAddressBusiness shippingAddressBusiness;
     @Autowired
-    public CustomerServiceImpl(CustomerBusiness customerBusiness, ModelMapper modelMapper, CloudinaryService cloudinaryService) {
+    public CustomerServiceImpl(CustomerBusiness customerBusiness, ModelMapper modelMapper, CloudinaryService cloudinaryService, ShippingAddressBusiness shippingAddressBusiness) {
         this.customerBusiness = customerBusiness;
         this.modelMapper = modelMapper;
-
         this.cloudinaryService = cloudinaryService;
+        this.shippingAddressBusiness = shippingAddressBusiness;
     }
 
     @Override
@@ -106,42 +105,51 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public CustomerDTO getCustomerById(String id) {
+    public CustomerDTO getCurrentCustomer() {
         try {
-            log.debug("getCustomerById() CustomerServiceImpl Start | id: {}", id);
-            UUID customerId = UUID.fromString(id);
-            Customer customer = customerBusiness.getById(customerId)
+            log.debug("getCustomerById() CustomerServiceImpl Start |");
+            UUID id = AuthUtils.getCurrentUserId();
+            Customer customer = customerBusiness.getById(id)
                     .orElseThrow(() -> new AppException(404, "Không tìm thấy khách hàng với ID: " + id));
+            if(customer.getRole() != UserRole.CUSTOMER) {
+                throw AppException.builder().code(400).message("Admin xem cái gì ở đây !!").build();
+            }
+            var shippingList = shippingAddressBusiness.findShippingAddressByUserId(customer.getId());
+
             CustomerDTO customerDTO = modelMapper.map(customer, CustomerDTO.class);
+            List<ShippingAddressDTO> shippingDTOList = shippingList.stream()
+                    .map(sa -> modelMapper.map(sa, ShippingAddressDTO.class))
+                    .toList();
+            customerDTO.setAddress(shippingDTOList);
             log.debug("getCustomerById() CustomerServiceImpl End | Customer found: {}", customerDTO);
             return customerDTO;
         } catch (Exception e) {
-            log.debug("getCustomerById() CustomerServiceImpl Error | id: {}, message: {}", id, e.getMessage());
+            log.debug("getCustomerById() CustomerServiceImpl Error | message: {}", e.getMessage());
             throw e;
         }
     }
 
     @Override
-    public CustomerDTO updateCustomer(String id, CustomerRequest customerRequest) {
+    public CustomerDTO updateCustomer(CustomerUpdateRequest customerRequest) {
         try {
-            log.debug("updateCustomer() CustomerServiceImpl Start | id: {}, customerRequest: {}", id, customerRequest);
-            UUID customerId = UUID.fromString(id);
-            Customer existingCustomer = customerBusiness.getById(customerId)
+            log.debug("updateCustomer() CustomerServiceImpl Start | customerRequest: {}", customerRequest);
+            UUID id = AuthUtils.getCurrentUserId();
+            Customer existingCustomer = customerBusiness.getById(id)
                     .orElseThrow(() -> new AppException(404, "Không tìm thấy khách hàng với ID: " + id));
 
-            existingCustomer.setId(customerId);
+            existingCustomer.setId(id);
             existingCustomer.setName(customerRequest.getName());
             existingCustomer.setEmail(customerRequest.getEmail());
             existingCustomer.setPhone(customerRequest.getPhone());
-            existingCustomer.setAddress(customerRequest.getAddress());
             existingCustomer.setAvatar(customerRequest.getAvatar());
-            existingCustomer.setRole(UserRole.CUSTOMER);
+            existingCustomer.setDateOfBirth(customerRequest.getDateOfBirth());
+            existingCustomer.setGender(customerRequest.getGender());
 
             CustomerDTO updatedCustomer = modelMapper.map(customerBusiness.update(existingCustomer), CustomerDTO.class);
             log.debug("updateCustomer() CustomerServiceImpl End | Updated Customer: {}", updatedCustomer);
             return updatedCustomer;
         } catch (Exception e) {
-            log.error("updateCustomer() CustomerServiceImpl Error | id: {}, message: {}", id, e.getMessage(), e);
+            log.error("updateCustomer() CustomerServiceImpl Error | message: {}", e.getMessage(), e);
             throw e;
         }
     }

@@ -73,7 +73,13 @@ public class AuthController {
         log.info("verifyForgotPasswordOtp() end | response: {}", response);
         return response;
     }
-
+    @PutMapping("/change-password")
+    public ResponseEntity<MessageResponse> changePassword(@RequestParam String oldPassword, @RequestParam String newPassword) {
+        log.info("changePassword() AuthController start");
+        MessageResponse newMessage = authService.changePassword(oldPassword, newPassword);
+        log.info("changePassword() AuthController end");
+        return ResponseEntity.ok(newMessage);
+    }
     @PutMapping("/forgot-password/reset")
     public AuthUserResponse resetForgotPassword(@RequestBody ResetPasswordRequest resetPasswordRequest) {
         log.info("resetForgotPassword() start");
