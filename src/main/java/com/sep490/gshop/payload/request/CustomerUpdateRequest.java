@@ -28,6 +28,4 @@ public class CustomerUpdateRequest {
     private String phone;
     private long dateOfBirth;
     private GenderEnum gender;
-
-    private String avatar;
 }
