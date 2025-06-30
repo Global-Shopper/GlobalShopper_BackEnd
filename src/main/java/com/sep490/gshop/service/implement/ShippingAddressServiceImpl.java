@@ -59,7 +59,7 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
     }
     @Override
     @Transactional
-    public ShippingAddressDTO updateShippingAddress(ShippingAddressRequest request, UUID shippingAddressId) {
+    public ShippingAddressDTO updateDefaultShippingAddress(ShippingAddressRequest request, UUID shippingAddressId) {
         log.debug("updateShippingAddress() Start | id: {}, request: {}", shippingAddressId, request);
         try {
             User currentUser = modelMapper.map(AuthUtils.getCurrentUser(), User.class);
@@ -152,6 +152,30 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
             throw e;
         }
     }
+
+    @Override
+    public boolean updateDefaultShippingAddress(UUID shippingAddressId) {
+        try {
+            UUID id = AuthUtils.getCurrentUser().getId();
+            log.debug("updateShippingAddress() Start | id: {}", id);
+            if (shippingAddressId == null) {
+                throw AppException.builder().code(401).message("Vui lòng đăng nhập để sử dụng dịch vụ").build();
+            }
+            ShippingAddress address = shippingAddressBusiness.getById(shippingAddressId)
+                    .orElseThrow(() -> new AppException(404, "Địa chỉ không tồn tại"));
+            if (!address.getCustomer().getId().equals(id)) {
+                throw AppException.builder().message("Bạn không có quyền sửa địa chỉ này").build();
+            }
+            address.setDefault(true);
+            shippingAddressBusiness.update(address);
+            log.debug("updateShippingAddress() End | id: {}", id);
+            return address.isDefault();
+        }catch (Exception e) {
+            log.error("updateShippingAddress() Exception | id: {}, message: {}", shippingAddressId, e.getMessage());
+            throw e;
+        }
+    }
+
     public boolean IsDefaultShippingAddress() {
         User user = modelMapper.map(AuthUtils.getCurrentUser(), User.class);
         var list = shippingAddressBusiness.findShippingAddressByUserId(user.getId()).stream()

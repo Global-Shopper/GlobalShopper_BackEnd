@@ -43,7 +43,7 @@ public class ShippingAddressController {
             @PathVariable UUID id,
             @RequestBody ShippingAddressRequest request) {
         log.debug("updateShippingAddress() Start | id: {}, request: {}", id, request);
-        ShippingAddressDTO dto = shippingAddressService.updateShippingAddress(request, id);
+        ShippingAddressDTO dto = shippingAddressService.updateDefaultShippingAddress(request, id);
         log.debug("updateShippingAddress() End | dto: {}", dto);
         return ResponseEntity.ok(dto);
     }
@@ -64,6 +64,14 @@ public class ShippingAddressController {
         List<ShippingAddressDTO> list = shippingAddressService.getShippingAddressesByCurrentUser();
         log.debug("getShippingAddresses() End | size: {}", list.size());
         return ResponseEntity.ok(list);
+    }
+
+    @PutMapping("/default/{id}")
+    public MessageResponse updateShippingAddress(@PathVariable UUID id){
+        log.debug("updateShippingAddress() Start | id: {}", id);
+        var shipping = shippingAddressService.updateDefaultShippingAddress(id);
+        log.debug("updateShippingAddress() End | dto: {}", shipping);
+        return MessageResponse.builder().message("Update thành công").isSuccess(shipping).build();
     }
 
     @Operation(summary = "Delete shipping address by ID for current user")
