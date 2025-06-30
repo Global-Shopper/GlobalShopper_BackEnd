@@ -7,6 +7,7 @@ import com.sep490.gshop.entity.ShippingAddress;
 import com.sep490.gshop.entity.User;
 import com.sep490.gshop.payload.dto.ShippingAddressDTO;
 import com.sep490.gshop.payload.request.ShippingAddressRequest;
+import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.service.ShippingAddressService;
 import com.sep490.gshop.utils.AuthUtils;
 import jakarta.transaction.Transactional;

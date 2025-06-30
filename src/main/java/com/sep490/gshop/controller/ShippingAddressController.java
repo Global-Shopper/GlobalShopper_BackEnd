@@ -3,6 +3,7 @@ package com.sep490.gshop.controller;
 import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.payload.dto.ShippingAddressDTO;
 import com.sep490.gshop.payload.request.ShippingAddressRequest;
+import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.service.ShippingAddressService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.log4j.Log4j2;
@@ -67,10 +68,10 @@ public class ShippingAddressController {
 
     @Operation(summary = "Delete shipping address by ID for current user")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteShippingAddress(@PathVariable UUID id) {
+    public MessageResponse deleteShippingAddress(@PathVariable UUID id) {
         log.debug("deleteShippingAddress() Start | id: {}", id);
-        shippingAddressService.deleteShippingAddress(id);
+        var shipping = shippingAddressService.deleteShippingAddress(id);
         log.debug("deleteShippingAddress() End | id: {}", id);
-        return ResponseEntity.noContent().build();
+        return MessageResponse.builder().message("Xoá địa chỉ thành công").isSuccess(shipping).build();
     }
 }

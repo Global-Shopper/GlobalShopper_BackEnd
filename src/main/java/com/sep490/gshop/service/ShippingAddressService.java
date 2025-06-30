@@ -2,6 +2,7 @@ package com.sep490.gshop.service;
 
 import com.sep490.gshop.payload.dto.ShippingAddressDTO;
 import com.sep490.gshop.payload.request.ShippingAddressRequest;
+import com.sep490.gshop.payload.response.MessageResponse;
 
 import java.util.List;
 import java.util.UUID;
