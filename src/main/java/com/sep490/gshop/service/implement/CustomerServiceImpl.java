@@ -114,13 +114,7 @@ public class CustomerServiceImpl implements CustomerService {
             if(customer.getRole() != UserRole.CUSTOMER) {
                 throw AppException.builder().code(400).message("Admin xem cái gì ở đây !!").build();
             }
-            var shippingList = shippingAddressBusiness.findShippingAddressByUserId(customer.getId());
-
             CustomerDTO customerDTO = modelMapper.map(customer, CustomerDTO.class);
-            List<ShippingAddressDTO> shippingDTOList = shippingList.stream()
-                    .map(sa -> modelMapper.map(sa, ShippingAddressDTO.class))
-                    .toList();
-            customerDTO.setAddress(shippingDTOList);
             log.debug("getCustomerById() CustomerServiceImpl End | Customer found: {}", customerDTO);
             return customerDTO;
         } catch (Exception e) {
