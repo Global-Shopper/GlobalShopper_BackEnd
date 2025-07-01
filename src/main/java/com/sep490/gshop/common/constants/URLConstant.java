@@ -8,10 +8,12 @@ public class URLConstant {
     public static final String WALLET = "wallet";
     public static final String USER = "user";
     public static final String FEEDBACK = "feedback";
-    public static final String REFUNDTICKET = "refund-ticket";
-    public static final String SHIPPINGADDRESS = "shipping-address";
+    public static final String REFUND_TICKET = "refund-ticket";
+    public static final String SHIPPING_ADDRESS = "shipping-address";
     public static final String ORDER = "orders";
     public static final String AUTH = "auth";
     public static final String ADMIN = "admin";
+    public static final String AI = "ai";
+    public static final String PURCHASE_REQUEST = "purchase-request";
 
 }

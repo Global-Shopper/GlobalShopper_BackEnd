@@ -3,12 +3,16 @@ package com.sep490.gshop.controller;
 import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.payload.dto.CustomerDTO;
 import com.sep490.gshop.payload.request.CustomerRequest;
+import com.sep490.gshop.payload.request.CustomerUpdateRequest;
 import com.sep490.gshop.service.CustomerService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -39,21 +43,32 @@ public class CustomerController {
         log.info("createCustomer() CustomerController end | {}", result);
         return ResponseEntity.ok().body(result);
     }
+    //Co token se lay user truc tiep khong nhap id, chi de test
+    @Operation(summary = "Upload avatar cho khách hàng hiện tại")
+    @PostMapping(value = "/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<CustomerDTO> uploadAvatar(@RequestPart("file") MultipartFile file) {
+        log.debug("uploadAvatar() Controller Start | filename: {}", file.getOriginalFilename());
+
+        CustomerDTO updatedCustomer = customerService.uploadAvatar(file);
+
+        log.debug("uploadAvatar() Controller End | avatarUrl: {}", updatedCustomer.getAvatar());
+
+        return ResponseEntity.ok(updatedCustomer);
+    }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CustomerDTO> getCustomerById(@PathVariable String id) {
-        log.info("getCustomerById() CustomerController start | id: {}", id);
-        CustomerDTO result = customerService.getCustomerById(id);
+    public ResponseEntity<CustomerDTO> getCurrentCustomer() {
+        log.info("getCustomerById() CustomerController start");
+        CustomerDTO result = customerService.getCurrentCustomer();
         log.info("getCustomerById() CustomerController end | {}", result);
         return ResponseEntity.ok().body(result);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<CustomerDTO> updateCustomer(
-            @PathVariable String id,
-            @Valid @RequestBody CustomerRequest customerRequest) {
-        log.info("updateCustomer() CustomerController start | id: {}, customerRequest: {}", id, customerRequest);
-        CustomerDTO result = customerService.updateCustomer(id, customerRequest);
+            @Valid @RequestBody CustomerUpdateRequest customerRequest) {
+        log.info("updateCustomer() CustomerController start | customerRequest: {}", customerRequest);
+        CustomerDTO result = customerService.updateCustomer(customerRequest);
         log.info("updateCustomer() CustomerController end | {}", result);
         return ResponseEntity.ok().body(result);
     }

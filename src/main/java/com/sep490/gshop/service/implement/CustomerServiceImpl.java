@@ -1,18 +1,25 @@
 package com.sep490.gshop.service.implement;
 
 import com.sep490.gshop.business.CustomerBusiness;
+import com.sep490.gshop.business.ShippingAddressBusiness;
 import com.sep490.gshop.common.enums.UserRole;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.Customer;
 import com.sep490.gshop.payload.dto.CustomerDTO;
+import com.sep490.gshop.payload.dto.ShippingAddressDTO;
 import com.sep490.gshop.payload.request.CustomerRequest;
+import com.sep490.gshop.payload.request.CustomerUpdateRequest;
+import com.sep490.gshop.payload.response.CloudinaryResponse;
+import com.sep490.gshop.service.CloudinaryService;
 import com.sep490.gshop.service.CustomerService;
+import com.sep490.gshop.utils.AuthUtils;
+import com.sep490.gshop.utils.FileUploadUtil;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,11 +29,14 @@ public class CustomerServiceImpl implements CustomerService {
 
     private CustomerBusiness customerBusiness;
     private ModelMapper modelMapper;
-
+    private CloudinaryService cloudinaryService;
+    private ShippingAddressBusiness shippingAddressBusiness;
     @Autowired
-    public CustomerServiceImpl(CustomerBusiness customerBusiness, ModelMapper modelMapper) {
+    public CustomerServiceImpl(CustomerBusiness customerBusiness, ModelMapper modelMapper, CloudinaryService cloudinaryService, ShippingAddressBusiness shippingAddressBusiness) {
         this.customerBusiness = customerBusiness;
         this.modelMapper = modelMapper;
+        this.cloudinaryService = cloudinaryService;
+        this.shippingAddressBusiness = shippingAddressBusiness;
     }
 
     @Override
@@ -59,6 +69,28 @@ public class CustomerServiceImpl implements CustomerService {
             throw e;
         }
     }
+    public CustomerDTO uploadAvatar(MultipartFile multipartFile) {
+        log.debug("uploadAvatar() Start | filename: {}", multipartFile.getOriginalFilename());
+        try {
+            UUID userId = AuthUtils.getCurrentUserId();
+            var customerFound = customerBusiness.getById(userId).orElseThrow(EntityNotFoundException::new);
+            FileUploadUtil.AssertAllowedExtension(multipartFile, FileUploadUtil.IMAGE_PATTERN);
+
+            String fileName = FileUploadUtil.formatFileName(multipartFile.getOriginalFilename());
+
+            CloudinaryResponse cloudinaryResponse = cloudinaryService.uploadImage(multipartFile, fileName);
+
+            customerFound.setAvatar(cloudinaryResponse.getResponseURL());
+
+            var updatedUser = modelMapper.map(customerBusiness.update(customerFound), CustomerDTO.class);
+            log.debug("uploadAvatar() End | avatarUrl: {}", updatedUser.getAvatar());
+
+            return updatedUser;
+        }  catch (Exception e) {
+            log.error("uploadAvatar() Unexpected Exception | message: {}", e.getMessage());
+            throw new RuntimeException("Lỗi khi upload avatar: " + e.getMessage());
+        }
+    }
 
     @Override
     public CustomerDTO FindCustomerById(UUID id) {
@@ -73,42 +105,50 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public CustomerDTO getCustomerById(String id) {
+    public CustomerDTO getCurrentCustomer() {
         try {
-            log.debug("getCustomerById() CustomerServiceImpl Start | id: {}", id);
-            UUID customerId = UUID.fromString(id);
-            Customer customer = customerBusiness.getById(customerId)
+            log.debug("getCustomerById() CustomerServiceImpl Start |");
+            UUID id = AuthUtils.getCurrentUserId();
+            Customer customer = customerBusiness.getById(id)
                     .orElseThrow(() -> new AppException(404, "Không tìm thấy khách hàng với ID: " + id));
+            if(customer.getRole() != UserRole.CUSTOMER) {
+                throw AppException.builder().code(400).message("Admin xem cái gì ở đây !!").build();
+            }
+            var shippingList = shippingAddressBusiness.findShippingAddressByUserId(customer.getId());
+
             CustomerDTO customerDTO = modelMapper.map(customer, CustomerDTO.class);
+            List<ShippingAddressDTO> shippingDTOList = shippingList.stream()
+                    .map(sa -> modelMapper.map(sa, ShippingAddressDTO.class))
+                    .toList();
+            customerDTO.setAddress(shippingDTOList);
             log.debug("getCustomerById() CustomerServiceImpl End | Customer found: {}", customerDTO);
             return customerDTO;
         } catch (Exception e) {
-            log.debug("getCustomerById() CustomerServiceImpl Error | id: {}, message: {}", id, e.getMessage());
+            log.debug("getCustomerById() CustomerServiceImpl Error | message: {}", e.getMessage());
             throw e;
         }
     }
 
     @Override
-    public CustomerDTO updateCustomer(String id, CustomerRequest customerRequest) {
+    public CustomerDTO updateCustomer(CustomerUpdateRequest customerRequest) {
         try {
-            log.debug("updateCustomer() CustomerServiceImpl Start | id: {}, customerRequest: {}", id, customerRequest);
-            UUID customerId = UUID.fromString(id);
-            Customer existingCustomer = customerBusiness.getById(customerId)
+            log.debug("updateCustomer() CustomerServiceImpl Start | customerRequest: {}", customerRequest);
+            UUID id = AuthUtils.getCurrentUserId();
+            Customer existingCustomer = customerBusiness.getById(id)
                     .orElseThrow(() -> new AppException(404, "Không tìm thấy khách hàng với ID: " + id));
 
-            existingCustomer.setId(customerId);
+            existingCustomer.setId(id);
             existingCustomer.setName(customerRequest.getName());
             existingCustomer.setEmail(customerRequest.getEmail());
             existingCustomer.setPhone(customerRequest.getPhone());
-            existingCustomer.setAddress(customerRequest.getAddress());
-            existingCustomer.setAvatar(customerRequest.getAvatar());
-            existingCustomer.setRole(UserRole.CUSTOMER);
+            existingCustomer.setDateOfBirth(customerRequest.getDateOfBirth());
+            existingCustomer.setGender(customerRequest.getGender());
 
             CustomerDTO updatedCustomer = modelMapper.map(customerBusiness.update(existingCustomer), CustomerDTO.class);
             log.debug("updateCustomer() CustomerServiceImpl End | Updated Customer: {}", updatedCustomer);
             return updatedCustomer;
         } catch (Exception e) {
-            log.error("updateCustomer() CustomerServiceImpl Error | id: {}, message: {}", id, e.getMessage(), e);
+            log.error("updateCustomer() CustomerServiceImpl Error | message: {}", e.getMessage());
             throw e;
         }
     }
@@ -126,7 +166,7 @@ public class CustomerServiceImpl implements CustomerService {
             }
             return isDeleted;
         } catch (Exception e) {
-            log.error("deleteCustomer() CustomerServiceImpl Error | id: {}, message: {}", id, e.getMessage(), e);
+            log.error("deleteCustomer() CustomerServiceImpl Error | id: {}, message: {}", id, e.getMessage());
             throw e;
         }
     }

@@ -3,6 +3,7 @@ package com.sep490.gshop.controller;
 import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.payload.dto.ShippingAddressDTO;
 import com.sep490.gshop.payload.request.ShippingAddressRequest;
+import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.service.ShippingAddressService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.log4j.Log4j2;
@@ -16,15 +17,18 @@ import java.util.UUID;
 
 @RestController
 @Log4j2
-@RequestMapping(URLConstant.SHIPPINGADDRESS)
+@RequestMapping(URLConstant.SHIPPING_ADDRESS)
+@CrossOrigin("*")
 public class ShippingAddressController {
-    private ShippingAddressService shippingAddressService;
+
+    private final ShippingAddressService shippingAddressService;
+
     @Autowired
     public ShippingAddressController(ShippingAddressService shippingAddressService) {
         this.shippingAddressService = shippingAddressService;
     }
 
-    @Operation(summary = "Create new shipping address")
+    @Operation(summary = "Create new shipping address for current user")
     @PostMapping
     public ResponseEntity<ShippingAddressDTO> createShippingAddress(@RequestBody ShippingAddressRequest request) {
         log.debug("createShippingAddress() Start | request: {}", request);
@@ -33,18 +37,18 @@ public class ShippingAddressController {
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
 
-    @Operation(summary = "Update shipping address")
+    @Operation(summary = "Update shipping address by ID for current user")
     @PutMapping("/{id}")
     public ResponseEntity<ShippingAddressDTO> updateShippingAddress(
             @PathVariable UUID id,
             @RequestBody ShippingAddressRequest request) {
         log.debug("updateShippingAddress() Start | id: {}, request: {}", id, request);
-        ShippingAddressDTO dto = shippingAddressService.updateShippingAddress(request, id);
+        ShippingAddressDTO dto = shippingAddressService.updateDefaultShippingAddress(request, id);
         log.debug("updateShippingAddress() End | dto: {}", dto);
         return ResponseEntity.ok(dto);
     }
 
-    @Operation(summary = "Get shipping address by ID")
+    @Operation(summary = "Get shipping address by ID for current user")
     @GetMapping("/{id}")
     public ResponseEntity<ShippingAddressDTO> getShippingAddress(@PathVariable UUID id) {
         log.debug("getShippingAddress() Start | id: {}", id);
@@ -53,21 +57,29 @@ public class ShippingAddressController {
         return ResponseEntity.ok(dto);
     }
 
-    @Operation(summary = "Get all shipping address")
+    @Operation(summary = "Get all shipping addresses of current user")
     @GetMapping
     public ResponseEntity<List<ShippingAddressDTO>> getShippingAddresses() {
         log.debug("getShippingAddresses() Start");
-        List<ShippingAddressDTO> list = shippingAddressService.getShippingAddresses();
+        List<ShippingAddressDTO> list = shippingAddressService.getShippingAddressesByCurrentUser();
         log.debug("getShippingAddresses() End | size: {}", list.size());
         return ResponseEntity.ok(list);
     }
 
-    @Operation(summary = "Delete shipping address")
+    @PutMapping("/default/{id}")
+    public MessageResponse updateShippingAddress(@PathVariable UUID id){
+        log.debug("updateShippingAddress() Start | id: {}", id);
+        var shipping = shippingAddressService.updateDefaultShippingAddress(id);
+        log.debug("updateShippingAddress() End | dto: {}", shipping);
+        return MessageResponse.builder().message("Update thành công").isSuccess(shipping).build();
+    }
+
+    @Operation(summary = "Delete shipping address by ID for current user")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteShippingAddress(@PathVariable UUID id) {
+    public MessageResponse deleteShippingAddress(@PathVariable UUID id) {
         log.debug("deleteShippingAddress() Start | id: {}", id);
-        shippingAddressService.deleteShippingAddress(id);
+        var shipping = shippingAddressService.deleteShippingAddress(id);
         log.debug("deleteShippingAddress() End | id: {}", id);
-        return ResponseEntity.noContent().build();
+        return MessageResponse.builder().message("Xoá địa chỉ thành công").isSuccess(shipping).build();
     }
 }

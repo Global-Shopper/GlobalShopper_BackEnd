@@ -1,5 +1,6 @@
 package com.sep490.gshop.service.implement;
 
+import com.sep490.gshop.business.CustomerBusiness;
 import com.sep490.gshop.business.UserBusiness;
 import com.sep490.gshop.common.constants.ErrorCode;
 import com.sep490.gshop.common.enums.CacheType;
@@ -17,6 +18,7 @@ import com.sep490.gshop.payload.response.ResetPasswordValidResponse;
 import com.sep490.gshop.service.AuthService;
 import com.sep490.gshop.service.EmailService;
 import com.sep490.gshop.service.TypedCacheService;
+import com.sep490.gshop.utils.AuthUtils;
 import com.sep490.gshop.utils.DateTimeUtil;
 import com.sep490.gshop.utils.RandomUtil;
 import lombok.extern.log4j.Log4j2;
@@ -47,10 +49,10 @@ public class AuthServiceImpl implements AuthService {
     private final TypedCacheService<String,String> typedCacheService;
 
     private final TypedCacheService<String,Integer> failCountCache;
-
+    private CustomerBusiness customerBusiness;
 
     @Autowired
-    public AuthServiceImpl(UserBusiness userBusiness, PasswordEncoder passwordEncoder, EmailService emailService, AuthenticationManager authenticationManager, JwtUtils jwtUtils, ModelMapper modelMapper, TypedCacheService<String,String> typedCacheService, TypedCacheService<String, Integer> failCountCache) {
+    public AuthServiceImpl(UserBusiness userBusiness, PasswordEncoder passwordEncoder, EmailService emailService, AuthenticationManager authenticationManager, JwtUtils jwtUtils, ModelMapper modelMapper, TypedCacheService<String,String> typedCacheService, TypedCacheService<String, Integer> failCountCache, CustomerBusiness customerBusiness) {
         this.userBusiness = userBusiness;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
@@ -59,6 +61,7 @@ public class AuthServiceImpl implements AuthService {
         this.modelMapper = modelMapper;
         this.typedCacheService = typedCacheService;
         this.failCountCache = failCountCache;
+        this.customerBusiness = customerBusiness;
     }
 
     @Override
@@ -225,6 +228,41 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    public MessageResponse changePassword(String oldPassword, String newPassword) {
+        log.debug("changePassword() Start | userId: {}", AuthUtils.getCurrentUserId());
+        try {
+            var currentUserId = AuthUtils.getCurrentUserId();
+            if (currentUserId == null) {
+                throw AppException.builder().code(401).message("Bạn cần đăng nhập để sử dụng dịch vụ").build();
+            }
+            Customer customer = customerBusiness.getById(currentUserId)
+                    .orElseThrow(() -> new AppException(404, "Không tìm thấy khách hàng với ID: " + currentUserId));
+
+            if (!passwordEncoder.matches(oldPassword, customer.getPassword())) {
+                throw AppException.builder().code(400).message("Mật khẩu cũ không đúng").build();
+            }
+
+            if (newPassword.equals(oldPassword)) {
+                throw AppException.builder().code(400).message("Mật khẩu mới không được trùng với mật khẩu cũ").build();
+            }
+
+            customer.setPassword(passwordEncoder.encode(newPassword));
+            customerBusiness.update(customer);
+
+            log.debug("changePassword() End | userId: {}, message: Cập nhật mật khẩu thành công", currentUserId);
+            return MessageResponse.builder()
+                    .message("Cập nhật mật khẩu thành công")
+                    .isSuccess(true)
+                    .build();
+        } catch (Exception e) {
+            log.error("changePassword() Exception | message: {}", e.getMessage());
+            throw e;
+        }
+    }
+
+
+
+    @Override
     public ResetPasswordValidResponse verifyOtpResetPassword(String otp, String email) {
         try {
             if (otp == null || otp.trim().isEmpty()) {
@@ -312,7 +350,11 @@ public class AuthServiceImpl implements AuthService {
 
             String email = jwtUtils.getEmailFromToken(token);
             if (email == null || email.isEmpty()) {
-                throw new AppException(401, "Token xác thực không hợp lệ hoặc đã hết hạn");
+                throw ErrorException.builder()
+                        .message("Token xác thực không hợp lệ hoặc đã hết hạn.")
+                        .httpCode(400)
+                        .errorCode(ErrorCode.EXPIRED_OTP)
+                        .build();
             }
             User user = userBusiness.getUserByEmail(email);
             if (user == null) {
@@ -339,7 +381,7 @@ public class AuthServiceImpl implements AuthService {
             throw ae;
         } catch (Exception e) {
             log.error("resetPassword() Unexpected Exception | message: {}", e.getMessage());
-            throw new AppException(500, "Lỗi hệ thống, vui lòng thử lại sau");
+            throw e;
         }
     }
 

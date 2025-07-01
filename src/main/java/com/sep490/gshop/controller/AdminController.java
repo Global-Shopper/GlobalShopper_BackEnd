@@ -1,5 +1,6 @@
 package com.sep490.gshop.controller;
 
+import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.payload.dto.AdminDTO;
 import com.sep490.gshop.payload.request.AdminRequest;
 import com.sep490.gshop.service.AdminService;
@@ -16,7 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/admins")
+@RequestMapping(URLConstant.ADMIN)
 @RequiredArgsConstructor
 @Log4j2
 @Validated

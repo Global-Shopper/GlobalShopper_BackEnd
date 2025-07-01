@@ -1,7 +1,9 @@
 package com.sep490.gshop.entity;
 
+import com.sep490.gshop.common.enums.PurchaseRequestStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +14,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class PurchaseRequest extends BaseEntity {
 
     private long expiredAt;
@@ -25,9 +28,13 @@ public class PurchaseRequest extends BaseEntity {
     private Customer customer;
 
     @ManyToOne
-    @JoinColumn(name = "admin_id", nullable = false)
+    @JoinColumn(name = "admin_id")
     private Admin admin;
 
     @OneToMany(mappedBy = "purchaseRequest", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<RequestItem> requestItems;
+
+    @Enumerated(EnumType.STRING)
+    private PurchaseRequestStatus status;
+
 }
