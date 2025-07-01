@@ -29,7 +29,7 @@ public class GlobalExceptionHandler {
 
         Map<String, Object> body = new HashMap<>();
         body.put("statusCode", HttpStatus.BAD_REQUEST.value());
-        body.put("errors", errors);
+        body.put("messages", errors);
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(body);
