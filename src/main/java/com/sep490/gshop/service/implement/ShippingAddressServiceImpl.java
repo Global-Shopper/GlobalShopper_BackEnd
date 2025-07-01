@@ -7,10 +7,10 @@ import com.sep490.gshop.entity.ShippingAddress;
 import com.sep490.gshop.entity.User;
 import com.sep490.gshop.payload.dto.ShippingAddressDTO;
 import com.sep490.gshop.payload.request.ShippingAddressRequest;
-import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.service.ShippingAddressService;
 import com.sep490.gshop.utils.AuthUtils;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +31,7 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
     }
     @Override
     @Transactional
-    public ShippingAddressDTO createShippingAddress(ShippingAddressRequest request) {
+    public ShippingAddressDTO createShippingAddress(@Valid ShippingAddressRequest request) {
         log.debug("createShippingAddress() Start | request: {}", request);
         try {
             User currentUser = modelMapper.map(AuthUtils.getCurrentUser(), User.class);
@@ -59,7 +59,7 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
     }
     @Override
     @Transactional
-    public ShippingAddressDTO updateDefaultShippingAddress(ShippingAddressRequest request, UUID shippingAddressId) {
+    public ShippingAddressDTO updateDefaultShippingAddress(@Valid ShippingAddressRequest request, UUID shippingAddressId) {
         log.debug("updateShippingAddress() Start | id: {}, request: {}", shippingAddressId, request);
         try {
             User currentUser = modelMapper.map(AuthUtils.getCurrentUser(), User.class);

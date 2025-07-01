@@ -6,6 +6,7 @@ import com.sep490.gshop.payload.request.ShippingAddressRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.service.ShippingAddressService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -30,7 +31,7 @@ public class ShippingAddressController {
 
     @Operation(summary = "Create new shipping address for current user")
     @PostMapping
-    public ResponseEntity<ShippingAddressDTO> createShippingAddress(@RequestBody ShippingAddressRequest request) {
+    public ResponseEntity<ShippingAddressDTO> createShippingAddress(@Valid @RequestBody ShippingAddressRequest request) {
         log.debug("createShippingAddress() Start | request: {}", request);
         ShippingAddressDTO dto = shippingAddressService.createShippingAddress(request);
         log.debug("createShippingAddress() End | dto: {}", dto);
@@ -41,7 +42,7 @@ public class ShippingAddressController {
     @PutMapping("/{id}")
     public ResponseEntity<ShippingAddressDTO> updateShippingAddress(
             @PathVariable UUID id,
-            @RequestBody ShippingAddressRequest request) {
+            @Valid @RequestBody ShippingAddressRequest request) {
         log.debug("updateShippingAddress() Start | id: {}, request: {}", id, request);
         ShippingAddressDTO dto = shippingAddressService.updateDefaultShippingAddress(request, id);
         log.debug("updateShippingAddress() End | dto: {}", dto);
