@@ -1,8 +1,16 @@
 package com.sep490.gshop.service;
 
 import com.sep490.gshop.payload.dto.PurchaseRequestDTO;
+import com.sep490.gshop.payload.dto.RequestItemDTO;
+import com.sep490.gshop.payload.dto.SubRequestDTO;
 import com.sep490.gshop.payload.request.PurchaseRequestModel;
+import com.sep490.gshop.payload.response.PurchaseRequestResponse;
+
+import java.util.List;
 
 public interface PurchaseRequestService {
-    PurchaseRequestDTO createPurchaseRequest(PurchaseRequestModel purchaseRequestModel);
+
+    PurchaseRequestResponse<List<RequestItemDTO>> createOnlinePurchaseRequest(PurchaseRequestModel purchaseRequestModel);
+
+    PurchaseRequestResponse<SubRequestDTO> createOfflinePurchaseRequest(PurchaseRequestModel purchaseRequestModel);
 }

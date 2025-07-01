@@ -1,13 +1,19 @@
 package com.sep490.gshop.controller;
 
 import com.sep490.gshop.common.constants.URLConstant;
+import com.sep490.gshop.entity.SubRequest;
 import com.sep490.gshop.payload.dto.PurchaseRequestDTO;
+import com.sep490.gshop.payload.dto.RequestItemDTO;
+import com.sep490.gshop.payload.dto.SubRequestDTO;
 import com.sep490.gshop.payload.request.PurchaseRequestModel;
+import com.sep490.gshop.payload.response.PurchaseRequestResponse;
 import com.sep490.gshop.service.PurchaseRequestService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping(URLConstant.PURCHASE_REQUEST)
@@ -22,11 +28,19 @@ public class PurchaseRequestController {
         this.purchaseRequestService = purchaseRequestService;
     }
 
-    @PostMapping("/create")
-    public ResponseEntity<PurchaseRequestDTO> createPurchaseRequest(@RequestBody PurchaseRequestModel purchaseRequestModel) {
+    @PostMapping("/online-request")
+    public ResponseEntity<PurchaseRequestResponse<List<RequestItemDTO>>> createOnlinePurchaseRequest(@RequestBody PurchaseRequestModel purchaseRequestModel) {
         log.info("Creating purchase request: {}", purchaseRequestModel);
-        PurchaseRequestDTO createdPurchaseRequest = purchaseRequestService.createPurchaseRequest(purchaseRequestModel);
+        PurchaseRequestResponse<List<RequestItemDTO>> createdPurchaseRequest = purchaseRequestService.createOnlinePurchaseRequest(purchaseRequestModel);
         log.info("Purchase request created successfully: {}", createdPurchaseRequest);
+        return ResponseEntity.ok(createdPurchaseRequest);
+    }
+
+    @PostMapping("/offline-request")
+    public ResponseEntity<PurchaseRequestResponse<SubRequestDTO>> createOfflinePurchaseRequest(@RequestBody PurchaseRequestModel purchaseRequestModel) {
+        log.info("createOfflinePurchaseRequest() PurchaseRequestController start | model : {}", purchaseRequestModel);
+        PurchaseRequestResponse<SubRequestDTO> createdPurchaseRequest = purchaseRequestService.createOfflinePurchaseRequest(purchaseRequestModel);
+        log.info("createOfflinePurchaseRequest() PurchaseRequestController end | createdPurchaseRequest : {}", createdPurchaseRequest);
         return ResponseEntity.ok(createdPurchaseRequest);
     }
 
