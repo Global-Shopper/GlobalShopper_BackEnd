@@ -7,10 +7,10 @@ import com.sep490.gshop.common.enums.PurchaseRequestStatus;
 import com.sep490.gshop.common.enums.RequestType;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.*;
-import com.sep490.gshop.payload.dto.PurchaseRequestDTO;
 import com.sep490.gshop.payload.dto.RequestItemDTO;
 import com.sep490.gshop.payload.dto.SubRequestDTO;
 import com.sep490.gshop.payload.request.PurchaseRequestModel;
+import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.PurchaseRequestResponse;
 import com.sep490.gshop.service.PurchaseRequestService;
 import com.sep490.gshop.utils.AuthUtils;
@@ -148,6 +148,33 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
             }
         } catch (Exception e) {
             log.error("createOfflinePurchaseRequest() PurchaseRequestServiceImpl error | message : {}", e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
+    public MessageResponse checkPurchaseRequest(String id) {
+        try {
+            log.debug("checkPurchaseRequest() PurchaseRequestServiceImpl start | id : {}", id);
+            PurchaseRequest purchaseRequest = purchaseRequestBusiness.getById(UUID.fromString(id))
+                    .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND.value(), "Không tìm thấy yêu cầu mua hàng"));
+            boolean checkStatus = purchaseRequest.getStatus() == PurchaseRequestStatus.SENT;
+            if (!checkStatus) {
+                throw new AppException(HttpStatus.BAD_REQUEST.value(), "Chỉ có thể chuyển trạng thái yêu cầu mua hàng từ Đã gửi sang Đang kiểm tra");
+            }
+            purchaseRequest.setStatus(PurchaseRequestStatus.CHECKING);
+            Admin admin = (Admin) userBusiness.getById(AuthUtils.getCurrentUserId())
+                    .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND.value(), "Không tìm thấy người dùng hiện tại"));
+            purchaseRequest.setAdmin(admin);
+            purchaseRequest = purchaseRequestBusiness.update(purchaseRequest);
+            if (purchaseRequest.getAdmin().getId() == AuthUtils.getCurrentUserId() && purchaseRequest.getStatus() == PurchaseRequestStatus.CHECKING) {
+                log.debug("checkPurchaseRequest() PurchaseRequestServiceImpl end | isSuccess : true");
+                return new MessageResponse("Chuyển trạng thái thành công", true);
+            }
+            log.debug("checkPurchaseRequest() PurchaseRequestServiceImpl end | isSuccess : false");
+            return new MessageResponse("Chuyển trạng thái không thành công", false);
+        } catch (Exception e) {
+            log.error("checkPurchaseRequest() PurchaseRequestServiceImpl error | message : {}", e.getMessage());
             throw e;
         }
     }
