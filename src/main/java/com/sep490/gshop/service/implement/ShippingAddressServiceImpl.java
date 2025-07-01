@@ -166,6 +166,9 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
             if (!address.getCustomer().getId().equals(id)) {
                 throw AppException.builder().message("Bạn không có quyền sửa địa chỉ này").build();
             }
+            if(IsDefaultShippingAddress()){
+                setDefaultShippingAddress();
+            }
             address.setDefault(true);
             shippingAddressBusiness.update(address);
             log.debug("updateShippingAddress() End | id: {}", id);
