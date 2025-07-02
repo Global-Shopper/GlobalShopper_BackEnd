@@ -1,6 +1,7 @@
 package com.sep490.gshop.entity;
 
 import com.sep490.gshop.common.enums.PurchaseRequestStatus;
+import com.sep490.gshop.common.enums.RequestType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,5 +37,8 @@ public class PurchaseRequest extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private PurchaseRequestStatus status;
+
+    @Enumerated(EnumType.STRING)
+    private RequestType requestType;
 
 }

@@ -1,5 +1,6 @@
 package com.sep490.gshop.payload.dto;
 
+import com.sep490.gshop.entity.RequestItem;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -8,14 +9,12 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class PurchaseRequestDTO {
-    private String id;
-    private ShippingAddressDTO shippingAddress;
-    private String status;
+public class SubRequestDTO {
+    private List<String> contactInfo;
+    private String seller;
+    private String ecommercePlatform;
     private List<RequestItemDTO> requestItems;
-    private AdminDTO admin;
-    private String requestType;
 }

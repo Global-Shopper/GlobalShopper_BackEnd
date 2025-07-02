@@ -16,7 +16,6 @@ public class RequestItemDTO {
     private String id;
     private String productURL;
     private String productName;
-    private String contactInfo;
     private List<String> variants;
     private String description;
     private int quantity;
