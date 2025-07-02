@@ -15,6 +15,7 @@ public class ShippingAddressRequest {
     @Size(max = 50, message = "Tên không được dài quá 50 kí tự")
     private String name;
     @NotBlank(message = "Tag không được bỏ trống")
+    @Size(max = 20, message = "Tag không được dài quá 20 kí tự")
     private String tag;
     @NotBlank(message = "Số điện thoại không được bỏ trống")
     @Pattern(

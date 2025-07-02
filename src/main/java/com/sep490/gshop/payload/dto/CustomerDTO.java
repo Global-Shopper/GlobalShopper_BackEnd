@@ -18,7 +18,6 @@ public class CustomerDTO {
     private String phone;
     private GenderEnum gender;
     private long dateOfBirth;
-    private List<ShippingAddressDTO> address;
     private String avatar;
     private WalletDTO wallet;
 }
