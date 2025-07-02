@@ -5,8 +5,10 @@ import com.sep490.gshop.business.ShippingAddressBusiness;
 import com.sep490.gshop.business.UserBusiness;
 import com.sep490.gshop.common.enums.PurchaseRequestStatus;
 import com.sep490.gshop.common.enums.RequestType;
+import com.sep490.gshop.common.enums.UserRole;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.*;
+import com.sep490.gshop.payload.dto.PurchaseRequestDTO;
 import com.sep490.gshop.payload.dto.RequestItemDTO;
 import com.sep490.gshop.payload.dto.SubRequestDTO;
 import com.sep490.gshop.payload.request.PurchaseRequestModel;
@@ -17,6 +19,10 @@ import com.sep490.gshop.utils.AuthUtils;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -175,6 +181,49 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
             return new MessageResponse("Chuyển trạng thái không thành công", false);
         } catch (Exception e) {
             log.error("checkPurchaseRequest() PurchaseRequestServiceImpl error | message : {}", e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
+    public Page<PurchaseRequestDTO> getPurchaseRequests(int page, int size, String type) {
+        try {
+            log.debug("getPurchaseRequests() start | page: {}, size: {}, type: {}", page, size, type);
+            Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+            Pageable pageable = PageRequest.of(page, size,sort);
+            UserRole role = AuthUtils.getCurrentUser().getRole();
+            UUID userId = AuthUtils.getCurrentUserId();
+            Page<PurchaseRequest> purchaseRequests = null;
+            if (UserRole.CUSTOMER.equals(role)) {
+                purchaseRequests = purchaseRequestBusiness.findByCustomerId(userId, pageable);
+            } else if (UserRole.ADMIN.equals(role)) {
+                switch (type != null ? type.toLowerCase() : "") {
+                    case "unassigned":
+                        purchaseRequests = purchaseRequestBusiness.findUnassignedRequests(pageable);
+                        break;
+                    case "assigned":
+                        purchaseRequests = purchaseRequestBusiness.findAssignedRequestsByAdminId(userId, pageable);
+                        break;
+                    default:
+                        throw new AppException(HttpStatus.BAD_REQUEST.value(), "Sai loại Yêu cầu. Sử dụng 'Chưa được nhận' or 'Đã được nhận'.");
+                }
+            }
+            if (purchaseRequests == null || purchaseRequests.isEmpty()) {
+                log.debug("getPurchaseRequests() end | response: empty");
+                return Page.empty();
+            }
+            Page<PurchaseRequestDTO> response = purchaseRequests.map(purchaseRequest -> {
+                PurchaseRequestDTO dto = modelMapper.map(purchaseRequest, PurchaseRequestDTO.class);
+                List<RequestItemDTO> requestItems = purchaseRequest.getRequestItems().stream()
+                        .map(item -> modelMapper.map(item, RequestItemDTO.class))
+                        .toList();
+                dto.setRequestItems(requestItems);
+                return dto;
+            });
+            log.debug("getPurchaseRequests() end | response: {}", response);
+            return response;
+        } catch (Exception e) {
+            log.error("getPurchaseRequests() error | message : {}", e.getMessage(), e);
             throw e;
         }
     }

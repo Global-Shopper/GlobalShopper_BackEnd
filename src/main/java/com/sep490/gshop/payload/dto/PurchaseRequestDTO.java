@@ -17,5 +17,8 @@ public class PurchaseRequestDTO {
     private String status;
     private List<RequestItemDTO> requestItems;
     private AdminDTO admin;
+    private CustomerDTO customer;
     private String requestType;
+    private String createdAt;
+    private long expiredAt;
 }
