@@ -43,7 +43,7 @@ public class CustomerController {
         log.info("createCustomer() CustomerController end | {}", result);
         return ResponseEntity.ok().body(result);
     }
-    //Co token se lay user truc tiep khong nhap id, chi de test
+
     @Operation(summary = "Upload avatar cho khách hàng hiện tại")
     @PostMapping(value = "/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CustomerDTO> uploadAvatar(@RequestPart("file") MultipartFile file) {
@@ -56,7 +56,7 @@ public class CustomerController {
         return ResponseEntity.ok(updatedCustomer);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/current-information")
     public ResponseEntity<CustomerDTO> getCurrentCustomer() {
         log.info("getCustomerById() CustomerController start");
         CustomerDTO result = customerService.getCurrentCustomer();
