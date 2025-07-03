@@ -8,9 +8,11 @@ import com.sep490.gshop.payload.response.AuthUserResponse;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.ResetPasswordValidResponse;
 import com.sep490.gshop.service.AuthService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -86,6 +88,26 @@ public class AuthController {
         AuthUserResponse response = authService.resetPassword(resetPasswordRequest.getPassword(), resetPasswordRequest.getToken());
         log.info("resetForgotPassword() end | response: {}", response);
         return response;
+    }
+
+    @Operation(summary = "Thay đổi email của user hiện tại")
+    @PostMapping("/change-email")
+    public ResponseEntity<MessageResponse> changeEmail(@RequestParam String newEmail) {
+        log.debug("POST /api/auth/change-email | newEmail: {}", newEmail);
+        MessageResponse response = authService.changeMail(newEmail);
+        log.debug("POST /api/auth/change-email | response: {}", response);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "Xác thực email mới bằng OTP")
+    @PostMapping("/verify-email")
+    public ResponseEntity<AuthUserResponse> verifyEmail(
+            @RequestParam String email,
+            @RequestParam String otp) {
+        log.debug("POST /api/auth/verify-email | email: {}, otp: {}", email, otp);
+        AuthUserResponse response = authService.verifyNewMail(otp, email);
+        log.debug("POST /api/auth/verify-email | response: {}", response);
+        return ResponseEntity.ok(response);
     }
 
 }
