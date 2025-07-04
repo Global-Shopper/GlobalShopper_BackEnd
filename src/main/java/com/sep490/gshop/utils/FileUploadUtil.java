@@ -13,7 +13,6 @@ import java.util.regex.Pattern;
 
 @UtilityClass
 public class FileUploadUtil {
-    public static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
 
     public static final String IMAGE_PATTERN = "([^\\s]+(\\.(?i)(jpg|png|gif|bmp))$)";
 
@@ -26,10 +25,6 @@ public class FileUploadUtil {
         return matcher.matches();
     }
     public static void AssertAllowedExtension(MultipartFile file, String pattern) {
-        final long size = file.getSize();
-        if (size > MAX_FILE_SIZE) {
-            throw new ErrorException("File upload không vượt quá 10mb", ErrorCode.EXCEED_FILE_SIZE, 400);
-        }
         final String fileName = file.getOriginalFilename();
         if (fileName == null || !isAllowedExtension(fileName, pattern)) {
             throw new ErrorException("Chỉ chấp nhận file đuôi jpg, png, gif, bmp", ErrorCode.EXCEED_FILE_SIZE, 400);

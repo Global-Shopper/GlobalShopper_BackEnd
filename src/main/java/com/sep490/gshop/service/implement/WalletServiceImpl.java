@@ -9,6 +9,7 @@ import com.sep490.gshop.entity.Wallet;
 import com.sep490.gshop.payload.dto.WalletDTO;
 import com.sep490.gshop.payload.request.WalletRequest;
 import com.sep490.gshop.service.WalletService;
+import com.sep490.gshop.utils.AuthUtils;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,12 +25,13 @@ public class WalletServiceImpl implements WalletService {
     private final WalletBusiness walletBusiness;
     private final CustomerBusiness customerBusiness;
     private final ModelMapper modelMapper;
-
+    private VNPayServiceImpl vnPayServiceImpl;
     @Autowired
-    public WalletServiceImpl(WalletBusiness walletBusiness, CustomerBusiness customerBusiness, ModelMapper modelMapper) {
+    public WalletServiceImpl(WalletBusiness walletBusiness, CustomerBusiness customerBusiness, ModelMapper modelMapper, VNPayServiceImpl vnPayServiceImpl) {
         this.walletBusiness = walletBusiness;
         this.customerBusiness = customerBusiness;
         this.modelMapper = modelMapper;
+        this.vnPayServiceImpl = vnPayServiceImpl;
     }
 
     @Override
@@ -51,14 +53,15 @@ public class WalletServiceImpl implements WalletService {
     public WalletDTO createWallet(WalletRequest walletRequest) {
         try {
             log.debug("createWallet() WalletServiceImpl start | walletRequest: {}", walletRequest);
-            Customer customer = customerBusiness.getById(UUID.fromString(walletRequest.getUserId()))
+            Customer customer = customerBusiness.getById(AuthUtils.getCurrentUserId())
                     .orElseThrow(() -> new AppException(404,"Customer not found"));
             Wallet wallet = Wallet.builder()
                     .customer(customer)
                     .balance(walletRequest.getBalance())
                     .build();
-            wallet.setId(customer.getId());
+            var deposit = vnPayServiceImpl.createURL(wallet.getBalance());
             WalletDTO createdWallet = modelMapper.map(walletBusiness.create(wallet), WalletDTO.class);
+            createdWallet.setUrl(deposit);
             log.debug("createWallet() WalletServiceImpl end | Created Wallet: {}", createdWallet);
             return createdWallet;
         } catch (Exception e) {
@@ -88,7 +91,7 @@ public class WalletServiceImpl implements WalletService {
             log.debug("updateWallet() WalletServiceImpl start | id: {}, walletRequest: {}", id, walletRequest);
             Wallet existingWallet = walletBusiness.getById(UUID.fromString(id))
                     .orElseThrow(() -> new AppException(404, "Wallet not found"));
-            Customer customer = customerBusiness.getById(UUID.fromString(walletRequest.getUserId()))
+            Customer customer = customerBusiness.getById(UUID.fromString(id))
                     .orElseThrow(() -> new AppException(404, "Customer not found"));
             existingWallet.setCustomer(customer);
             existingWallet.setBalance(walletRequest.getBalance());
