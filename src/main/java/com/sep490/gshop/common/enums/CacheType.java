@@ -8,7 +8,8 @@ public enum CacheType {
     PAYMENT_SESSION(15),
     ORDER_CONFIRMATION(10),
     OTP_ATTEMPT(10),
-    OTP_RESET_PASSWORD(5);
+    OTP_RESET_PASSWORD(5),
+    OTP_CHANGE_MAIL(5);
 
     private final long ttlMinutes;
 

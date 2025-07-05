@@ -31,6 +31,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -50,6 +51,7 @@ public class AuthServiceImpl implements AuthService {
 
     private final TypedCacheService<String,Integer> failCountCache;
     private CustomerBusiness customerBusiness;
+
 
     @Autowired
     public AuthServiceImpl(UserBusiness userBusiness, PasswordEncoder passwordEncoder, EmailService emailService, AuthenticationManager authenticationManager, JwtUtils jwtUtils, ModelMapper modelMapper, TypedCacheService<String,String> typedCacheService, TypedCacheService<String, Integer> failCountCache, CustomerBusiness customerBusiness) {
@@ -193,13 +195,6 @@ public class AuthServiceImpl implements AuthService {
             if (user == null) {
                 throw new AppException(400, "Email chưa được đăng ký hoặc không tồn tại");
             }
-//            if (!user.isEmailVerified()) {
-//                throw ErrorException.builder()
-//                        .message("Hệ thống đã gửi mã OTP đến email của bạn. Vui lòng xác thực email trước khi sử dụng dịch vụ khác!")
-//                        .httpCode(401)
-//                        .errorCode(ErrorCode.EMAIL_UNCONFIRMED)
-//                        .build();
-//            }
 
             String cachedOtp = typedCacheService.get(CacheType.OTP_RESET_PASSWORD, email);
             long timeRemain = typedCacheService.getTimeRemaining(CacheType.OTP_RESET_PASSWORD, email);
@@ -385,6 +380,86 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+
+
+    @Override
+    public MessageResponse changeMail() {
+        UUID currentId = AuthUtils.getCurrentUserId();
+        log.debug("changeMail() Start | userId: {}", currentId);
+        try {
+            if (currentId == null) {
+                throw AppException.builder()
+                        .message("Bạn cần đăng nhập để sử dụng dịch vụ")
+                        .code(401)
+                        .build();
+            }
+            Customer customer = customerBusiness.getById(currentId)
+                    .orElseThrow(() -> new AppException(404, "Không tìm thấy khách hàng với ID: " + currentId));
+
+            String currentEmail = customer.getEmail();
+            if (currentEmail == null) {
+                return MessageResponse.builder()
+                        .message("Email của bạn hiện không tồn tại, vui lòng thử lại")
+                        .isSuccess(false)
+                        .build();
+            }
+            sendOTP(currentEmail, customer.getName(), CacheType.OTP_CHANGE_MAIL);
+            customer.setEmailVerified(false);
+            customerBusiness.update(customer);
+            log.debug("changeMail() End | userId: {}, message: OTP đã được gửi đến email hiện tại", currentId);
+            return MessageResponse.builder()
+                    .message("Hãy xác nhận email hiện tại trước khi tiếp tục. Mã OTP đã được gửi đến email để xác nhận.")
+                    .isSuccess(true)
+                    .build();
+        } catch (AppException ae) {
+            log.error("changeMail() AppException | userId: {}, message: {}", currentId, ae.getMessage());
+            throw ae;
+        } catch (Exception e) {
+            log.error("changeMail() Unexpected Exception | userId: {}, message: {}", currentId, e.getMessage(), e);
+            throw e;
+        }
+    }
+
+
+    @Override
+    public AuthUserResponse verifyNewMail(String otp, String newMail) {
+        log.debug("verifyNewMail() Start | email: {}", newMail);
+        Integer failCount = failCountCache.get(CacheType.OTP_ATTEMPT, newMail);
+        if (failCount != null && failCount >= MAX_RETRY) {
+            String timeRemain = DateTimeUtil.secondToTime(failCountCache.getTimeRemaining(CacheType.OTP_ATTEMPT, newMail));
+            throw new AppException(429, "Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau " + timeRemain + ".");
+        }
+
+        UUID userId = AuthUtils.getCurrentUserId();
+        User user = userBusiness.getById(userId).orElseThrow(() -> new AppException(404, "Không tìm thấy khách hàng với ID: " + userId));;
+        if (user != null && user.getEmail().equalsIgnoreCase(newMail)) {
+            throw new AppException(400, "Email đã tồn tại");
+        }
+
+        if (user.isEmailVerified()) {
+            log.debug("verifyNewMail() Email đã được xác thực trước đó");
+            throw ErrorException.builder()
+                    .message("Email đã được xác thực trước đó! Bạn có thể đăng nhập ngay bây giờ.")
+                    .httpCode(400)
+                    .errorCode(ErrorCode.ALREADY_VERIFIED)
+                    .build();
+        }
+        String cachedOtp = typedCacheService.get(CacheType.OTP_CHANGE_MAIL, user.getEmail());
+        if (cachedOtp == null || !cachedOtp.equals(otp)) {
+            failCountCache.put(CacheType.OTP_ATTEMPT, newMail, (failCount == null ? 1 : failCount + 1));
+            throw new AppException(400, "Mã OTP không đúng hoặc đã hết hạn");
+        }
+        user.setEmailVerified(true);
+        user.setEmail(newMail);
+        typedCacheService.remove(CacheType.OTP_CHANGE_MAIL, newMail);
+        failCountCache.remove(CacheType.OTP_ATTEMPT, newMail);
+
+        user = userBusiness.update(user);
+        UserDTO userDTO = modelMapper.map(user, UserDTO.class);
+        String jwt = jwtUtils.generateJwtToken(user);
+        log.debug("verifyNewMail() End | Email verified successfully for email: {}", newMail);
+        return new AuthUserResponse(jwt, userDTO);
+    }
 
 
     private void sendOTP(String email, String name, CacheType cacheType) {

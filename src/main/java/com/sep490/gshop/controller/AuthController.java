@@ -1,6 +1,7 @@
 package com.sep490.gshop.controller;
 
 import com.sep490.gshop.common.constants.URLConstant;
+import com.sep490.gshop.payload.request.ChangePasswordRequest;
 import com.sep490.gshop.payload.request.LoginRequest;
 import com.sep490.gshop.payload.request.RegisterRequest;
 import com.sep490.gshop.payload.request.ResetPasswordRequest;
@@ -8,9 +9,11 @@ import com.sep490.gshop.payload.response.AuthUserResponse;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.ResetPasswordValidResponse;
 import com.sep490.gshop.service.AuthService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -74,9 +77,9 @@ public class AuthController {
         return response;
     }
     @PutMapping("/change-password")
-    public ResponseEntity<MessageResponse> changePassword(@RequestParam String oldPassword, @RequestParam String newPassword) {
+    public ResponseEntity<MessageResponse> changePassword(@RequestBody ChangePasswordRequest changePasswordRequest) {
         log.info("changePassword() AuthController start");
-        MessageResponse newMessage = authService.changePassword(oldPassword, newPassword);
+        MessageResponse newMessage = authService.changePassword(changePasswordRequest.getOldPassword(), changePasswordRequest.getNewPassword());
         log.info("changePassword() AuthController end");
         return ResponseEntity.ok(newMessage);
     }
@@ -86,6 +89,26 @@ public class AuthController {
         AuthUserResponse response = authService.resetPassword(resetPasswordRequest.getPassword(), resetPasswordRequest.getToken());
         log.info("resetForgotPassword() end | response: {}", response);
         return response;
+    }
+
+    @Operation(summary = "Thay đổi email của user hiện tại")
+    @PostMapping("/change-email")
+    public ResponseEntity<MessageResponse> changeEmail() {
+        log.debug("POST /api/auth/change-email");
+        MessageResponse response = authService.changeMail();
+        log.debug("POST /api/auth/change-email | response: {}", response);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "Xác thực email mới bằng OTP")
+    @PostMapping("/verify-email")
+    public ResponseEntity<AuthUserResponse> verifyEmail(
+            @RequestParam String email,
+            @RequestParam String otp) {
+        log.debug("POST /api/auth/verify-email | email: {}, otp: {}", email, otp);
+        AuthUserResponse response = authService.verifyNewMail(otp, email);
+        log.debug("POST /api/auth/verify-email | response: {}", response);
+        return ResponseEntity.ok(response);
     }
 
 }
