@@ -74,6 +74,7 @@ public class VNPayServiceImpl {
             urlBuilder.deleteCharAt(urlBuilder.length() - 1);
 
             String paymentUrl = urlBuilder.toString();
+            String sercureHase = vnpParams.get("vnp_SecureHash");
             log.debug("createURL() Success | paymentUrl: {}", paymentUrl);
             return paymentUrl;
 
@@ -101,4 +102,6 @@ public class VNPayServiceImpl {
             return "";
         }
     }
+
+    //public String returnURL() {}
 }

@@ -69,7 +69,6 @@ public class WalletServiceImpl implements WalletService {
             throw e;
         }
     }
-
     @Override
     public WalletDTO getWalletById(String id) {
         try {

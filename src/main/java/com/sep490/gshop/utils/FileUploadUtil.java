@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 @UtilityClass
 public class FileUploadUtil {
 
-    public static final String IMAGE_PATTERN = "([^\\s]+(\\.(?i)(jpg|png|gif|bmp))$)";
+    public static final String IMAGE_PATTERN = "(^[\\s\\S]+\\.(jpe?g|jpg|png|gif|bmp)$)";
 
     public static final String DATE_FORMAT = "yyyyMMddHHmmss";
 

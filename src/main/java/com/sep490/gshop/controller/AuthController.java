@@ -1,6 +1,7 @@
 package com.sep490.gshop.controller;
 
 import com.sep490.gshop.common.constants.URLConstant;
+import com.sep490.gshop.payload.request.ChangePasswordRequest;
 import com.sep490.gshop.payload.request.LoginRequest;
 import com.sep490.gshop.payload.request.RegisterRequest;
 import com.sep490.gshop.payload.request.ResetPasswordRequest;
@@ -76,9 +77,9 @@ public class AuthController {
         return response;
     }
     @PutMapping("/change-password")
-    public ResponseEntity<MessageResponse> changePassword(@RequestParam String oldPassword, @RequestParam String newPassword) {
+    public ResponseEntity<MessageResponse> changePassword(@RequestBody ChangePasswordRequest changePasswordRequest) {
         log.info("changePassword() AuthController start");
-        MessageResponse newMessage = authService.changePassword(oldPassword, newPassword);
+        MessageResponse newMessage = authService.changePassword(changePasswordRequest.getOldPassword(), changePasswordRequest.getNewPassword());
         log.info("changePassword() AuthController end");
         return ResponseEntity.ok(newMessage);
     }
@@ -92,9 +93,9 @@ public class AuthController {
 
     @Operation(summary = "Thay đổi email của user hiện tại")
     @PostMapping("/change-email")
-    public ResponseEntity<MessageResponse> changeEmail(@RequestParam String newEmail) {
-        log.debug("POST /api/auth/change-email | newEmail: {}", newEmail);
-        MessageResponse response = authService.changeMail(newEmail);
+    public ResponseEntity<MessageResponse> changeEmail() {
+        log.debug("POST /api/auth/change-email");
+        MessageResponse response = authService.changeMail();
         log.debug("POST /api/auth/change-email | response: {}", response);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }

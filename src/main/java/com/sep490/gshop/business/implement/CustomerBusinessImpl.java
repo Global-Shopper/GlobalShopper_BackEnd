@@ -14,6 +14,6 @@ public class CustomerBusinessImpl extends BaseBusinessImpl<Customer, CustomerRep
 
     @Override
     public boolean existsByEmail(String email) {
-        return repository.existsByEmail(email);
+        return repository.existsByEmailIgnoreCase(email);
     }
 }
