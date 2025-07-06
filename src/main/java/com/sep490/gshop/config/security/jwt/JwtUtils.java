@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 @Log4j2
@@ -89,6 +90,34 @@ public class JwtUtils {
       return null;
     }
   }
+
+  public UUID getUserIdFromToken(String token) {
+    try {
+      Claims claims = Jwts.parserBuilder()
+              .setSigningKey(key())
+              .build()
+              .parseClaimsJws(token)
+              .getBody();
+
+      Object idObj = claims.get("id");
+      if (idObj == null) {
+        return null;
+      }
+
+      if (idObj instanceof String) {
+        return UUID.fromString((String) idObj);
+      } else if (idObj instanceof Integer) {
+        return UUID.fromString(String.valueOf(idObj));
+      } else {
+        return null;
+      }
+    } catch (Exception e) {
+      log.error("Failed to get userId from token: {}", e.getMessage());
+      return null;
+    }
+  }
+
+
   public boolean validateJwtToken(String authToken) {
     try {
       Jwts.parserBuilder().setSigningKey(key()).build().parse(authToken);

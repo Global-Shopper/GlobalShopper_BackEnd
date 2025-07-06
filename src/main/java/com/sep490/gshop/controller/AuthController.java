@@ -1,6 +1,7 @@
 package com.sep490.gshop.controller;
 
 import com.sep490.gshop.common.constants.URLConstant;
+import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.payload.request.ChangePasswordRequest;
 import com.sep490.gshop.payload.request.LoginRequest;
 import com.sep490.gshop.payload.request.RegisterRequest;
@@ -102,23 +103,35 @@ public class AuthController {
 
     @Operation(summary = "nhập mail mới và xác thực bằng OTP")
     @PostMapping("/verify-email")
-    public ResponseEntity<AuthUserResponse> verifyEmail(
+    public ResponseEntity<MessageResponse> verifyEmail(
             @RequestParam String newEmail,
             @RequestParam String otp) {
         log.debug("POST /api/auth/verify-email | email: {}, otp: {}", newEmail, otp);
-        AuthUserResponse response = authService.verifyMail(otp, newEmail);
+        MessageResponse response = authService.verifyMail(otp, newEmail);
         log.debug("POST /api/auth/verify-email | response: {}", response);
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "Xác thực email mới bằng OTP")
-    @PostMapping("/verify-otp-to-update")
-    public ResponseEntity<MessageResponse> verifyNewEmail(
-            @RequestParam String otp) {
-        log.debug("verifyEmail | otp: {}", otp);
-        MessageResponse response = authService.confirmNewMail(otp);
-        log.debug("verifyEmail | response: {}", response);
-        return ResponseEntity.ok(response);
+
+    @GetMapping("/verify-email")
+    @Operation(summary = "Xác thực mail mới")
+    public ResponseEntity<MessageResponse> verifyEmail(@RequestParam("token") String token) {
+        try {
+            MessageResponse response = authService.verifyToUpdateEmail(token);
+            return ResponseEntity.ok(response);
+        } catch (AppException ae) {
+            return ResponseEntity.status(ae.getCode()).body(
+                    MessageResponse.builder()
+                            .isSuccess(false)
+                            .message(ae.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(
+                    MessageResponse.builder()
+                            .isSuccess(false)
+                            .message("Lỗi trong quá trình xác thực email: " + e.getMessage())
+                            .build());
+        }
     }
 
 }

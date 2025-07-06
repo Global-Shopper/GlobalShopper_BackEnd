@@ -12,7 +12,6 @@ import com.sep490.gshop.config.security.jwt.JwtUtils;
 import com.sep490.gshop.entity.Customer;
 import com.sep490.gshop.entity.User;
 import com.sep490.gshop.entity.Wallet;
-import com.sep490.gshop.payload.dto.CustomerDTO;
 import com.sep490.gshop.payload.dto.UserDTO;
 import com.sep490.gshop.payload.request.RegisterRequest;
 import com.sep490.gshop.payload.response.AuthUserResponse;
@@ -34,6 +33,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -429,10 +430,35 @@ public class AuthServiceImpl implements AuthService {
             throw e;
         }
     }
+    @Override
+    public MessageResponse verifyToUpdateEmail(String token) {
+        if (!jwtUtils.validateJwtToken(token)) {
+            throw new AppException(400, "Token xác thực không hợp lệ hoặc đã hết hạn");
+        }
 
+        UUID userId = jwtUtils.getUserIdFromToken(token);
+        String email = jwtUtils.getEmailFromToken(token);
+        User user = userBusiness.getById(userId)
+                .orElseThrow(() -> new AppException(404, "Không tìm thấy người dùng"));
+
+        if (user.isEmailVerified()) {
+            return MessageResponse.builder()
+                    .isSuccess(true)
+                    .message("Email đã được xác thực trước đó")
+                    .build();
+        }
+
+        user.setEmailVerified(true);
+        user.setEmail(email);
+        userBusiness.update(user);
+        return MessageResponse.builder()
+                .isSuccess(true)
+                .message("Xác thực email thành công")
+                .build();
+    }
 
     @Override
-    public AuthUserResponse verifyMail(String otp, String newMail) {
+    public MessageResponse verifyMail(String otp, String newMail) {
         log.debug("verifyMail() Start | email: {}", newMail);
         Integer failCount = failCountCache.get(CacheType.OTP_ATTEMPT, newMail);
         if (failCount != null && failCount >= MAX_RETRY) {
@@ -459,46 +485,51 @@ public class AuthServiceImpl implements AuthService {
             failCountCache.put(CacheType.OTP_ATTEMPT, newMail, (failCount == null ? 1 : failCount + 1));
             throw new AppException(400, "Mã OTP không đúng hoặc đã hết hạn");
         }
-        user.setEmail(newMail);
         typedCacheService.remove(CacheType.OTP_CHANGE_MAIL, newMail);
         failCountCache.remove(CacheType.OTP_ATTEMPT, newMail);
-        sendOTP(newMail, user.getName(), CacheType.OTP_CHANGE_MAIL);
-        user = userBusiness.update(user);
-        var dto = modelMapper.map(user, UserDTO.class);
-        var jwt = jwtUtils.generateJwtToken(user);
+        var test = sendVerificationEmail(user, newMail);
         log.debug("verifyMail() End | Email verified successfully for email: {}", newMail);
-        return AuthUserResponse.builder().token(jwt).user(dto).build();
+        return test;
     }
 
-    public MessageResponse confirmNewMail(String otp) {
-        log.debug("verifyMail() Start | otp: {}", otp);
-        Customer customer = customerBusiness.getById(AuthUtils.getCurrentUserId()).orElseThrow(() -> AppException.builder().message("Bạn cần đăng nhập để sử dụng dịch vụ").code(401).build());
-        Integer failCount = failCountCache.get(CacheType.OTP_ATTEMPT, customer.getEmail());
-        if (failCount != null && failCount >= MAX_RETRY) {
-            String timeRemain = DateTimeUtil.secondToTime(failCountCache.getTimeRemaining(CacheType.OTP_ATTEMPT, customer.getEmail()));
-            throw new AppException(429, "Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau " + timeRemain + ".");
-        }
-
-        if (customer.isEmailVerified()) {
-            log.debug("verifyMail() Email đã được xác thực trước đó");
-            throw ErrorException.builder()
-                    .message("Email đã được xác thực trước đó! Bạn có thể đăng nhập ngay bây giờ.")
-                    .httpCode(400)
-                    .errorCode(ErrorCode.ALREADY_VERIFIED)
-                    .build();
-        }
-        String cachedOtp = typedCacheService.get(CacheType.OTP_CHANGE_MAIL, customer.getEmail());
-        if (cachedOtp == null || !cachedOtp.equals(otp)) {
-            failCountCache.put(CacheType.OTP_ATTEMPT, customer.getEmail(), (failCount == null ? 1 : failCount + 1));
-            throw new AppException(400, "Mã OTP không đúng hoặc đã hết hạn");
-        }
-        typedCacheService.remove(CacheType.OTP_CHANGE_MAIL, customer.getEmail());
-        failCountCache.remove(CacheType.OTP_ATTEMPT, customer.getEmail());
-        customer.setEmailVerified(true);
-        UserDTO user = modelMapper.map(customerBusiness.update(customer), UserDTO.class);
-        log.debug("verifyMail() End | Email verified successfully for email: {}", customer.getEmail());
-        return MessageResponse.builder().message("Thành công").isSuccess(true).build();
+    public MessageResponse sendVerificationEmail(User user, String email) {
+        user.setEmail(email);
+        String token = jwtUtils.generateJwtToken(user);
+        String verificationLink = "http://localhost:8080/api/auth/verify-email?token=" + URLEncoder.encode(token, StandardCharsets.UTF_8);
+        emailService.sendEmail(email, "Xác thực email", "Vui lòng bấm vào link sau để xác thực email: " + verificationLink);
+        return MessageResponse.builder().message("Đã gửi xác thực đến email của bạn, vui lòng check mail").isSuccess(true).build();
     }
+
+
+//    public MessageResponse confirmNewMail(String otp) {
+//        log.debug("verifyMail() Start | otp: {}", otp);
+//        Customer customer = customerBusiness.getById(AuthUtils.getCurrentUserId()).orElseThrow(() -> AppException.builder().message("Bạn cần đăng nhập để sử dụng dịch vụ").code(401).build());
+//        Integer failCount = failCountCache.get(CacheType.OTP_ATTEMPT, customer.getEmail());
+//        if (failCount != null && failCount >= MAX_RETRY) {
+//            String timeRemain = DateTimeUtil.secondToTime(failCountCache.getTimeRemaining(CacheType.OTP_ATTEMPT, customer.getEmail()));
+//            throw new AppException(429, "Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau " + timeRemain + ".");
+//        }
+//
+//        if (customer.isEmailVerified()) {
+//            log.debug("verifyMail() Email đã được xác thực trước đó");
+//            throw ErrorException.builder()
+//                    .message("Email đã được xác thực trước đó! Bạn có thể đăng nhập ngay bây giờ.")
+//                    .httpCode(400)
+//                    .errorCode(ErrorCode.ALREADY_VERIFIED)
+//                    .build();
+//        }
+//        String cachedOtp = typedCacheService.get(CacheType.OTP_CHANGE_MAIL, customer.getEmail());
+//        if (cachedOtp == null || !cachedOtp.equals(otp)) {
+//            failCountCache.put(CacheType.OTP_ATTEMPT, customer.getEmail(), (failCount == null ? 1 : failCount + 1));
+//            throw new AppException(400, "Mã OTP không đúng hoặc đã hết hạn");
+//        }
+//        typedCacheService.remove(CacheType.OTP_CHANGE_MAIL, customer.getEmail());
+//        failCountCache.remove(CacheType.OTP_ATTEMPT, customer.getEmail());
+//        customer.setEmailVerified(true);
+//        UserDTO user = modelMapper.map(customerBusiness.update(customer), UserDTO.class);
+//        log.debug("verifyMail() End | Email verified successfully for email: {}", customer.getEmail());
+//        return MessageResponse.builder().message("Thành công").isSuccess(true).build();
+//    }
 
     private void sendOTP(String email, String name, CacheType cacheType) {
         String otp = RandomUtil.randomNumber(6);
