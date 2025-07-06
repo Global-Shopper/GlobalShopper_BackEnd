@@ -1,9 +1,7 @@
-package com.sep490.gshop.service.implement;
-
+package com.sep490.gshop.utils;
 
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -16,24 +14,23 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
-
-
-@Service
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 @Log4j2
-public class VNPayServiceImpl {
+public class VNPayUtils {
     @Value("${vnp.tmnCode}")
-    private String terminalCode;
+    private static String terminalCode;
     @Value("${vnp.hashSecret}")
-    private String vnpHasSecret;
+    private static String vnpHasSecret;
     @Value("${vnp.url}")
-    private String vnpUrl;
+    private static String vnpUrl;
     //@Value("${vnp.return-url}")
-    private String returnURL = "http://localhost:8080/api/wallet/check-payment-vnpay";
+    private static String returnURL = "http://localhost:8080/api/wallet/check-payment-vnpay";
 
 
 
-    public String createURL(double money, String reason, String userEmail) {
+    public static String createURL(double money, String reason) {
         try {
             String currCode = "VND";
             Map<String, String> vnpParams = new TreeMap<>();
@@ -42,12 +39,11 @@ public class VNPayServiceImpl {
             vnpParams.put("vnp_TmnCode", terminalCode);
             vnpParams.put("vnp_Locale", "vn");
             vnpParams.put("vnp_CurrCode", currCode);
-            vnpParams.put("vnp_TxnRef", reason);
-            vnpParams.put("vnp_OrderInfo", "Thanh toan: " + UUID.randomUUID().toString());
+            vnpParams.put("vnp_TxnRef", "test");
+            vnpParams.put("vnp_OrderInfo", "Thanh toan: " + reason);
             vnpParams.put("vnp_OrderType", "other");
             vnpParams.put("vnp_Amount", ((int) money) + "00");
-            String returnUrlWithEmail = returnURL + "?email=" + URLEncoder.encode(userEmail, StandardCharsets.UTF_8.toString());
-            vnpParams.put("vnp_ReturnUrl", returnUrlWithEmail);
+            vnpParams.put("vnp_ReturnUrl", returnURL);
             vnpParams.put("vnp_CreateDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
             vnpParams.put("vnp_IpAddr", "167.99.74.201");
 
@@ -86,7 +82,7 @@ public class VNPayServiceImpl {
         }
     }
 
-    public Long getAmountFromReturnURL(String returnURL) {
+    public static Long getAmountFromReturnURL(String returnURL) {
         try {
             URL url = new URL(returnURL);
             String query = url.getQuery();
@@ -103,7 +99,6 @@ public class VNPayServiceImpl {
                 }
             }
             String responseCode = params.get("vnp_ResponseCode");
-            String email = params.get("email");
             if (!"00".equals(responseCode)) {
                 return null;
             }
@@ -136,5 +131,5 @@ public class VNPayServiceImpl {
         }
     }
 
-    //public String returnURL() {}
+
 }

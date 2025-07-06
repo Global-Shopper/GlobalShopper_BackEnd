@@ -100,14 +100,24 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "Xác thực email mới bằng OTP")
+    @Operation(summary = "nhập mail mới và xác thực bằng OTP")
     @PostMapping("/verify-email")
     public ResponseEntity<AuthUserResponse> verifyEmail(
-            @RequestParam String email,
+            @RequestParam String newEmail,
             @RequestParam String otp) {
-        log.debug("POST /api/auth/verify-email | email: {}, otp: {}", email, otp);
-        AuthUserResponse response = authService.verifyNewMail(otp, email);
+        log.debug("POST /api/auth/verify-email | email: {}, otp: {}", newEmail, otp);
+        AuthUserResponse response = authService.verifyMail(otp, newEmail);
         log.debug("POST /api/auth/verify-email | response: {}", response);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Xác thực email mới bằng OTP")
+    @PostMapping("/verify-otp-to-update")
+    public ResponseEntity<MessageResponse> verifyNewEmail(
+            @RequestParam String otp) {
+        log.debug("verifyEmail | otp: {}", otp);
+        MessageResponse response = authService.confirmNewMail(otp);
+        log.debug("verifyEmail | response: {}", response);
         return ResponseEntity.ok(response);
     }
 

@@ -43,7 +43,7 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
             newAddress.setCustomer(modelMapper.map(currentUser, Customer.class));
 
             if (newAddress.isDefault()) {
-                setDefaultShippingAddress();
+                unsetDefaultShippingAddress();
                 newAddress.setDefault(true);
             }
 
@@ -71,7 +71,7 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
             }
             modelMapper.map(request, address);
             if (address.isDefault()) {
-                setDefaultShippingAddress();
+                unsetDefaultShippingAddress();
                 address.setDefault(true);
             }
             ShippingAddress updated = shippingAddressBusiness.update(address);
@@ -167,7 +167,7 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
                 throw AppException.builder().message("Bạn không có quyền sửa địa chỉ này").build();
             }
             if(IsDefaultShippingAddress()){
-                setDefaultShippingAddress();
+                unsetDefaultShippingAddress();
             }
             address.setDefault(true);
             shippingAddressBusiness.update(address);
@@ -192,7 +192,7 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
         }
         return !addedList.isEmpty();
     }
-    public void setDefaultShippingAddress() {
+    public void unsetDefaultShippingAddress() {
         User user = modelMapper.map(AuthUtils.getCurrentUser(), User.class);
         var list = shippingAddressBusiness.findShippingAddressByUserId(user.getId()).stream()
                 .map(sa -> modelMapper.map(sa, ShippingAddress.class))

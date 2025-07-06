@@ -1,15 +1,23 @@
 package com.sep490.gshop.controller;
 
+import com.cloudinary.Url;
 import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.payload.dto.WalletDTO;
 import com.sep490.gshop.payload.request.WalletRequest;
+import com.sep490.gshop.payload.response.MessageResponse;
+import com.sep490.gshop.payload.response.MoneyChargeResponse;
 import com.sep490.gshop.service.WalletService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.List;
 
 @RestController
@@ -25,46 +33,26 @@ public class WalletController {
     }
 
     @GetMapping
-    public ResponseEntity<List<WalletDTO>> getAllWallets() {
-        log.info("getAllWallets() WalletController start");
-        List<WalletDTO> wallets = walletService.getAllWallets();
-        log.info("getAllWallets() WalletController end | Wallets size: {}", wallets.size());
-        return ResponseEntity.ok().body(wallets);
+    public WalletDTO getWallet() {
+        log.debug("getWallet() Start");
+        WalletDTO wallet = walletService.getWalletByCurrent();
+        log.debug("getWallet() End | result: {}", wallet);
+        return wallet;
     }
-
-    @GetMapping("{id}")
-    public ResponseEntity<WalletDTO> getWalletById(@PathVariable String id) {
-        log.info("getWalletById() WalletController start | id: {}", id);
-        WalletDTO wallet = walletService.getWalletById(id);
-        log.info("getWalletById() WalletController end | Wallet: {}", wallet);
-        return ResponseEntity.ok().body(wallet);
-    }
-
     @PostMapping
-    public ResponseEntity<WalletDTO> createWallet(@Valid @RequestBody WalletRequest walletRequest) {
-        log.info("createWallet() WalletController start | walletDTO: {}", walletRequest);
-        WalletDTO createdWallet = walletService.createWallet(walletRequest);
-        log.info("createWallet() WalletController end | Created Wallet: {}", createdWallet);
-        return ResponseEntity.ok().body(createdWallet);
+    public MoneyChargeResponse repositMoney(@RequestBody WalletRequest walletRequest) {
+        log.debug("repositMoney() Start");
+        var response = walletService.depositMoney(walletRequest);
+        log.debug("repositMoney() End | response: {}", response);
+        return response;
+    }
+    @GetMapping("/check-payment-vnpay")
+    public MessageResponse checkPaymentVnpay(HttpServletRequest request) {
+        String fullURL = request.getRequestURL().toString();
+        String queryString = request.getQueryString();
+
+        String completeURL = fullURL + (queryString != null ? "?" + queryString : "");
+        return walletService.processVNPayReturn(completeURL);
     }
 
-    @PutMapping("{id}")
-    public ResponseEntity<WalletDTO> updateWallet(@PathVariable String id, @RequestBody WalletRequest walletRequest) {
-        log.info("updateWallet() WalletController start | id: {}, walletRequest: {}", id, walletRequest);
-        WalletDTO updatedWallet = walletService.updateWallet(id, walletRequest);
-        log.info("updateWallet() WalletController end | Updated Wallet: {}", updatedWallet);
-        return ResponseEntity.ok().body(updatedWallet);
-    }
-
-    @DeleteMapping("{id}")
-    public ResponseEntity<String> deleteWallet(@PathVariable String id) {
-        log.info("deleteWallet() WalletController start | id: {}", id);
-        boolean check = walletService.deleteWallet(id);
-        log.info("deleteWallet() WalletController end | Wallet with id: {} deleted", id);
-        if (check) {
-            return ResponseEntity.ok("Xoá thành công");
-        } else {
-            return ResponseEntity.status(404).body("Xoá không thành công");
-        }
-    }
 }

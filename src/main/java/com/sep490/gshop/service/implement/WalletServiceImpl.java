@@ -8,8 +8,11 @@ import com.sep490.gshop.entity.User;
 import com.sep490.gshop.entity.Wallet;
 import com.sep490.gshop.payload.dto.WalletDTO;
 import com.sep490.gshop.payload.request.WalletRequest;
+import com.sep490.gshop.payload.response.MessageResponse;
+import com.sep490.gshop.payload.response.MoneyChargeResponse;
 import com.sep490.gshop.service.WalletService;
 import com.sep490.gshop.utils.AuthUtils;
+import com.sep490.gshop.utils.VNPayUtils;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,92 +38,85 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
-    public List<WalletDTO> getAllWallets() {
-        try {
-            log.debug("getAllWallets() WalletServiceImpl start");
-            List<WalletDTO> wallets = walletBusiness.getAll().stream()
-                    .map(wallet -> modelMapper.map(wallet, WalletDTO.class))
-                    .toList();
-            log.debug("getAllWallets() WalletServiceImpl end | Wallets size: {}", wallets.size());
-            return wallets;
-        } catch (Exception e) {
-            log.error("getAllWallets() WalletServiceImpl Error | message: {}", e.getMessage(), e);
-            throw e;
-        }
+    public MoneyChargeResponse depositMoney(WalletRequest request) {
+       Customer customer = customerBusiness.getById(AuthUtils.getCurrentUserId()).orElseThrow(() -> AppException.builder().message("Bạn cần đăng nhập để sử dụng dịch vụ").code(401).build());
+       Wallet wallet = walletBusiness.getById(customer.getWallet().getId()).orElseThrow(() -> AppException.builder().code(404).message("Không tìm thấy ví của bạn").build());
+        var url = vnPayServiceImpl.createURL(request.getBalance(), "Nạp tiền vào tài khoản " + customer.getName(), customer.getEmail());
+        return MoneyChargeResponse.builder().isSuccess(true).message("Đã yêu cầu nạp thành công số tiền "+ request.getBalance() + " vào ví của bạn").url(url).build();
     }
 
     @Override
-    public WalletDTO createWallet(WalletRequest walletRequest) {
+    public MessageResponse processVNPayReturn(String returnURL) {
+        log.debug("processVNPayReturn() Start | returnURL: {}", returnURL);
         try {
-            log.debug("createWallet() WalletServiceImpl start | walletRequest: {}", walletRequest);
-            Customer customer = customerBusiness.getById(AuthUtils.getCurrentUserId())
-                    .orElseThrow(() -> new AppException(404,"Customer not found"));
-            Wallet wallet = Wallet.builder()
-                    .customer(customer)
-                    .balance(walletRequest.getBalance())
+            Long amount = vnPayServiceImpl.getAmountFromReturnURL(returnURL);
+            if (amount == null) {
+                return MessageResponse.builder()
+                        .isSuccess(false)
+                        .message("Thanh toán VNPay không thành công hoặc dữ liệu không hợp lệ")
+                        .build();
+            }
+
+            UUID currentUserId = AuthUtils.getCurrentUserId();
+            Customer customer = customerBusiness.getById(currentUserId)
+                    .orElseThrow(() -> AppException.builder()
+                            .message("Bạn cần đăng nhập để sử dụng dịch vụ")
+                            .code(401)
+                            .build());
+
+            Wallet wallet = walletBusiness.getById(customer.getWallet().getId())
+                    .orElseThrow(() -> AppException.builder()
+                            .code(404)
+                            .message("Không tìm thấy ví của bạn")
+                            .build());
+            wallet.setBalance(wallet.getBalance() + amount);
+            walletBusiness.update(wallet);
+            log.debug("processVNPayReturn() End | updated balance: {}", wallet.getBalance());
+
+            return MessageResponse.builder()
+                    .isSuccess(true)
+                    .message("Nạp tiền thành công: " + amount + " VND vào ví")
                     .build();
-            var deposit = vnPayServiceImpl.createURL(wallet.getBalance());
-            WalletDTO createdWallet = modelMapper.map(walletBusiness.create(wallet), WalletDTO.class);
-            createdWallet.setUrl(deposit);
-            log.debug("createWallet() WalletServiceImpl end | Created Wallet: {}", createdWallet);
-            return createdWallet;
-        } catch (Exception e) {
-            log.error("createWallet() WalletServiceImpl Error | message: {}", e.getMessage(), e);
+        }catch (Exception e) {
+            log.error("processVNPayReturn() Unexpected Exception | message: {}", e.getMessage());
             throw e;
         }
     }
+
+
     @Override
-    public WalletDTO getWalletById(String id) {
+    public MoneyChargeResponse withdrawMoneyRequest(WalletRequest request) {
+        return null;
+    }
+
+    @Override
+    public WalletDTO getWalletByCurrent() {
+        log.debug("getWalletByCurrent() Start");
         try {
-            log.debug("getWalletById() WalletServiceImpl start | id: {}", id);
-            Wallet wallet = walletBusiness.getById(UUID.fromString(id))
-                    .orElseThrow(() -> new AppException(404, "Wallet not found"));
+            Customer customer = customerBusiness.getById(AuthUtils.getCurrentUserId())
+                    .orElseThrow(() -> AppException.builder()
+                            .message("Bạn cần đăng nhập để sử dụng dịch vụ")
+                            .code(401)
+                            .build());
+
+            Wallet wallet = walletBusiness.getById(customer.getWallet().getId())
+                    .orElseThrow(() -> AppException.builder()
+                            .code(404)
+                            .message("Không tìm thấy ví của bạn, hãy thử lại")
+                            .build());
+
             WalletDTO walletDTO = modelMapper.map(wallet, WalletDTO.class);
-            log.debug("getWalletById() WalletServiceImpl end | Wallet: {}", walletDTO);
+            log.debug("getWalletByCurrent() End | result: {}", walletDTO);
             return walletDTO;
+
+        } catch (AppException ae) {
+            log.error("getWalletByCurrent() AppException | message: {}", ae.getMessage());
+            throw ae;
         } catch (Exception e) {
-            log.error("getWalletById() WalletServiceImpl Error | message: {}", e.getMessage(), e);
+            log.error("getWalletByCurrent() Unexpected Exception | message: {}", e.getMessage(), e);
             throw e;
         }
     }
 
-    @Override
-    public WalletDTO updateWallet(String id, WalletRequest walletRequest) {
-        try {
-            log.debug("updateWallet() WalletServiceImpl start | id: {}, walletRequest: {}", id, walletRequest);
-            Wallet existingWallet = walletBusiness.getById(UUID.fromString(id))
-                    .orElseThrow(() -> new AppException(404, "Wallet not found"));
-            Customer customer = customerBusiness.getById(UUID.fromString(id))
-                    .orElseThrow(() -> new AppException(404, "Customer not found"));
-            existingWallet.setCustomer(customer);
-            existingWallet.setBalance(walletRequest.getBalance());
-            Wallet updatedWallet = walletBusiness.update(existingWallet);
-            WalletDTO updatedWalletDTO = modelMapper.map(updatedWallet, WalletDTO.class);
-            log.debug("updateWallet() WalletServiceImpl end | Updated Wallet: {}", updatedWalletDTO);
-            return updatedWalletDTO;
-        } catch (Exception e) {
-            log.error("updateWallet() WalletServiceImpl Error | message: {}", e.getMessage(), e);
-            throw e;
-        }
-    }
-
-    @Override
-    public boolean deleteWallet(String id) {
-        try {
-            log.debug("deleteWallet() WalletServiceImpl start | id: {}", id);
-            Wallet wallet = walletBusiness.getById(UUID.fromString(id))
-                    .orElseThrow(() -> new AppException(404, "Wallet not found"));
-            Customer customer = customerBusiness.getById(wallet.getCustomer().getId())
-                    .orElseThrow(() -> new AppException(404, "Customer not found"));
-            customer.setWallet(null);
-            customerBusiness.update(customer);
-            boolean check = walletBusiness.delete(UUID.fromString(id));
-            log.debug("deleteWallet() WalletServiceImpl end | Wallet with id: {} deleted", id);
-            return check;
-        } catch (Exception e) {
-            log.error("deleteWallet() WalletServiceImpl Error | message: {}", e.getMessage(), e);
-            throw e;
-        }
-    }
 
 }

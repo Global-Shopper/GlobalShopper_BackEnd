@@ -14,7 +14,10 @@ public interface AuthService {
     ResetPasswordValidResponse verifyOtpResetPassword(String otp, String email);
     AuthUserResponse verifyOtp(String email, String otp);
     AuthUserResponse resetPassword(String newPassword, String token);
+    //Update mail mới
     MessageResponse changeMail();
-    AuthUserResponse verifyNewMail(String otp, String email);
+    AuthUserResponse verifyMail(String otp, String email);
+
+    MessageResponse confirmNewMail(String otp);
 
 }
