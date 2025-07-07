@@ -39,7 +39,7 @@ public class WalletServiceImpl implements WalletService {
        Customer customer = customerBusiness.getById(AuthUtils.getCurrentUserId()).orElseThrow(() -> AppException.builder().message("Bạn cần đăng nhập để sử dụng dịch vụ").code(401).build());
        Wallet wallet = walletBusiness.getById(customer.getWallet().getId()).orElseThrow(() -> AppException.builder().code(404).message("Không tìm thấy ví của bạn").build());
         var url = vnPayServiceImpl.createURL(request.getBalance(), "Nạp tiền vào tài khoản " + customer.getName(), customer.getEmail());
-        return MoneyChargeResponse.builder().isSuccess(true).message("Đã yêu cầu nạp thành công số tiền "+ request.getBalance() + " vào ví của bạn").url(url).build();
+        return MoneyChargeResponse.builder().isSuccess(true).message("Đã yêu cầu nạp thành công số tiền "+ request.getBalance() + "VNĐ vào ví của bạn").url(url).build();
     }
 
     @Override
@@ -53,12 +53,10 @@ public class WalletServiceImpl implements WalletService {
                         .message("Thanh toán VNPay không thành công hoặc dữ liệu không hợp lệ")
                         .build();
             }
-
             Customer customer = customerBusiness.findByEmail(email);
             if(email == null || customer == null) {
                 throw AppException.builder().message("Không tìm thấy người dùng, thử lại sau").code(404).build();
             }
-
             Wallet wallet = walletBusiness.getById(customer.getWallet().getId())
                     .orElseThrow(() -> AppException.builder()
                             .code(404)
@@ -70,7 +68,7 @@ public class WalletServiceImpl implements WalletService {
 
             return MessageResponse.builder()
                     .isSuccess(true)
-                    .message("Nạp tiền thành công: " + amount + " VND vào ví")
+                    .message("Nạp tiền thành công: " + amount + "VNĐ vào ví")
                     .build();
         }catch (Exception e) {
             log.error("processVNPayReturn() Unexpected Exception | message: {}", e.getMessage());
