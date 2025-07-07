@@ -20,6 +20,6 @@ public interface WalletService {
     MoneyChargeResponse depositMoney(WalletRequest request);
     MoneyChargeResponse withdrawMoneyRequest(WalletRequest request);
     WalletDTO getWalletByCurrent();
-    MessageResponse processVNPayReturn(String returnURL);
+    MessageResponse processVNPayReturn(String email, String status, String amount);
 
 }

@@ -1,24 +1,14 @@
 package com.sep490.gshop.controller;
 
-import com.cloudinary.Url;
 import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.payload.dto.WalletDTO;
 import com.sep490.gshop.payload.request.WalletRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.MoneyChargeResponse;
 import com.sep490.gshop.service.WalletService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
-import java.net.URL;
-import java.util.List;
 
 @RestController
 @RequestMapping(URLConstant.WALLET)
@@ -40,19 +30,19 @@ public class WalletController {
         return wallet;
     }
     @PostMapping
-    public MoneyChargeResponse repositMoney(@RequestBody WalletRequest walletRequest) {
+    public MoneyChargeResponse depositMoney(@RequestBody WalletRequest walletRequest) {
         log.info("repositMoney() Start");
         var response = walletService.depositMoney(walletRequest);
         log.info("repositMoney() End | response: {}", response);
         return response;
     }
     @GetMapping("/check-payment-vnpay")
-    public MessageResponse checkPaymentVnpay(HttpServletRequest request) {
-        String fullURL = request.getRequestURL().toString();
-        String queryString = request.getQueryString();
-
-        String completeURL = fullURL + (queryString != null ? "?" + queryString : "");
-        return walletService.processVNPayReturn(completeURL);
+    public MessageResponse checkPaymentVnpay(@RequestParam("email") String email,
+                                             @RequestParam("vnp_ResponseCode") String status,
+                                             @RequestParam("vnp_Amount") String amount) {
+        var message = walletService.processVNPayReturn(email, status, amount);
+        log.info("checkPaymentVnpay() End | response: {}", message);
+        return message;
     }
 
 }

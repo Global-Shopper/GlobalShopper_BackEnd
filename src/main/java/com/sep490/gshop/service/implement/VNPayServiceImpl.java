@@ -17,6 +17,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 
 @Service
@@ -35,6 +36,7 @@ public class VNPayServiceImpl {
 
     public String createURL(double money, String reason, String userEmail) {
         try {
+            var random = ThreadLocalRandom.current();
             String currCode = "VND";
             Map<String, String> vnpParams = new TreeMap<>();
             vnpParams.put("vnp_Version", "2.1.0");
@@ -42,8 +44,8 @@ public class VNPayServiceImpl {
             vnpParams.put("vnp_TmnCode", terminalCode);
             vnpParams.put("vnp_Locale", "vn");
             vnpParams.put("vnp_CurrCode", currCode);
-            vnpParams.put("vnp_TxnRef", reason);
-            vnpParams.put("vnp_OrderInfo", "Thanh toan: " + UUID.randomUUID().toString());
+            vnpParams.put("vnp_TxnRef", random.toString());
+            vnpParams.put("vnp_OrderInfo", reason + " số tiền: " + money);
             vnpParams.put("vnp_OrderType", "other");
             vnpParams.put("vnp_Amount", ((int) money) + "00");
             String returnUrlWithEmail = returnURL + "?email=" + URLEncoder.encode(userEmail, StandardCharsets.UTF_8.toString());
@@ -86,37 +88,6 @@ public class VNPayServiceImpl {
         }
     }
 
-    public Long getAmountFromReturnURL(String returnURL) {
-        try {
-            URL url = new URL(returnURL);
-            String query = url.getQuery();
-            Map<String, String> params = new HashMap<>();
-            if (query != null && !query.isEmpty()) {
-                String[] pairs = query.split("&");
-                for (String pair : pairs) {
-                    int idx = pair.indexOf('=');
-                    if (idx > 0 && idx < pair.length() - 1) {
-                        String key = URLDecoder.decode(pair.substring(0, idx), StandardCharsets.UTF_8);
-                        String value = URLDecoder.decode(pair.substring(idx + 1), StandardCharsets.UTF_8);
-                        params.put(key, value);
-                    }
-                }
-            }
-            String responseCode = params.get("vnp_ResponseCode");
-            String email = params.get("email");
-            if (!"00".equals(responseCode)) {
-                return null;
-            }
-            String amountStr = params.get("vnp_Amount");
-            if (amountStr == null) return null;
-            long amount = Long.parseLong(amountStr);
-            return amount / 100;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
     public static String generateHMAC(String secretKey, String signData) {
         try {
             Mac hmacSha512 = Mac.getInstance("HmacSHA512");
@@ -136,5 +107,4 @@ public class VNPayServiceImpl {
         }
     }
 
-    //public String returnURL() {}
 }

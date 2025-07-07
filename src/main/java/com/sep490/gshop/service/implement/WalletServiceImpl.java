@@ -4,7 +4,6 @@ import com.sep490.gshop.business.CustomerBusiness;
 import com.sep490.gshop.business.WalletBusiness;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.Customer;
-import com.sep490.gshop.entity.User;
 import com.sep490.gshop.entity.Wallet;
 import com.sep490.gshop.payload.dto.WalletDTO;
 import com.sep490.gshop.payload.request.WalletRequest;
@@ -12,13 +11,11 @@ import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.MoneyChargeResponse;
 import com.sep490.gshop.service.WalletService;
 import com.sep490.gshop.utils.AuthUtils;
-import com.sep490.gshop.utils.VNPayUtils;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -46,30 +43,28 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
-    public MessageResponse processVNPayReturn(String returnURL) {
-        log.debug("processVNPayReturn() Start | returnURL: {}", returnURL);
+    public MessageResponse processVNPayReturn(String email, String status, String amount) {
+        log.debug("processVNPayReturn() Start | email: {}", email);
         try {
-            Long amount = vnPayServiceImpl.getAmountFromReturnURL(returnURL);
-            if (amount == null) {
+            double amountGet = Double.parseDouble(amount);
+            if (!status.equals("00")) {
                 return MessageResponse.builder()
                         .isSuccess(false)
                         .message("Thanh toán VNPay không thành công hoặc dữ liệu không hợp lệ")
                         .build();
             }
 
-            UUID currentUserId = AuthUtils.getCurrentUserId();
-            Customer customer = customerBusiness.getById(currentUserId)
-                    .orElseThrow(() -> AppException.builder()
-                            .message("Bạn cần đăng nhập để sử dụng dịch vụ")
-                            .code(401)
-                            .build());
+            Customer customer = customerBusiness.findByEmail(email);
+            if(email == null || customer == null) {
+                throw AppException.builder().message("Không tìm thấy người dùng, thử lại sau").code(404).build();
+            }
 
             Wallet wallet = walletBusiness.getById(customer.getWallet().getId())
                     .orElseThrow(() -> AppException.builder()
                             .code(404)
                             .message("Không tìm thấy ví của bạn")
                             .build());
-            wallet.setBalance(wallet.getBalance() + amount);
+            wallet.setBalance(wallet.getBalance() + amountGet);
             walletBusiness.update(wallet);
             log.debug("processVNPayReturn() End | updated balance: {}", wallet.getBalance());
 
