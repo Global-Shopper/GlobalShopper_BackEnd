@@ -5,6 +5,7 @@ import com.sep490.gshop.payload.response.AuthUserResponse;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.MessageWithTokenResponse;
 import com.sep490.gshop.payload.response.ResetPasswordValidResponse;
+import org.springframework.http.ResponseEntity;
 
 public interface AuthService {
     AuthUserResponse login(String email, String password);
@@ -18,6 +19,6 @@ public interface AuthService {
     //Update mail mới
     MessageResponse changeMail();
     MessageResponse verifyMail(String otp, String email);
-    MessageWithTokenResponse verifyToUpdateEmail(String token);
+    ResponseEntity<Void> verifyToUpdateEmail(String token);
 
 }

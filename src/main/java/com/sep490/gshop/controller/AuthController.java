@@ -113,21 +113,10 @@ public class AuthController {
         return response;
     }
 
-    @GetMapping("/verify-email")
+    @GetMapping("/verify-new-email")
     @Operation(summary = "Xác thực mail mới")
-    public MessageWithTokenResponse verifyEmail(@RequestParam("token") String token) {
-        log.info("verifyEmail(token) Start | token: {}", token);
-        try {
-            MessageWithTokenResponse response = authService.verifyToUpdateEmail(token);
-            log.info("verifyEmail(token) End | response: {}", response);
-            return response;
-        }catch (Exception e) {
-            log.error("verifyEmail(token) Unexpected Exception | message: {}", e.getMessage(), e);
-            return MessageWithTokenResponse.builder()
-                            .isSuccess(false)
-                            .message("Lỗi trong quá trình xác thực email: " + e.getMessage())
-                            .build();
-        }
+    public ResponseEntity<Void> verifyEmail(@RequestParam("token") String token) {
+        return authService.verifyToUpdateEmail(token);
     }
 
 

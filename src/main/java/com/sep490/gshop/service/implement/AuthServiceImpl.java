@@ -27,6 +27,8 @@ import com.sep490.gshop.utils.RandomUtil;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -418,7 +420,7 @@ public class AuthServiceImpl implements AuthService {
             sendOTP(currentEmail, customer.getName(), CacheType.OTP_CHANGE_MAIL);
             log.debug("changeMail() End | userId: {}, message: OTP đã được gửi đến email hiện tại", currentId);
             return MessageResponse.builder()
-                    .message("Hãy xác nhận email hiện tại trước khi tiếp tục. Mã OTP đã được gửi đến email để xác nhận.")
+                    .message("Hãy xác nhận email hiện tại của bạn còn khả dụng trước khi tiếp tục. Mã OTP đã được gửi đến email để xác nhận.")
                     .isSuccess(true)
                     .build();
         } catch (AppException ae) {
@@ -430,7 +432,7 @@ public class AuthServiceImpl implements AuthService {
         }
     }
     @Override
-    public MessageWithTokenResponse verifyToUpdateEmail(String token) {
+    public ResponseEntity<Void> verifyToUpdateEmail(String token) {
         log.debug("verifyToUpdateEmail() Start | token: {}", token);
         try {
             if (!jwtUtils.validateJwtToken(token)) {
@@ -441,27 +443,23 @@ public class AuthServiceImpl implements AuthService {
             User user = userBusiness.getById(userId)
                     .orElseThrow(() -> new AppException(404, "Không tìm thấy người dùng"));
 
-            if (user.isEmailVerified()) {
-                log.debug("verifyToUpdateEmail() Email đã được xác thực trước đó");
-                return MessageWithTokenResponse.builder()
-                        .isSuccess(true)
-                        .message("Email đã được xác thực trước đó")
-                        .build();
-            }
             user.setEmail(email);
             userBusiness.update(user);
             var jwt = jwtUtils.generateJwtToken(user);
             log.debug("verifyToUpdateEmail() End | Email verified successfully for email: {}", email);
-            return MessageWithTokenResponse.builder()
-                    .isSuccess(true)
-                    .message("Xác thực email thành công")
-                    .token(jwt)
+
+            String redirectUrl = "http://localhost:5173/account-center?token=" + URLEncoder.encode(jwt, StandardCharsets.UTF_8);
+
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .header("Location", redirectUrl)
                     .build();
-        }catch (Exception e) {
+
+        } catch (Exception e) {
             log.error("verifyToUpdateEmail() Unexpected Exception | message: {}", e.getMessage());
             throw e;
         }
     }
+
 
     @Override
     public MessageResponse verifyMail(String otp, String newMail) {
@@ -504,7 +502,7 @@ public class AuthServiceImpl implements AuthService {
         log.debug("sendVerificationEmail() Start | email: {}", email);
         try {
             String token = jwtUtils.generateTempTokenChangeMail(user, email);
-            String verificationLink = "http://localhost:8080/api/auth/verify-email?token=" + URLEncoder.encode(token, StandardCharsets.UTF_8);
+            String verificationLink = "http://localhost:8080/api/auth/verify-new-email?token=" + URLEncoder.encode(token, StandardCharsets.UTF_8);
             emailService.sendEmail(email, "Xác thực email", "Vui lòng bấm vào link sau để xác thực email: " + verificationLink);
             log.debug("sendVerificationEmail() End | Verification email sent to: {}", email);
             return MessageResponse.builder()
