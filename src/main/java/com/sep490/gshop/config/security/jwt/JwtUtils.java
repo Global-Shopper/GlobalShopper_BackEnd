@@ -26,6 +26,7 @@ public class JwtUtils {
   private int jwtExpirationMs;
 
   private int jwtTempExpirationInMs = 300000;
+
   public String generateJwtToken(Authentication authentication) {
 
     UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
@@ -52,6 +53,17 @@ public class JwtUtils {
             .setClaims(claims)
             .setIssuedAt(new Date())
             .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
+            .signWith(key(), SignatureAlgorithm.HS256)
+            .compact();
+  }
+
+  public String generateTempTokenChangeMail(User user, String email) {
+    Claims claims = Jwts.claims().setSubject(email);
+    claims.put("id", user.getId());
+    return Jwts.builder()
+            .setClaims(claims)
+            .setIssuedAt(new Date())
+            .setExpiration(new Date((new Date()).getTime() + jwtTempExpirationInMs))
             .signWith(key(), SignatureAlgorithm.HS256)
             .compact();
   }

@@ -416,8 +416,6 @@ public class AuthServiceImpl implements AuthService {
                         .build();
             }
             sendOTP(currentEmail, customer.getName(), CacheType.OTP_CHANGE_MAIL);
-            customer.setEmailVerified(false);
-            customerBusiness.update(customer);
             log.debug("changeMail() End | userId: {}, message: OTP đã được gửi đến email hiện tại", currentId);
             return MessageResponse.builder()
                     .message("Hãy xác nhận email hiện tại trước khi tiếp tục. Mã OTP đã được gửi đến email để xác nhận.")
@@ -450,14 +448,14 @@ public class AuthServiceImpl implements AuthService {
                         .message("Email đã được xác thực trước đó")
                         .build();
             }
-            user.setEmailVerified(true);
             user.setEmail(email);
             userBusiness.update(user);
+            var jwt = jwtUtils.generateJwtToken(user);
             log.debug("verifyToUpdateEmail() End | Email verified successfully for email: {}", email);
             return MessageWithTokenResponse.builder()
                     .isSuccess(true)
                     .message("Xác thực email thành công")
-                    .token(token)
+                    .token(jwt)
                     .build();
         }catch (Exception e) {
             log.error("verifyToUpdateEmail() Unexpected Exception | message: {}", e.getMessage());
@@ -483,14 +481,6 @@ public class AuthServiceImpl implements AuthService {
             if(customerBusiness.existsByEmail(newMail)){
                 throw AppException.builder().message("Email trùng với email có trong hệ thống, hãy thử mail khác").code(400).build();
             }
-            if (user.isEmailVerified()) {
-                log.debug("verifyMail() Email đã được xác thực trước đó");
-                throw ErrorException.builder()
-                        .message("Email đã được xác thực trước đó! Bạn có thể đăng nhập ngay bây giờ.")
-                        .httpCode(400)
-                        .errorCode(ErrorCode.ALREADY_VERIFIED)
-                        .build();
-            }
             String cachedOtp = typedCacheService.get(CacheType.OTP_CHANGE_MAIL, user.getEmail());
             if (cachedOtp == null || !cachedOtp.equals(otp)) {
                 failCountCache.put(CacheType.OTP_ATTEMPT, newMail, (failCount == null ? 1 : failCount + 1));
@@ -513,8 +503,7 @@ public class AuthServiceImpl implements AuthService {
     public MessageResponse sendVerificationEmail(User user, String email) {
         log.debug("sendVerificationEmail() Start | email: {}", email);
         try {
-            user.setEmail(email);
-            String token = jwtUtils.generateJwtToken(user);
+            String token = jwtUtils.generateTempTokenChangeMail(user, email);
             String verificationLink = "http://localhost:8080/api/auth/verify-email?token=" + URLEncoder.encode(token, StandardCharsets.UTF_8);
             emailService.sendEmail(email, "Xác thực email", "Vui lòng bấm vào link sau để xác thực email: " + verificationLink);
             log.debug("sendVerificationEmail() End | Verification email sent to: {}", email);
