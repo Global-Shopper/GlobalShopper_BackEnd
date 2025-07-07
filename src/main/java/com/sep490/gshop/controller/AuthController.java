@@ -8,6 +8,7 @@ import com.sep490.gshop.payload.request.RegisterRequest;
 import com.sep490.gshop.payload.request.ResetPasswordRequest;
 import com.sep490.gshop.payload.response.AuthUserResponse;
 import com.sep490.gshop.payload.response.MessageResponse;
+import com.sep490.gshop.payload.response.MessageWithTokenResponse;
 import com.sep490.gshop.payload.response.ResetPasswordValidResponse;
 import com.sep490.gshop.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -94,44 +95,40 @@ public class AuthController {
 
     @Operation(summary = "Thay đổi email của user hiện tại")
     @PostMapping("/change-email")
-    public ResponseEntity<MessageResponse> changeEmail() {
-        log.debug("POST /api/auth/change-email");
+    public MessageResponse changeEmail() {
+        log.info("changeEmail() Start");
         MessageResponse response = authService.changeMail();
-        log.debug("POST /api/auth/change-email | response: {}", response);
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        log.info("changeEmail() End | response: {}", response);
+        return response;
     }
 
-    @Operation(summary = "nhập mail mới và xác thực bằng OTP")
+    @Operation(summary = "Nhập mail mới và xác thực bằng OTP")
     @PostMapping("/verify-email")
-    public ResponseEntity<MessageResponse> verifyEmail(
+    public MessageResponse verifyEmail(
             @RequestParam String newEmail,
             @RequestParam String otp) {
-        log.debug("POST /api/auth/verify-email | email: {}, otp: {}", newEmail, otp);
+        log.info("verifyEmail() Start | newEmail: {}, otp: {}", newEmail, otp);
         MessageResponse response = authService.verifyMail(otp, newEmail);
-        log.debug("POST /api/auth/verify-email | response: {}", response);
-        return ResponseEntity.ok(response);
+        log.info("verifyEmail() End | response: {}", response);
+        return response;
     }
-
 
     @GetMapping("/verify-email")
     @Operation(summary = "Xác thực mail mới")
-    public ResponseEntity<MessageResponse> verifyEmail(@RequestParam("token") String token) {
+    public MessageWithTokenResponse verifyEmail(@RequestParam("token") String token) {
+        log.info("verifyEmail(token) Start | token: {}", token);
         try {
-            MessageResponse response = authService.verifyToUpdateEmail(token);
-            return ResponseEntity.ok(response);
-        } catch (AppException ae) {
-            return ResponseEntity.status(ae.getCode()).body(
-                    MessageResponse.builder()
-                            .isSuccess(false)
-                            .message(ae.getMessage())
-                            .build());
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(
-                    MessageResponse.builder()
+            MessageWithTokenResponse response = authService.verifyToUpdateEmail(token);
+            log.info("verifyEmail(token) End | response: {}", response);
+            return response;
+        }catch (Exception e) {
+            log.error("verifyEmail(token) Unexpected Exception | message: {}", e.getMessage(), e);
+            return MessageWithTokenResponse.builder()
                             .isSuccess(false)
                             .message("Lỗi trong quá trình xác thực email: " + e.getMessage())
-                            .build());
+                            .build();
         }
     }
+
 
 }

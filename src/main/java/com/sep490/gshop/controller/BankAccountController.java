@@ -26,9 +26,9 @@ public class BankAccountController {
 
     @PostMapping
     public ResponseEntity<BankAccountDTO> createBankAccount(@Valid @RequestBody BankAccountRequest request) {
-        log.debug("createBankAccount() Start | request: {}", request);
+        log.info("createBankAccount() Start | request: {}", request);
         BankAccountDTO created = bankAccountService.createBankAccount(request);
-        log.debug("createBankAccount() End | result: {}", created);
+        log.info("createBankAccount() End | result: {}", created);
         return ResponseEntity.ok(created);
     }
 
@@ -37,33 +37,33 @@ public class BankAccountController {
     public ResponseEntity<BankAccountDTO> updateBankAccount(
             @PathVariable UUID id,
             @Valid @RequestBody BankAccountUpdateRequest request) {
-        log.debug("updateBankAccount() Start | id: {}, request: {}", id, request);
+        log.info("updateBankAccount() Start | id: {}, request: {}", id, request);
         BankAccountDTO updated = bankAccountService.updateBankAccount(id, request);
-        log.debug("updateBankAccount() End | result: {}", updated);
+        log.info("updateBankAccount() End | result: {}", updated);
         return ResponseEntity.ok(updated);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<BankAccountDTO> getBankAccountByCurrent(@PathVariable UUID id) {
-        log.debug("getBankAccountByCurrent() Start | id: {}", id);
+        log.info("getBankAccountByCurrent() Start | id: {}", id);
         BankAccountDTO dto = bankAccountService.getBankAccountByCurrent(id);
-        log.debug("getBankAccountByCurrent() End | result: {}", dto);
+        log.info("getBankAccountByCurrent() End | result: {}", dto);
         return ResponseEntity.ok(dto);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<MessageResponse> deleteBankAccount(@PathVariable UUID id) {
-        log.debug("deleteBankAccount() Start | id: {}", id);
+        log.info("deleteBankAccount() Start | id: {}", id);
         MessageResponse response = bankAccountService.deleteBankAccount(id);
-        log.debug("deleteBankAccount() End | result: {}", response);
+        log.info("deleteBankAccount() End | result: {}", response);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping
     public ResponseEntity<List<BankAccountDTO>> getAllBankAccountsByCurrent() {
-        log.debug("getAllBankAccountsByCurrent() Start");
+        log.info("getAllBankAccountsByCurrent() Start");
         List<BankAccountDTO> list = bankAccountService.getAllBankAccountsByCurrent();
-        log.debug("getAllBankAccountsByCurrent() End | size: {}", list.size());
+        log.info("getAllBankAccountsByCurrent() End | size: {}", list.size());
         return ResponseEntity.ok(list);
     }
 

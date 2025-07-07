@@ -25,27 +25,27 @@ public class RefundTicketController {
     @GetMapping("/{id}")
     @Operation(summary = "find refund ticket with id")
     public ResponseEntity<RefundTicketDTO> getRefundTicketById(@PathVariable UUID id) {
-        log.debug("getRefundTicketById() Start | id: {}", id);
+        log.info("getRefundTicketById() Start | id: {}", id);
         RefundTicketDTO dto = refundTicketService.getRefundTicketById(id);
-        log.debug("getRefundTicketById() End | dto: {}", dto);
+        log.info("getRefundTicketById() End | dto: {}", dto);
         return ResponseEntity.ok(dto);
     }
 
     @PostMapping
     @Operation(summary = "create new refund ticket")
     public ResponseEntity<RefundTicketDTO> createRefundTicket(@RequestBody RefundTicketRequest refundTicketRequest) {
-        log.debug("createRefundTicket() Start | request: {}", refundTicketRequest);
+        log.info("createRefundTicket() Start | request: {}", refundTicketRequest);
         RefundTicketDTO dto = refundTicketService.createNewRefundTicket(refundTicketRequest);
-        log.debug("createRefundTicket() End | dto: {}", dto);
+        log.info("createRefundTicket() End | dto: {}", dto);
         return ResponseEntity.ok(dto);
     }
 
     @GetMapping
     @Operation(summary = "get all refund tickets")
     public ResponseEntity<List<RefundTicketDTO>> getAllRefundTickets() {
-        log.debug("getAllRefundTickets() Start");
+        log.info("getAllRefundTickets() Start");
         List<RefundTicketDTO> list = refundTicketService.getAllRefundTickets();
-        log.debug("getAllRefundTickets() End | size: {}", list.size());
+        log.info("getAllRefundTickets() End | size: {}", list.size());
         return ResponseEntity.ok(list);
     }
 
@@ -54,18 +54,18 @@ public class RefundTicketController {
     public ResponseEntity<RefundTicketDTO> updateRefundTicket(
             @PathVariable UUID id,
             @RequestBody RefundTicketRequest request) {
-        log.debug("updateRefundTicket() Start | id: {}, request: {}", id, request);
+        log.info("updateRefundTicket() Start | id: {}, request: {}", id, request);
         RefundTicketDTO dto = refundTicketService.updateRefundTicket(id, request);
-        log.debug("updateRefundTicket() End | dto: {}", dto);
+        log.info("updateRefundTicket() End | dto: {}", dto);
         return ResponseEntity.ok(dto);
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Remove specific refund ticket")
     public ResponseEntity<Void> deleteRefundTicket(@PathVariable UUID id) {
-        log.debug("deleteRefundTicket() Start | id: {}", id);
+        log.info("deleteRefundTicket() Start | id: {}", id);
         refundTicketService.deleteRefundTicket(id);
-        log.debug("deleteRefundTicket() End | id: {}", id);
+        log.info("deleteRefundTicket() End | id: {}", id);
         return ResponseEntity.noContent().build();
     }
 

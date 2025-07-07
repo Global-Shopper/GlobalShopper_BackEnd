@@ -34,16 +34,16 @@ public class WalletController {
 
     @GetMapping
     public WalletDTO getWallet() {
-        log.debug("getWallet() Start");
+        log.info("getWallet() Start");
         WalletDTO wallet = walletService.getWalletByCurrent();
-        log.debug("getWallet() End | result: {}", wallet);
+        log.info("getWallet() End | result: {}", wallet);
         return wallet;
     }
     @PostMapping
     public MoneyChargeResponse repositMoney(@RequestBody WalletRequest walletRequest) {
-        log.debug("repositMoney() Start");
+        log.info("repositMoney() Start");
         var response = walletService.depositMoney(walletRequest);
-        log.debug("repositMoney() End | response: {}", response);
+        log.info("repositMoney() End | response: {}", response);
         return response;
     }
     @GetMapping("/check-payment-vnpay")

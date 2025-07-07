@@ -32,9 +32,9 @@ public class ShippingAddressController {
     @Operation(summary = "Create new shipping address for current user")
     @PostMapping
     public ResponseEntity<ShippingAddressDTO> createShippingAddress(@Valid @RequestBody ShippingAddressRequest request) {
-        log.debug("createShippingAddress() Start | request: {}", request);
+        log.info("createShippingAddress() Start | request: {}", request);
         ShippingAddressDTO dto = shippingAddressService.createShippingAddress(request);
-        log.debug("createShippingAddress() End | dto: {}", dto);
+        log.info("createShippingAddress() End | dto: {}", dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
 
@@ -43,44 +43,44 @@ public class ShippingAddressController {
     public ResponseEntity<ShippingAddressDTO> updateShippingAddress(
             @PathVariable UUID id,
             @Valid @RequestBody ShippingAddressRequest request) {
-        log.debug("updateShippingAddress() Start | id: {}, request: {}", id, request);
+        log.info("updateShippingAddress() Start | id: {}, request: {}", id, request);
         ShippingAddressDTO dto = shippingAddressService.updateDefaultShippingAddress(request, id);
-        log.debug("updateShippingAddress() End | dto: {}", dto);
+        log.info("updateShippingAddress() End | dto: {}", dto);
         return ResponseEntity.ok(dto);
     }
 
     @Operation(summary = "Get shipping address by ID for current user")
     @GetMapping("/{id}")
     public ResponseEntity<ShippingAddressDTO> getShippingAddress(@PathVariable UUID id) {
-        log.debug("getShippingAddress() Start | id: {}", id);
+        log.info("getShippingAddress() Start | id: {}", id);
         ShippingAddressDTO dto = shippingAddressService.getShippingAddress(id);
-        log.debug("getShippingAddress() End | dto: {}", dto);
+        log.info("getShippingAddress() End | dto: {}", dto);
         return ResponseEntity.ok(dto);
     }
 
     @Operation(summary = "Get all shipping addresses of current user")
     @GetMapping
     public ResponseEntity<List<ShippingAddressDTO>> getShippingAddresses() {
-        log.debug("getShippingAddresses() Start");
+        log.info("getShippingAddresses() Start");
         List<ShippingAddressDTO> list = shippingAddressService.getShippingAddressesByCurrentUser();
-        log.debug("getShippingAddresses() End | size: {}", list.size());
+        log.info("getShippingAddresses() End | size: {}", list.size());
         return ResponseEntity.ok(list);
     }
 
     @PutMapping("/default/{id}")
     public MessageResponse updateShippingAddress(@PathVariable UUID id){
-        log.debug("updateShippingAddress() Start | id: {}", id);
+        log.info("updateShippingAddress() Start | id: {}", id);
         var shipping = shippingAddressService.updateDefaultShippingAddress(id);
-        log.debug("updateShippingAddress() End | dto: {}", shipping);
+        log.info("updateShippingAddress() End | dto: {}", shipping);
         return MessageResponse.builder().message("Update thành công").isSuccess(shipping).build();
     }
 
     @Operation(summary = "Delete shipping address by ID for current user")
     @DeleteMapping("/{id}")
     public MessageResponse deleteShippingAddress(@PathVariable UUID id) {
-        log.debug("deleteShippingAddress() Start | id: {}", id);
+        log.info("deleteShippingAddress() Start | id: {}", id);
         var shipping = shippingAddressService.deleteShippingAddress(id);
-        log.debug("deleteShippingAddress() End | id: {}", id);
+        log.info("deleteShippingAddress() End | id: {}", id);
         return MessageResponse.builder().message("Xoá địa chỉ thành công").isSuccess(shipping).build();
     }
 }
