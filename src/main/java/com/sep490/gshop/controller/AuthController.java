@@ -103,7 +103,7 @@ public class AuthController {
     }
 
     @Operation(summary = "Nhập mail mới và xác thực bằng OTP")
-    @PostMapping("/verify-email")
+    @PostMapping("/verify-otp-and-change-email")
     public MessageResponse verifyEmail(
             @RequestParam String newEmail,
             @RequestParam String otp) {
