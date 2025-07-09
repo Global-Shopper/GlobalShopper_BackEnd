@@ -19,6 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping(URLConstant.CUSTOMER)
 @Log4j2
+@CrossOrigin("*")
 public class CustomerController {
 
     private final CustomerService customerService;
@@ -64,7 +65,7 @@ public class CustomerController {
         return ResponseEntity.ok().body(result);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping()
     public ResponseEntity<CustomerDTO> updateCustomer(
             @Valid @RequestBody CustomerUpdateRequest customerRequest) {
         log.info("updateCustomer() CustomerController start | customerRequest: {}", customerRequest);
