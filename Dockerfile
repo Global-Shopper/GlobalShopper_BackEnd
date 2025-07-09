@@ -14,7 +14,7 @@ EXPOSE 8080
 WORKDIR /app
 
 # Copy the specific built JAR file from the build stage
-COPY --from=build /home/gradle/src/build/libs/internhub-0.0.1-SNAPSHOT.jar /app/spring-boot-application.jar
+COPY --from=build /home/gradle/src/build/libs/globalshopper-0.0.1-SNAPSHOT.jar /app/spring-boot-application.jar
 
 # Run the application with optimized JVM settings
 ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "/app/spring-boot-application.jar"]
