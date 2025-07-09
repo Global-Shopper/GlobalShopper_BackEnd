@@ -17,9 +17,7 @@ public class CustomerUpdateRequest {
     @Size(max = 100, message = "Tên không được dài quá 100 kí tự")
     private String name;
 
-    @Email(message = "Sai định dạng mail, Ex: abc@example.com")
-    @Size(max = 255, message = "Email không được vượt quá 255 kí tự")
-    private String email;
+
 
     @Pattern(
             regexp = "^(?:\\+84|0084|0)(?:3[2-9]|5[2689]|7[06-9]|8[1-689]|9[0-9]|2[0-9]|8[0-9]|5[6-9]|7[0-9]|9[0-46-9])\\d{7,8}$",

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 @Log4j2
@@ -25,6 +26,7 @@ public class JwtUtils {
   private int jwtExpirationMs;
 
   private int jwtTempExpirationInMs = 300000;
+
   public String generateJwtToken(Authentication authentication) {
 
     UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
@@ -55,6 +57,17 @@ public class JwtUtils {
             .compact();
   }
 
+  public String generateTempTokenChangeMail(User user, String email) {
+    Claims claims = Jwts.claims().setSubject(email);
+    claims.put("id", user.getId());
+    return Jwts.builder()
+            .setClaims(claims)
+            .setIssuedAt(new Date())
+            .setExpiration(new Date((new Date()).getTime() + jwtTempExpirationInMs))
+            .signWith(key(), SignatureAlgorithm.HS256)
+            .compact();
+  }
+
   public String generateTempToken(String email) {
 
     return Jwts.builder()
@@ -64,6 +77,7 @@ public class JwtUtils {
             .signWith(key(), SignatureAlgorithm.HS256)
             .compact();
   }
+
 
 
   private Key key() {
@@ -88,6 +102,34 @@ public class JwtUtils {
       return null;
     }
   }
+
+  public UUID getUserIdFromToken(String token) {
+    try {
+      Claims claims = Jwts.parserBuilder()
+              .setSigningKey(key())
+              .build()
+              .parseClaimsJws(token)
+              .getBody();
+
+      Object idObj = claims.get("id");
+      if (idObj == null) {
+        return null;
+      }
+
+      if (idObj instanceof String) {
+        return UUID.fromString((String) idObj);
+      } else if (idObj instanceof Integer) {
+        return UUID.fromString(String.valueOf(idObj));
+      } else {
+        return null;
+      }
+    } catch (Exception e) {
+      log.error("Failed to get userId from token: {}", e.getMessage());
+      return null;
+    }
+  }
+
+
   public boolean validateJwtToken(String authToken) {
     try {
       Jwts.parserBuilder().setSigningKey(key()).build().parse(authToken);

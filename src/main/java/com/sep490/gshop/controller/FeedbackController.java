@@ -26,9 +26,9 @@ public class FeedbackController {
 
     @PostMapping
     public ResponseEntity<FeedbackDTO> createFeedback(@RequestBody FeedbackRequest request) {
-        log.debug("createFeedback() Start | request: {}", request);
+        log.info("createFeedback() Start | request: {}", request);
         FeedbackDTO dto = feedbackService.createFeedback(request);
-        log.debug("createFeedback() End | dto: {}", dto);
+        log.info("createFeedback() End | dto: {}", dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
 
@@ -36,33 +36,33 @@ public class FeedbackController {
     public ResponseEntity<FeedbackDTO> updateFeedback(
             @PathVariable UUID id,
             @RequestBody FeedbackRequest request) {
-        log.debug("updateFeedback() Start | id: {}, request: {}", id, request);
+        log.info("updateFeedback() Start | id: {}, request: {}", id, request);
         FeedbackDTO dto = feedbackService.updateFeedback(id, request);
-        log.debug("updateFeedback() End | dto: {}", dto);
+        log.info("updateFeedback() End | dto: {}", dto);
         return ResponseEntity.ok(dto);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteFeedback(@PathVariable UUID id) {
-        log.debug("deleteFeedback() Start | id: {}", id);
+        log.info("deleteFeedback() Start | id: {}", id);
         feedbackService.deleteFeedback(id);
-        log.debug("deleteFeedback() End | id: {}", id);
+        log.info("deleteFeedback() End | id: {}", id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping
     public ResponseEntity<List<FeedbackDTO>> getAllFeedback() {
-        log.debug("getAllFeedback() Start");
+        log.info("getAllFeedback() Start");
         List<FeedbackDTO> list = feedbackService.getAllFeedback();
-        log.debug("getAllFeedback() End | size: {}", list.size());
+        log.info("getAllFeedback() End | size: {}", list.size());
         return ResponseEntity.ok(list);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<FeedbackDTO> getFeedbackById(@PathVariable UUID id) {
-        log.debug("getFeedbackById() Start | id: {}", id);
+        log.info("getFeedbackById() Start | id: {}", id);
         FeedbackDTO dto = feedbackService.getFeedbackById(id);
-        log.debug("getFeedbackById() End | dto: {}", dto);
+        log.info("getFeedbackById() End | dto: {}", dto);
         return ResponseEntity.ok(dto);
     }
 }

@@ -1,6 +1,7 @@
 package com.sep490.gshop.common.constants;
 
 public class URLConstant {
+
     private URLConstant() {}
 
     public static final String HEALTH_CHECK = "healthcheck";
@@ -15,5 +16,7 @@ public class URLConstant {
     public static final String ADMIN = "admin";
     public static final String AI = "ai";
     public static final String PURCHASE_REQUEST = "purchase-request";
+    public static final String BANK_ACCOUNT = "bank-account";
+
 
 }

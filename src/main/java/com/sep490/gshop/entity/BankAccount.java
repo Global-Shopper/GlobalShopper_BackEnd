@@ -15,9 +15,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class BankAccount extends BaseEntity{
     private String bankAccountNumber;
+    //Ten ngan hang
     private String providerName;
+    //Ten chu the
     private String accountHolderName;
-    private String status;
+    private String ExpirationDate;
     private boolean isDefault;
 
     @ManyToOne

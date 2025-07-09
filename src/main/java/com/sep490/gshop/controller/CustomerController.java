@@ -47,11 +47,11 @@ public class CustomerController {
     @Operation(summary = "Upload avatar cho khách hàng hiện tại")
     @PostMapping(value = "/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CustomerDTO> uploadAvatar(@RequestPart("file") MultipartFile file) {
-        log.debug("uploadAvatar() Controller Start | filename: {}", file.getOriginalFilename());
+        log.info("uploadAvatar() Controller Start | filename: {}", file.getOriginalFilename());
 
         CustomerDTO updatedCustomer = customerService.uploadAvatar(file);
 
-        log.debug("uploadAvatar() Controller End | avatarUrl: {}", updatedCustomer.getAvatar());
+        log.info("uploadAvatar() Controller End | avatarUrl: {}", updatedCustomer.getAvatar());
 
         return ResponseEntity.ok(updatedCustomer);
     }

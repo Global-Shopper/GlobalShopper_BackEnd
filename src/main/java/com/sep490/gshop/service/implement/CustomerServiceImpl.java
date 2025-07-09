@@ -133,7 +133,6 @@ public class CustomerServiceImpl implements CustomerService {
 
             existingCustomer.setId(id);
             existingCustomer.setName(customerRequest.getName());
-            existingCustomer.setEmail(customerRequest.getEmail());
             existingCustomer.setPhone(customerRequest.getPhone());
             existingCustomer.setDateOfBirth(customerRequest.getDateOfBirth());
             existingCustomer.setGender(customerRequest.getGender());
@@ -145,6 +144,10 @@ public class CustomerServiceImpl implements CustomerService {
             log.error("updateCustomer() CustomerServiceImpl Error | message: {}", e.getMessage());
             throw e;
         }
+    }
+
+    public final boolean findDuplicateMail (String email){
+        return customerBusiness.existsByEmail(email);
     }
 
     @Override

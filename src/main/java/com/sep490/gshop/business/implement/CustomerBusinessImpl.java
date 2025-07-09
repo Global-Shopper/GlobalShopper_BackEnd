@@ -11,4 +11,14 @@ public class CustomerBusinessImpl extends BaseBusinessImpl<Customer, CustomerRep
     public CustomerBusinessImpl(CustomerRepository repository) {
         super(repository);
     }
+
+    @Override
+    public boolean existsByEmail(String email) {
+        return repository.existsByEmailIgnoreCase(email);
+    }
+
+    @Override
+    public Customer findByEmail(String email) {
+        return repository.findByEmailIgnoreCase(email);
+    }
 }
