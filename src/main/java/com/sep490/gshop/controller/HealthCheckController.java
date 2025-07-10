@@ -20,4 +20,13 @@ public class HealthCheckController {
         log.info("Health Check End: {}", currentDate);
         return message;
     }
+
+    @GetMapping("/test-cicd")
+    public String testCICD() {
+        log.info("CICD Test Started");
+        Date currentDate = new Date();
+        String message = "CICD Test at " + currentDate + ": OK!";
+        log.info("CICD Test End: {}", currentDate);
+        return message;
+    }
 }
