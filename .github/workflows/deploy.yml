@@ -1,0 +1,30 @@
+name: Deploy to VPS on develop push
+
+on:
+  push:
+    branches:
+      - deploy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: SSH into VPS and deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd ~/GlobalShopper_BackEnd || git clone https://github.com/Global-Shopper/GlobalShopper_BackEnd.git && cd GlobalShopper_BackEnd
+            git checkout deploy
+            git pull origin deploy
+            
+            chmod +x ./gradlew
+            ./gradlew build -x test
+            
+            docker stop globalshopper || true
+            docker rm globalshopper || true
+            docker build -t globalshopper .
+            docker run -d --name globalshopper -p 8080:8080 --env-file .env globalshopper
