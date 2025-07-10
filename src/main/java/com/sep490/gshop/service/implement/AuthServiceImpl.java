@@ -27,6 +27,7 @@ import com.sep490.gshop.utils.RandomUtil;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -46,6 +47,8 @@ import java.util.concurrent.TimeUnit;
 public class AuthServiceImpl implements AuthService {
 
     private static final int MAX_RETRY = 5;
+    @Value("${global-shopper.base-url}")
+    private String baseUrl;
 
     private final UserBusiness userBusiness;
     private final PasswordEncoder passwordEncoder;
@@ -502,7 +505,7 @@ public class AuthServiceImpl implements AuthService {
         log.debug("sendVerificationEmail() Start | email: {}", email);
         try {
             String token = jwtUtils.generateTempTokenChangeMail(user, email);
-            String verificationLink = "http://localhost:8080/api/auth/verify-new-email?token=" + URLEncoder.encode(token, StandardCharsets.UTF_8);
+            String verificationLink = baseUrl + "/auth/verify-new-email?token=" + URLEncoder.encode(token, StandardCharsets.UTF_8);
             emailService.sendEmail(email, "Xác thực email", "Vui lòng bấm vào link sau để xác thực email: " + verificationLink);
             log.debug("sendVerificationEmail() End | Verification email sent to: {}", email);
             return MessageResponse.builder()
