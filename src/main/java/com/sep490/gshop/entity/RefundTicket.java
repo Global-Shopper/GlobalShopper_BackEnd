@@ -19,6 +19,7 @@ public class RefundTicket extends BaseEntity {
     private List<String> evidence;
     private String reason;
     private double amount;
+    @Enumerated(EnumType.STRING)
     private RefundStatus status;
     private BankAccountSnapshot bankAccount;
 

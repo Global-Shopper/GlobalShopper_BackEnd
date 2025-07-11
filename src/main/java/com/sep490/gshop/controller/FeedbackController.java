@@ -16,6 +16,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping(URLConstant.FEEDBACK)
 @Slf4j
+@CrossOrigin("*")
 public class FeedbackController {
     private final FeedbackService feedbackService;
 

@@ -8,8 +8,6 @@ import org.springframework.stereotype.Service;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
-import java.net.URL;
-import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
@@ -29,8 +27,8 @@ public class VNPayServiceImpl {
     private String vnpHasSecret;
     @Value("${vnp.url}")
     private String vnpUrl;
-    //@Value("${vnp.return-url}")
-    private String returnURL = "http://localhost:8080/api/wallet/check-payment-vnpay";
+    @Value("${vnp.return-url}")
+    private String returnURL;
 
 
 
@@ -48,7 +46,7 @@ public class VNPayServiceImpl {
             vnpParams.put("vnp_OrderInfo", reason + " số tiền: " + money);
             vnpParams.put("vnp_OrderType", "other");
             vnpParams.put("vnp_Amount", ((int) money) + "00");
-            String returnUrlWithEmail = returnURL + "?email=" + URLEncoder.encode(userEmail, StandardCharsets.UTF_8.toString());
+            String returnUrlWithEmail = returnURL + "/wallet/check-payment-vnpay" + "?email=" + URLEncoder.encode(userEmail, StandardCharsets.UTF_8.toString());
             vnpParams.put("vnp_ReturnUrl", returnUrlWithEmail);
             vnpParams.put("vnp_CreateDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
             vnpParams.put("vnp_IpAddr", "167.99.74.201");

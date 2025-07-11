@@ -16,7 +16,6 @@ import com.sep490.gshop.payload.dto.UserDTO;
 import com.sep490.gshop.payload.request.RegisterRequest;
 import com.sep490.gshop.payload.response.AuthUserResponse;
 import com.sep490.gshop.payload.response.MessageResponse;
-import com.sep490.gshop.payload.response.MessageWithTokenResponse;
 import com.sep490.gshop.payload.response.ResetPasswordValidResponse;
 import com.sep490.gshop.service.AuthService;
 import com.sep490.gshop.service.EmailService;

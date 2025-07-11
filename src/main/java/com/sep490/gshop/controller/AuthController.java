@@ -1,21 +1,18 @@
 package com.sep490.gshop.controller;
 
 import com.sep490.gshop.common.constants.URLConstant;
-import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.payload.request.ChangePasswordRequest;
 import com.sep490.gshop.payload.request.LoginRequest;
 import com.sep490.gshop.payload.request.RegisterRequest;
 import com.sep490.gshop.payload.request.ResetPasswordRequest;
 import com.sep490.gshop.payload.response.AuthUserResponse;
 import com.sep490.gshop.payload.response.MessageResponse;
-import com.sep490.gshop.payload.response.MessageWithTokenResponse;
 import com.sep490.gshop.payload.response.ResetPasswordValidResponse;
 import com.sep490.gshop.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -115,8 +112,12 @@ public class AuthController {
 
     @GetMapping("/verify-new-email")
     @Operation(summary = "Xác thực mail mới")
-    public ResponseEntity<Void> verifyEmail(@RequestParam("token") String token) {
-        return authService.verifyToUpdateEmail(token);
+    public ResponseEntity<Void> verifyNewEmail(@RequestParam("token") String token) {
+        log.info("verifyNewEmail() Start | token: {}", token);
+        var response =  authService.verifyToUpdateEmail(token);
+        log.info("verifyNewEmail() End | response: {}", response);
+        return ResponseEntity.ok().build();
+
     }
 
 
