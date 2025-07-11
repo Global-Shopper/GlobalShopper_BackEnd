@@ -79,6 +79,7 @@ public class WebSecurityConfig {
                                 .requestMatchers("/healthcheck").permitAll()
                                 .requestMatchers("/swagger-ui/**").permitAll()
                                 .requestMatchers("wallet/check-payment-vnpay").permitAll()
+                                .requestMatchers("purchase-request/**").authenticated()
                                 .anyRequest().permitAll()
                 )
 //                .oauth2Login(a -> a.authorizationEndpoint(
