@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -63,19 +64,17 @@ public class WalletController {
         }
     }
 
-    @GetMapping("/deposit")
-    public ResponseEntity<MessageResponse> checkPaymentVnpay(@RequestParam("email") String email,
-                                                             @RequestParam("vnp_ResponseCode") String status,
-                                                             @RequestParam("vnp_Amount") String amount) {
-        log.info("checkPaymentVnpay() Start | email: {}, status: {}, amount: {}", email, status, amount);
-        try {
-            MessageResponse message = walletService.processVNPayReturn(email, status, amount);
-            log.info("checkPaymentVnpay() End | response: {}", message);
-            return ResponseEntity.ok(message);
-        } catch (Exception e) {
-            log.error("checkPaymentVnpay() Exception | message: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    @GetMapping("/check-payment-vnpay")
+    public ResponseEntity<Void> checkPaymentVNPay(
+            @RequestParam("email") String email,
+            @RequestParam("vnp_ResponseCode") String status,
+            @RequestParam("vnp_Amount") String amount) {
+
+        walletService.processVNPayReturn(email, status, amount);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Location", "http://localhost:5173/wallet/deposit");
+        return new ResponseEntity<>(headers, HttpStatus.FOUND);
     }
 
     @PostMapping("/withdraw-request")

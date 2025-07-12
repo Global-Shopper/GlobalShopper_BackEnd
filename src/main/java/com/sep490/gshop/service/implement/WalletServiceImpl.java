@@ -96,18 +96,15 @@ public class WalletServiceImpl implements WalletService {
 
 
     @Override
-    public MessageResponse processVNPayReturn(String email, String status, String amount) {
+    public void processVNPayReturn(String email, String status, String amount) {
         log.debug("processVNPayReturn() Start | email: {}", email);
         try {
             double amountGet = Double.parseDouble(amount);
             if (!status.equals("00")) {
-                return MessageResponse.builder()
-                        .isSuccess(false)
-                        .message("Thanh toán VNPay không thành công hoặc dữ liệu không hợp lệ")
-                        .build();
+                throw new AppException(400, "Thanh toán VNPay không thành công hoặc dữ liệu không hợp lệ");
             }
             Customer customer = customerBusiness.findByEmail(email);
-            if(email == null || customer == null) {
+            if (email == null || customer == null) {
                 throw AppException.builder().message("Không tìm thấy người dùng, thử lại sau").code(404).build();
             }
             Wallet wallet = walletBusiness.getById(customer.getWallet().getId())
@@ -118,18 +115,12 @@ public class WalletServiceImpl implements WalletService {
             wallet.setBalance(wallet.getBalance() + amountGet);
             walletBusiness.update(wallet);
             log.debug("processVNPayReturn() End | updated balance: {}", wallet.getBalance());
-
-
-            String formattedAmount = formatAmount(amountGet);
-            return MessageResponse.builder()
-                    .isSuccess(true)
-                    .message("Nạp tiền thành công: " + formattedAmount + " VNĐ vào ví")
-                    .build();
-        }catch (Exception e) {
+        } catch (Exception e) {
             log.error("processVNPayReturn() Unexpected Exception | message: {}", e.getMessage());
             throw e;
         }
     }
+
 
 
     private String formatAmount(double amount) {

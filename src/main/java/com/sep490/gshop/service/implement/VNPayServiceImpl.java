@@ -49,7 +49,7 @@ public class VNPayServiceImpl {
             vnpParams.put("vnp_OrderInfo", reason + " số tiền: " + money);
             vnpParams.put("vnp_OrderType", "other");
             vnpParams.put("vnp_Amount", ((int) money) + "00");
-            String returnUrlWithEmail = returnURL + "/wallet/deposit" + "?email=" + URLEncoder.encode(userEmail, StandardCharsets.UTF_8.toString());
+            String returnUrlWithEmail = returnURL + "/wallet/check-payment-vnpay" + "?email=" + URLEncoder.encode(userEmail, StandardCharsets.UTF_8.toString());
             vnpParams.put("vnp_ReturnUrl", returnUrlWithEmail);
             vnpParams.put("vnp_CreateDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
             vnpParams.put("vnp_IpAddr", "167.99.74.201");

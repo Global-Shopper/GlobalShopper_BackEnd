@@ -17,7 +17,7 @@ public interface WalletService {
     MoneyChargeResponse depositMoney(@Valid WalletRequest request);
     MessageResponse withdrawMoneyRequest(@Valid WithdrawRequest request);
     WalletDTO getWalletByCurrent();
-    MessageResponse processVNPayReturn(String email, String status, String amount);
+    void processVNPayReturn(String email, String status, String amount);
     List<WithdrawTicketDTO> getWithdrawTicketsWithPendingStatus();
     MessageWithBankInformationResponse processWithdrawRequest(UUID refundTicketId, boolean isApproved, String reason);
     MessageResponse uploadTransferBill(UUID withdrawTicketId, MultipartFile multipartFile);
