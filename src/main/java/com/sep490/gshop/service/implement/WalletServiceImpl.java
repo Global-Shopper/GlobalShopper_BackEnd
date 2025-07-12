@@ -99,7 +99,8 @@ public class WalletServiceImpl implements WalletService {
     public void processVNPayReturn(String email, String status, String amount) {
         log.debug("processVNPayReturn() Start | email: {}", email);
         try {
-            double amountGet = Double.parseDouble(amount);
+            String trimmedAmountStr = amount.substring(0, amount.length() - 2);
+            double amountGet = Double.parseDouble(trimmedAmountStr);
             if (!status.equals("00")) {
                 throw new AppException(400, "Thanh toán VNPay không thành công hoặc dữ liệu không hợp lệ");
             }

@@ -72,11 +72,16 @@ public class WalletController {
             @RequestParam("vnp_ResponseCode") String status,
             @RequestParam("vnp_Amount") String amount) {
 
-        walletService.processVNPayReturn(email, status, amount);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Location", domainRedirect + "/wallet/deposit");
-        return new ResponseEntity<>(headers, HttpStatus.FOUND);
+        if(status.equals("00")) {
+            walletService.processVNPayReturn(email, status, amount);
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("Location", domainRedirect + "/wallet/deposit");
+            return new ResponseEntity<>(headers, HttpStatus.FOUND);
+        }else {
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("Location", domainRedirect + "/wallet/deposit");
+            return new ResponseEntity<>(headers, HttpStatus.FOUND);
+        }
     }
 
     @PostMapping("/withdraw-request")
