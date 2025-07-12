@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -32,7 +33,8 @@ import java.util.UUID;
 public class WalletController {
 
     private final WalletService walletService;
-
+    @Value("${fe.redirect-domain}")
+    private String domainRedirect;
     @Autowired
     public WalletController(WalletService walletService) {
         this.walletService = walletService;
@@ -73,7 +75,7 @@ public class WalletController {
         walletService.processVNPayReturn(email, status, amount);
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Location", "http://localhost:5173/wallet/deposit");
+        headers.add("Location", domainRedirect + "/wallet/deposit");
         return new ResponseEntity<>(headers, HttpStatus.FOUND);
     }
 
