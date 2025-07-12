@@ -9,8 +9,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class MessageWithTokenResponse {
-    private String token;
+public class MessageWithBankInformationResponse {
+    private String bankAccountNumber;
+    private String providerName;
+    private String accountHolderName;
     private String message;
     private boolean isSuccess;
 }

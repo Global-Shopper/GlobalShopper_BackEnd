@@ -8,8 +8,6 @@ import org.springframework.stereotype.Service;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
-import java.net.URL;
-import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
@@ -29,26 +27,29 @@ public class VNPayServiceImpl {
     private String vnpHasSecret;
     @Value("${vnp.url}")
     private String vnpUrl;
-    //@Value("${vnp.return-url}")
-    private String returnURL = "http://localhost:8080/api/wallet/check-payment-vnpay";
+    @Value("${vnp.return-url}")
+    private String returnURL;
 
 
 
     public String createURL(double money, String reason, String userEmail) {
         try {
             var random = ThreadLocalRandom.current();
-            String currCode = "VNĐ";
+            String randomStr = random.toString();
+            int atIndex = randomStr.indexOf('@');
+            String txnRef = (atIndex != -1) ? randomStr.substring(atIndex + 1) : randomStr;
+            String currCode = "VND";
             Map<String, String> vnpParams = new TreeMap<>();
             vnpParams.put("vnp_Version", "2.1.0");
             vnpParams.put("vnp_Command", "pay");
             vnpParams.put("vnp_TmnCode", terminalCode);
             vnpParams.put("vnp_Locale", "vn");
             vnpParams.put("vnp_CurrCode", currCode);
-            vnpParams.put("vnp_TxnRef", random.toString());
+            vnpParams.put("vnp_TxnRef", txnRef);
             vnpParams.put("vnp_OrderInfo", reason + " số tiền: " + money);
             vnpParams.put("vnp_OrderType", "other");
             vnpParams.put("vnp_Amount", ((int) money) + "00");
-            String returnUrlWithEmail = returnURL + "?email=" + URLEncoder.encode(userEmail, StandardCharsets.UTF_8.toString());
+            String returnUrlWithEmail = returnURL + "/wallet/deposit" + "?email=" + URLEncoder.encode(userEmail, StandardCharsets.UTF_8.toString());
             vnpParams.put("vnp_ReturnUrl", returnUrlWithEmail);
             vnpParams.put("vnp_CreateDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
             vnpParams.put("vnp_IpAddr", "167.99.74.201");

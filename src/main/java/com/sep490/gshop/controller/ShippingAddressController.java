@@ -11,6 +11,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,6 +32,7 @@ public class ShippingAddressController {
 
     @Operation(summary = "Create new shipping address for current user")
     @PostMapping
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ShippingAddressDTO> createShippingAddress(@Valid @RequestBody ShippingAddressRequest request) {
         log.info("createShippingAddress() Start | request: {}", request);
         ShippingAddressDTO dto = shippingAddressService.createShippingAddress(request);
@@ -40,6 +42,7 @@ public class ShippingAddressController {
 
     @Operation(summary = "Update shipping address by ID for current user")
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ShippingAddressDTO> updateShippingAddress(
             @PathVariable UUID id,
             @Valid @RequestBody ShippingAddressRequest request) {
@@ -51,6 +54,7 @@ public class ShippingAddressController {
 
     @Operation(summary = "Get shipping address by ID for current user")
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ShippingAddressDTO> getShippingAddress(@PathVariable UUID id) {
         log.info("getShippingAddress() Start | id: {}", id);
         ShippingAddressDTO dto = shippingAddressService.getShippingAddress(id);
@@ -60,6 +64,7 @@ public class ShippingAddressController {
 
     @Operation(summary = "Get all shipping addresses of current user")
     @GetMapping
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<List<ShippingAddressDTO>> getShippingAddresses() {
         log.info("getShippingAddresses() Start");
         List<ShippingAddressDTO> list = shippingAddressService.getShippingAddressesByCurrentUser();
@@ -68,6 +73,7 @@ public class ShippingAddressController {
     }
 
     @PutMapping("/default/{id}")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public MessageResponse updateShippingAddress(@PathVariable UUID id){
         log.info("updateShippingAddress() Start | id: {}", id);
         var shipping = shippingAddressService.updateDefaultShippingAddress(id);
@@ -77,6 +83,7 @@ public class ShippingAddressController {
 
     @Operation(summary = "Delete shipping address by ID for current user")
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public MessageResponse deleteShippingAddress(@PathVariable UUID id) {
         log.info("deleteShippingAddress() Start | id: {}", id);
         var shipping = shippingAddressService.deleteShippingAddress(id);

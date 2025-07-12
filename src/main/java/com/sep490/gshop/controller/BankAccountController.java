@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,13 +19,12 @@ import java.util.UUID;
 @RestController
 @Log4j2
 @RequestMapping(URLConstant.BANK_ACCOUNT)
+@CrossOrigin("*")
 public class BankAccountController {
     @Autowired
     private BankAccountService bankAccountService;
-
-
-
     @PostMapping
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<BankAccountDTO> createBankAccount(@Valid @RequestBody BankAccountRequest request) {
         log.info("createBankAccount() Start | request: {}", request);
         BankAccountDTO created = bankAccountService.createBankAccount(request);
@@ -34,6 +34,7 @@ public class BankAccountController {
 
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<BankAccountDTO> updateBankAccount(
             @PathVariable UUID id,
             @Valid @RequestBody BankAccountUpdateRequest request) {
@@ -44,6 +45,7 @@ public class BankAccountController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<BankAccountDTO> getBankAccountByCurrent(@PathVariable UUID id) {
         log.info("getBankAccountByCurrent() Start | id: {}", id);
         BankAccountDTO dto = bankAccountService.getBankAccountByCurrent(id);
@@ -52,6 +54,7 @@ public class BankAccountController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<MessageResponse> deleteBankAccount(@PathVariable UUID id) {
         log.info("deleteBankAccount() Start | id: {}", id);
         MessageResponse response = bankAccountService.deleteBankAccount(id);
@@ -60,6 +63,7 @@ public class BankAccountController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<List<BankAccountDTO>> getAllBankAccountsByCurrent() {
         log.info("getAllBankAccountsByCurrent() Start");
         List<BankAccountDTO> list = bankAccountService.getAllBankAccountsByCurrent();

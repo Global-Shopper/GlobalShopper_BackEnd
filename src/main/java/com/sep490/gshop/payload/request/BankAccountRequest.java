@@ -21,7 +21,6 @@ public class BankAccountRequest {
     @NotBlank(message = "Tên chủ tài khoản không được để trống")
     private String accountHolderName;
 
-    @NotBlank(message = "Ngày hết hạn không được để trống")
     @Pattern(regexp = "^(0[1-9]|1[0-2])/\\d{2}$", message = "Ngày hết hạn phải đúng định dạng MM/YY, ví dụ 07/25")
     private String expirationDate;
     private boolean isDefault;

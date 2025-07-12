@@ -2,7 +2,6 @@ package com.sep490.gshop.business.implement;
 
 import com.sep490.gshop.business.RefundTicketBusiness;
 import com.sep490.gshop.entity.RefundTicket;
-import com.sep490.gshop.payload.dto.RefundTicketDTO;
 import com.sep490.gshop.repository.RefundTicketRepository;
 import org.springframework.stereotype.Component;
 
@@ -15,7 +14,7 @@ public class RefundTicketBusinessImpl extends BaseBusinessImpl<RefundTicket, Ref
     }
 
     @Override
-    public RefundTicketDTO getRefundTicketByOrderId(UUID orderId) {
+    public RefundTicket getRefundTicketByOrderId(UUID orderId) {
         return repository.findRefundTicketByOrderId(orderId);
     }
 }
