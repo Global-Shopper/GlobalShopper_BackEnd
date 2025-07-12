@@ -90,7 +90,7 @@ public class WalletServiceImpl implements WalletService {
 
         } catch (Exception e) {
             log.error("depositMoney() Unexpected Exception | message: {}", e.getMessage(), e);
-            throw e;  // hoặc có thể trả về response lỗi tùy yêu cầu
+            throw e;
         }
     }
 

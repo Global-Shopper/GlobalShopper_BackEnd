@@ -63,7 +63,7 @@ public class WalletController {
         }
     }
 
-    @GetMapping("/check-payment-vnpay")
+    @GetMapping("/deposit")
     public ResponseEntity<MessageResponse> checkPaymentVnpay(@RequestParam("email") String email,
                                                              @RequestParam("vnp_ResponseCode") String status,
                                                              @RequestParam("vnp_Amount") String amount) {
