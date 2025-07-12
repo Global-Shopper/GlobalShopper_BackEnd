@@ -51,7 +51,7 @@ public class WalletController {
     }
 
     @PostMapping
-    public ResponseEntity<MoneyChargeResponse> depositMoney(@RequestBody WalletRequest walletRequest) {
+    public ResponseEntity<MoneyChargeResponse> depositMoney(@Valid @RequestBody WalletRequest walletRequest) {
         log.info("depositMoney() Start | request: {}", walletRequest);
         try {
             MoneyChargeResponse response = walletService.depositMoney(walletRequest);

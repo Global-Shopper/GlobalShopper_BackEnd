@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.text.DecimalFormat;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -60,12 +61,39 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
-    public MoneyChargeResponse depositMoney(WalletRequest request) {
-       Customer customer = customerBusiness.getById(AuthUtils.getCurrentUserId()).orElseThrow(() -> AppException.builder().message("Bạn cần đăng nhập để sử dụng dịch vụ").code(401).build());
-       Wallet wallet = walletBusiness.getById(customer.getWallet().getId()).orElseThrow(() -> AppException.builder().code(404).message("Không tìm thấy ví của bạn").build());
-        var url = vnPayServiceImpl.createURL(request.getBalance(), "Nạp tiền vào tài khoản " + customer.getName(), customer.getEmail());
-        return MoneyChargeResponse.builder().isSuccess(true).message("Đã yêu cầu nạp thành công số tiền "+ request.getBalance() + "VNĐ vào ví của bạn").url(url).build();
+    public MoneyChargeResponse depositMoney(@Valid WalletRequest request) {
+        log.debug("depositMoney() Start | request: {}", request);
+        try {
+            Customer customer = customerBusiness.getById(AuthUtils.getCurrentUserId())
+                    .orElseThrow(() -> AppException.builder()
+                            .message("Bạn cần đăng nhập để sử dụng dịch vụ")
+                            .code(401)
+                            .build());
+
+            Wallet wallet = walletBusiness.getById(customer.getWallet().getId())
+                    .orElseThrow(() -> AppException.builder()
+                            .code(404)
+                            .message("Không tìm thấy ví của bạn")
+                            .build());
+
+            var url = vnPayServiceImpl.createURL(request.getBalance(),
+                    "Nạp tiền vào tài khoản " + customer.getName(),
+                    customer.getEmail());
+
+            log.debug("depositMoney() End | url: {}", url);
+            String formattedAmount = formatAmount(request.getBalance());
+            return MoneyChargeResponse.builder()
+                    .isSuccess(true)
+                    .message("Đã yêu cầu nạp thành công số tiền " + formattedAmount + " VNĐ vào ví của bạn")
+                    .url(url)
+                    .build();
+
+        } catch (Exception e) {
+            log.error("depositMoney() Unexpected Exception | message: {}", e.getMessage(), e);
+            throw e;  // hoặc có thể trả về response lỗi tùy yêu cầu
+        }
     }
+
 
     @Override
     public MessageResponse processVNPayReturn(String email, String status, String amount) {
@@ -91,13 +119,27 @@ public class WalletServiceImpl implements WalletService {
             walletBusiness.update(wallet);
             log.debug("processVNPayReturn() End | updated balance: {}", wallet.getBalance());
 
+
+            String formattedAmount = formatAmount(amountGet);
             return MessageResponse.builder()
                     .isSuccess(true)
-                    .message("Nạp tiền thành công: " + amount + "VNĐ vào ví")
+                    .message("Nạp tiền thành công: " + formattedAmount + " VNĐ vào ví")
                     .build();
         }catch (Exception e) {
             log.error("processVNPayReturn() Unexpected Exception | message: {}", e.getMessage());
             throw e;
+        }
+    }
+
+
+    private String formatAmount(double amount) {
+        DecimalFormat df;
+        if (amount == (long) amount) {
+            df = new DecimalFormat("#,##0");
+            return df.format(amount);
+        } else {
+            df = new DecimalFormat("#,##0.00");
+            return df.format(amount);
         }
     }
 

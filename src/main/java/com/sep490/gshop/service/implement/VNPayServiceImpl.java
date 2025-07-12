@@ -35,6 +35,9 @@ public class VNPayServiceImpl {
     public String createURL(double money, String reason, String userEmail) {
         try {
             var random = ThreadLocalRandom.current();
+            String randomStr = random.toString();
+            int atIndex = randomStr.indexOf('@');
+            String txnRef = (atIndex != -1) ? randomStr.substring(atIndex + 1) : randomStr;
             String currCode = "VND";
             Map<String, String> vnpParams = new TreeMap<>();
             vnpParams.put("vnp_Version", "2.1.0");
@@ -42,7 +45,7 @@ public class VNPayServiceImpl {
             vnpParams.put("vnp_TmnCode", terminalCode);
             vnpParams.put("vnp_Locale", "vn");
             vnpParams.put("vnp_CurrCode", currCode);
-            vnpParams.put("vnp_TxnRef", random.toString());
+            vnpParams.put("vnp_TxnRef", txnRef);
             vnpParams.put("vnp_OrderInfo", reason + " số tiền: " + money);
             vnpParams.put("vnp_OrderType", "other");
             vnpParams.put("vnp_Amount", ((int) money) + "00");

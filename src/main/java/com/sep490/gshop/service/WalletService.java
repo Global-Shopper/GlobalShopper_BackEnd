@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface WalletService {
-    MoneyChargeResponse depositMoney(WalletRequest request);
+    MoneyChargeResponse depositMoney(@Valid WalletRequest request);
     MessageResponse withdrawMoneyRequest(@Valid WithdrawRequest request);
     WalletDTO getWalletByCurrent();
     MessageResponse processVNPayReturn(String email, String status, String amount);
