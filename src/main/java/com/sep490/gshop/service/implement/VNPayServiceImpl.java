@@ -35,7 +35,7 @@ public class VNPayServiceImpl {
     public String createURL(double money, String reason, String userEmail) {
         try {
             var random = ThreadLocalRandom.current();
-            String currCode = "VNĐ";
+            String currCode = "VND";
             Map<String, String> vnpParams = new TreeMap<>();
             vnpParams.put("vnp_Version", "2.1.0");
             vnpParams.put("vnp_Command", "pay");
