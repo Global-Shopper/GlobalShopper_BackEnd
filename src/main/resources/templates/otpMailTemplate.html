@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Xác thực OTP - Global Shopper</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f4faff;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 540px;
+            background: #fff;
+            margin: 48px auto 0 auto;
+            border-radius: 18px;
+            padding: 42px 38px 32px 38px;
+            box-shadow: 0 10px 32px rgba(33, 150, 243, 0.10);
+            border: 2.5px solid #e3f2fd;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 32px;
+        }
+        .logo {
+            margin-right: 20px;
+        }
+        .logo img {
+            width: 68px;
+            height: 68px;
+            object-fit: contain;
+        }
+        .title {
+            font-size: 2.3rem;
+            font-weight: bold;
+            color: #1976d2;
+            letter-spacing: 1px;
+            margin: 0;
+            line-height: 1;
+        }
+        .greeting {
+            font-size: 1.25rem;
+            margin-bottom: 12px;
+            color: #222;
+            font-weight: 500;
+        }
+        .content {
+            font-size: 1.13rem;
+            margin-bottom: 10px;
+            color: #222;
+        }
+        .otp-label {
+            font-size: 1.13rem;
+            margin-bottom: 8px;
+            color: #222;
+        }
+        #otpCode {
+            font-size: 2.1rem;
+            font-weight: bold;
+            color: #1565c0;
+            letter-spacing: 10px;
+            margin: 28px 0 12px 0;
+            text-align: center;
+            background: #e3f2fd;
+            padding: 22px 0;
+            border-radius: 12px;
+            border: 2.5px dashed #1976d2;
+            user-select: text;
+            cursor: default;
+        }
+        .highlight {
+            color: #1976d2;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 36px;
+            font-size: 1.05rem;
+            color: #888;
+            text-align: center;
+            border-top: 1.5px solid #e3f2fd;
+            padding-top: 16px;
+        }
+        .footer .warning {
+            color: #8e24aa;
+            font-weight: bold;
+        }
+        .footer .brand {
+            color: #222;
+            font-weight: bold;
+        }
+        @media (max-width: 600px) {
+            .container { padding: 18px 8px 16px 8px; }
+            .header { flex-direction: column; }
+            .logo { margin-right: 0; margin-bottom: 10px; }
+            .title { font-size: 1.4rem; }
+            #otpCode { font-size: 1.3rem; letter-spacing: 6px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="logo">
+            <img src="https://res.cloudinary.com/gshop/image/upload/v1752470184/IMG_2490_ydnotw.jpg" alt="Global Shopper Logo" />
+        </div>
+        <div class="title">Xác thực tài khoản</div>
+    </div>
+    <div class="greeting">Xin chào <span th:text="${name}">Người dùng</span>,</div>
+    <div class="content">
+        Bạn đang thực hiện thao tác xác thực tài khoản tại <b>Global Shopper</b>.<br/>
+        <span class="otp-label">Mã OTP của bạn là:</span>
+    </div>
+    <div id="otpCode" th:text="${otp}">320314</div>
+    <div class="content highlight">
+        Vui lòng nhập mã này trong vòng 5 phút để hoàn tất xác thực.
+    </div>
+    <div class="content">
+        Nếu bạn không yêu cầu mã này, vui lòng bỏ qua email này hoặc liên hệ bộ phận hỗ trợ của chúng tôi.
+    </div>
+    <div class="footer">
+        <div class="warning">Đây là email tự động, vui lòng không trả lời.</div>
+        <div>Cảm ơn bạn đã sử dụng <span class="brand">Global Shopper</span>.</div>
+    </div>
+</div>
+
+</body>
+</html>
