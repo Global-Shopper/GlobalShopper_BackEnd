@@ -3,7 +3,6 @@ package com.sep490.gshop.service;
 import com.sep490.gshop.payload.request.RegisterRequest;
 import com.sep490.gshop.payload.response.AuthUserResponse;
 import com.sep490.gshop.payload.response.MessageResponse;
-import com.sep490.gshop.payload.response.MessageWithTokenResponse;
 import com.sep490.gshop.payload.response.ResetPasswordValidResponse;
 import org.springframework.http.ResponseEntity;
 
