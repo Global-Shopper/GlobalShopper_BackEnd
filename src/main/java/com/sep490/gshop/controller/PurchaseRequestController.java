@@ -6,6 +6,7 @@ import com.sep490.gshop.payload.dto.RequestItemDTO;
 import com.sep490.gshop.payload.dto.SubRequestDTO;
 import com.sep490.gshop.payload.request.purchaserequest.OfflineRequest;
 import com.sep490.gshop.payload.request.purchaserequest.OnlineRequest;
+import com.sep490.gshop.payload.request.purchaserequest.SubRequestModel;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.PurchaseRequestResponse;
 import com.sep490.gshop.service.PurchaseRequestService;
@@ -75,4 +76,12 @@ public class PurchaseRequestController {
         return ResponseEntity.ok(purchaseRequestDTO);
     }
 
+    @PostMapping("/create-sub-request")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<MessageResponse> createSubRequest(@Valid @RequestBody SubRequestModel subRequestModel) {
+        log.info("createSubRequest() PurchaseRequestController start | subRequestDTO: {}", subRequestModel);
+        MessageResponse createdSubRequest = purchaseRequestService.createSubRequest(subRequestModel);
+        log.info("createSubRequest() PurchaseRequestController end | createdSubRequest: {}", createdSubRequest);
+        return ResponseEntity.ok(createdSubRequest);
+    }
 }

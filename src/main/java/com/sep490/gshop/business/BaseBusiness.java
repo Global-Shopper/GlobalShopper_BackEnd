@@ -12,4 +12,5 @@ public interface BaseBusiness<T> {
     boolean delete(UUID id);
     boolean existsById(UUID id);
     long count();
+    List<T> saveAll(List<T> entities);
 }

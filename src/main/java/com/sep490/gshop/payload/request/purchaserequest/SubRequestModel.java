@@ -1,4 +1,4 @@
-package com.sep490.gshop.payload.dto;
+package com.sep490.gshop.payload.request.purchaserequest;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,9 +11,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SubRequestDTO {
-    private List<String> contactInfo;
+public class SubRequestModel {
     private String seller;
     private String ecommercePlatform;
-    private List<RequestItemDTO> requestItems;
+    private List<String> contactInfo;
+    private List<String> itemIds;
 }
