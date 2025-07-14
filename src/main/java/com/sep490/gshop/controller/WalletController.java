@@ -74,11 +74,11 @@ public class WalletController {
         var check = walletService.processVNPayReturn(email, status, amount);
         if(check) {
             HttpHeaders headers = new HttpHeaders();
-            headers.add("Location", domainRedirect + "/wallet/deposit");
+            headers.add("Location", domainRedirect + "/wallet/deposit" + "?vnp_ResponseCode=" + status);
             return new ResponseEntity<>(headers, HttpStatus.FOUND);
         }else {
             HttpHeaders headers = new HttpHeaders();
-            headers.add("Location", domainRedirect + "/wallet/deposit");
+            headers.add("Location", domainRedirect + "/wallet/deposit" + "?vnp_ResponseCode=" + status);
             return new ResponseEntity<>(headers, HttpStatus.FOUND);
         }
     }
