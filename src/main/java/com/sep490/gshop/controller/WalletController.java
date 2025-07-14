@@ -67,13 +67,12 @@ public class WalletController {
     }
 
     @GetMapping("/check-payment-vnpay")
-    public ResponseEntity<Void> checkPaymentVNPay(
+    public ResponseEntity<Boolean> checkPaymentVNPay(
             @RequestParam("email") String email,
             @RequestParam("vnp_ResponseCode") String status,
             @RequestParam("vnp_Amount") String amount) {
-
-        if(status.equals("00")) {
-            walletService.processVNPayReturn(email, status, amount);
+        var check = walletService.processVNPayReturn(email, status, amount);
+        if(check) {
             HttpHeaders headers = new HttpHeaders();
             headers.add("Location", domainRedirect + "/wallet/deposit");
             return new ResponseEntity<>(headers, HttpStatus.FOUND);

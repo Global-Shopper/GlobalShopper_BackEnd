@@ -1,6 +1,8 @@
 package com.sep490.gshop.service.implement;
 
 import com.sep490.gshop.business.*;
+import com.sep490.gshop.common.enums.TransactionStatus;
+import com.sep490.gshop.common.enums.TransactionType;
 import com.sep490.gshop.common.enums.WithdrawStatus;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.*;
@@ -17,6 +19,7 @@ import com.sep490.gshop.service.CloudinaryService;
 import com.sep490.gshop.service.WalletService;
 import com.sep490.gshop.utils.AuthUtils;
 import com.sep490.gshop.utils.FileUploadUtil;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
@@ -40,7 +43,7 @@ public class WalletServiceImpl implements WalletService {
     private UserBusiness userBusiness;
     private WithdrawTicketBusiness withdrawTicketBusiness;
     private CloudinaryService cloudinaryService;
-
+    private TransactionBusiness transactionBusiness;
     @Autowired
     public WalletServiceImpl(WalletBusiness walletBusiness,
                              CustomerBusiness customerBusiness,
@@ -49,7 +52,8 @@ public class WalletServiceImpl implements WalletService {
                              BankAccountBusiness bankAccountBusiness,
                              UserBusiness userBusiness,
                              WithdrawTicketBusiness withdrawTicketBusiness,
-                             CloudinaryService cloudinaryService) {
+                             CloudinaryService cloudinaryService,
+                             TransactionBusiness transactionBusiness) {
         this.walletBusiness = walletBusiness;
         this.customerBusiness = customerBusiness;
         this.modelMapper = modelMapper;
@@ -58,6 +62,7 @@ public class WalletServiceImpl implements WalletService {
         this.userBusiness = userBusiness;
         this.withdrawTicketBusiness = withdrawTicketBusiness;
         this.cloudinaryService = cloudinaryService;
+        this.transactionBusiness = transactionBusiness;
     }
 
     @Override
@@ -96,31 +101,77 @@ public class WalletServiceImpl implements WalletService {
 
 
     @Override
-    public void processVNPayReturn(String email, String status, String amount) {
+    @Transactional
+    public boolean processVNPayReturn(String email, String status, String amount) {
         log.debug("processVNPayReturn() Start | email: {}", email);
+
+        Transaction transaction = new Transaction();
         try {
+            if (amount == null || amount.length() < 3) {
+                log.error("Amount không hợp lệ: {}", amount);
+                return false;
+            }
             String trimmedAmountStr = amount.substring(0, amount.length() - 2);
             double amountGet = Double.parseDouble(trimmedAmountStr);
-            if (!status.equals("00")) {
-                throw new AppException(400, "Thanh toán VNPay không thành công hoặc dữ liệu không hợp lệ");
+
+            transaction.setAmount(amountGet);
+            transaction.setType(TransactionType.DEPOSIT);
+
+            if (email == null || email.isEmpty()) {
+                log.error("Email không được để trống");
+                return false;
             }
             Customer customer = customerBusiness.findByEmail(email);
-            if (email == null || customer == null) {
-                throw AppException.builder().message("Không tìm thấy người dùng, thử lại sau").code(404).build();
+            if (customer == null) {
+                transaction.setStatus(TransactionStatus.FAIL);
+                transaction.setDescription("Không tìm thấy người dùng, thử lại sau");
+                transaction.setCustomer(null);
+                transactionBusiness.create(transaction);
+                log.error("Không tìm thấy khách hàng với email: {}", email);
+                return false;
             }
+            transaction.setCustomer(customer);
+
             Wallet wallet = walletBusiness.getById(customer.getWallet().getId())
-                    .orElseThrow(() -> AppException.builder()
-                            .code(404)
-                            .message("Không tìm thấy ví của bạn")
-                            .build());
-            wallet.setBalance(wallet.getBalance() + amountGet);
+                    .orElseThrow(() -> {
+                        transaction.setStatus(TransactionStatus.FAIL);
+                        transaction.setDescription("Không tìm thấy ví của bạn");
+                        transactionBusiness.create(transaction);
+                        log.error("Không tìm thấy ví cho khách hàng id: {}", customer.getId());
+                        return new AppException(404, "Không tìm thấy ví của bạn");
+                    });
+
+            double balanceBefore = wallet.getBalance();
+            transaction.setBalanceBefore(balanceBefore);
+
+            if (!"00".equals(status)) {
+                transaction.setStatus(TransactionStatus.FAIL);
+                transaction.setDescription("Thanh toán VNPay không thành công hoặc dữ liệu không hợp lệ, mã trạng thái: " + status);
+                transaction.setBalanceAfter(balanceBefore);
+                transactionBusiness.create(transaction);
+                log.warn("Thanh toán thất bại với mã trạng thái: {}", status);
+                return false;
+            }
+
+            wallet.setBalance(balanceBefore + amountGet);
             walletBusiness.update(wallet);
+
+            transaction.setBalanceAfter(wallet.getBalance());
+            transaction.setStatus(TransactionStatus.SUCCESS);
+            transaction.setDescription("Nạp tiền vào tài khoản thành công");
+            transactionBusiness.create(transaction);
+
             log.debug("processVNPayReturn() End | updated balance: {}", wallet.getBalance());
+
+            return true;
+
         } catch (Exception e) {
             log.error("processVNPayReturn() Unexpected Exception | message: {}", e.getMessage());
-            throw e;
+            return false;
         }
     }
+
+
 
 
 
@@ -179,6 +230,7 @@ public class WalletServiceImpl implements WalletService {
             WithdrawTicket withdrawTicket = modelMapper.map(request, WithdrawTicket.class);
             withdrawTicket.setStatus(WithdrawStatus.PENDING);
             withdrawTicket.setBankAccount(bankAccountSnapshot);
+            withdrawTicket.setWallet(wallet);
             withdrawTicketBusiness.create(withdrawTicket);
 
             log.debug("withdrawMoneyRequest() End | rút tiền thành công, số tiền: {}", request.getAmount());
@@ -286,10 +338,11 @@ public class WalletServiceImpl implements WalletService {
         }
     }
 
-@Override
+    @Override
     public MessageResponse uploadTransferBill(UUID withdrawTicketId, MultipartFile multipartFile) {
         log.debug("uploadTransferBill() Start | withdrawTicketId: {}, filename: {}", withdrawTicketId, multipartFile.getOriginalFilename());
 
+        Transaction transaction = new Transaction();
         try {
             WithdrawTicket withdrawTicket = withdrawTicketBusiness.getById(withdrawTicketId)
                     .orElseThrow(() -> new AppException(404, "Không tìm thấy yêu cầu rút tiền"));
@@ -300,13 +353,47 @@ public class WalletServiceImpl implements WalletService {
                         .message("Chỉ có thể upload hóa đơn khi yêu cầu đang ở trạng thái APPROVED")
                         .build();
             }
+
+            Customer customer = customerBusiness.findByWallet(withdrawTicket.getWallet().getId());
+
             FileUploadUtil.AssertAllowedExtension(multipartFile, FileUploadUtil.IMAGE_PATTERN);
+
             String fileName = FileUploadUtil.formatFileName(multipartFile.getOriginalFilename());
             CloudinaryResponse cloudinaryResponse = cloudinaryService.uploadImage(multipartFile, fileName);
+
             withdrawTicket.setBankingBill(cloudinaryResponse.getResponseURL());
             withdrawTicket.setStatus(WithdrawStatus.COMPLETED);
             withdrawTicketBusiness.update(withdrawTicket);
+
+            Wallet wallet = walletBusiness.getById(withdrawTicket.getWallet().getId())
+                    .orElseThrow(() -> AppException.builder()
+                            .message("Không tìm thấy ví của bạn, vui lòng thử lại")
+                            .code(404)
+                            .build());
+
+            double balanceBefore = wallet.getBalance();
+
+            if (balanceBefore < withdrawTicket.getAmount()) {
+                throw AppException.builder()
+                        .code(400)
+                        .message("Số tiền rút lớn hơn số tiền trong ví, vui lòng thử lại")
+                        .build();
+            }
+
+            wallet.setBalance(balanceBefore - withdrawTicket.getAmount());
+            walletBusiness.update(wallet);
+
+            transaction.setCustomer(customer);
+            transaction.setBalanceBefore(balanceBefore);
+            transaction.setAmount(withdrawTicket.getAmount());
+            transaction.setBalanceAfter(wallet.getBalance());
+            transaction.setDescription("Rút tiền về tài khoản");
+            transaction.setType(TransactionType.WITHDRAW);
+            transaction.setStatus(TransactionStatus.SUCCESS);
+            transactionBusiness.create(transaction);
+
             log.debug("uploadTransferBill() End | transferBillUrl: {}", cloudinaryResponse.getResponseURL());
+
             return MessageResponse.builder()
                     .isSuccess(true)
                     .message("Upload hóa đơn chuyển khoản thành công và cập nhật trạng thái COMPLETED")
@@ -314,12 +401,22 @@ public class WalletServiceImpl implements WalletService {
 
         } catch (Exception e) {
             log.error("uploadTransferBill() Unexpected Exception | message: {}", e.getMessage());
+
+            try {
+                transaction.setStatus(TransactionStatus.FAIL);
+                transaction.setDescription("Lỗi khi upload hóa đơn chuyển khoản: " + e.getMessage());
+                transactionBusiness.create(transaction);
+            } catch (Exception ex) {
+                log.error("Không thể lưu transaction thất bại: {}", ex.getMessage(), ex);
+            }
+
             return MessageResponse.builder()
                     .isSuccess(false)
                     .message("Lỗi khi upload hóa đơn chuyển khoản: " + e.getMessage())
                     .build();
         }
     }
+
 
 
 }

@@ -5,6 +5,8 @@ import com.sep490.gshop.entity.Customer;
 import com.sep490.gshop.repository.CustomerRepository;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Component
 public class CustomerBusinessImpl extends BaseBusinessImpl<Customer, CustomerRepository> implements CustomerBusiness {
 
@@ -20,5 +22,10 @@ public class CustomerBusinessImpl extends BaseBusinessImpl<Customer, CustomerRep
     @Override
     public Customer findByEmail(String email) {
         return repository.findByEmailIgnoreCase(email);
+    }
+
+    @Override
+    public Customer findByWallet(UUID walletId) {
+        return repository.findByWalletId(walletId);
     }
 }

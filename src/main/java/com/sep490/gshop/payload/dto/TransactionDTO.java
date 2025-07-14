@@ -1,34 +1,26 @@
-package com.sep490.gshop.entity;
+package com.sep490.gshop.payload.dto;
 
 import com.sep490.gshop.common.enums.TransactionStatus;
 import com.sep490.gshop.common.enums.TransactionType;
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Entity
-@Table(name = "transactions")
+import java.util.UUID;
+
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class Transaction extends BaseEntity {
-
-    @ManyToOne
-    @JoinColumn(name = "customer_id", nullable = false)
-    private Customer customer;
-
-    @Column(columnDefinition = "TEXT", nullable = false)
+@NoArgsConstructor
+@Builder
+public class TransactionDTO {
+    private UUID id;
     private String description;
-
-    @Enumerated(EnumType.STRING)
     private TransactionType type;
     private double amount;
     private double balanceBefore;
     private double balanceAfter;
-
-
-    @Enumerated(EnumType.STRING)
     private TransactionStatus status;
-
+    protected long createdAt;
+    protected long updatedAt;
 }

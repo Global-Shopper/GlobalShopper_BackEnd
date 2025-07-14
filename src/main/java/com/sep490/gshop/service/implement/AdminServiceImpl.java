@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -42,6 +43,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @PreAuthorize("hasRole('BUSINESS_MANAGER')")
     public AdminDTO createAdmin(@Valid AdminRequest adminRequest) {
         log.debug("createAdmin() Start | request: {}", adminRequest);
         try {
