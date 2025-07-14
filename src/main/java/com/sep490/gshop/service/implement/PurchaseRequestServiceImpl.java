@@ -1,8 +1,6 @@
 package com.sep490.gshop.service.implement;
 
-import com.sep490.gshop.business.PurchaseRequestBusiness;
-import com.sep490.gshop.business.ShippingAddressBusiness;
-import com.sep490.gshop.business.UserBusiness;
+import com.sep490.gshop.business.*;
 import com.sep490.gshop.common.enums.PurchaseRequestStatus;
 import com.sep490.gshop.common.enums.RequestType;
 import com.sep490.gshop.common.enums.UserRole;
@@ -13,6 +11,7 @@ import com.sep490.gshop.payload.dto.RequestItemDTO;
 import com.sep490.gshop.payload.dto.SubRequestDTO;
 import com.sep490.gshop.payload.request.purchaserequest.OfflineRequest;
 import com.sep490.gshop.payload.request.purchaserequest.OnlineRequest;
+import com.sep490.gshop.payload.request.purchaserequest.SubRequestModel;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.PurchaseRequestResponse;
 import com.sep490.gshop.service.PurchaseRequestService;
@@ -26,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -36,15 +36,19 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
 
     private final PurchaseRequestBusiness purchaseRequestBusiness;
     private final ShippingAddressBusiness shippingAddressBusiness;
+    private final RequestItemBusiness requestItemBusiness;
+    private final SubRequestBusiness subRequestBusiness;
     private final UserBusiness userBusiness;
     private final ModelMapper modelMapper;
 
     @Autowired
     public PurchaseRequestServiceImpl(PurchaseRequestBusiness purchaseRequestBusiness,
-                                      ShippingAddressBusiness shippingAddressBusiness, UserBusiness userBusiness,
+                                      ShippingAddressBusiness shippingAddressBusiness, RequestItemBusiness requestItemBusiness, SubRequestBusiness subRequestBusiness, UserBusiness userBusiness,
                                       ModelMapper modelMapper) {
         this.purchaseRequestBusiness = purchaseRequestBusiness;
         this.shippingAddressBusiness = shippingAddressBusiness;
+        this.requestItemBusiness = requestItemBusiness;
+        this.subRequestBusiness = subRequestBusiness;
         this.userBusiness = userBusiness;
         this.modelMapper = modelMapper;
     }
@@ -196,16 +200,12 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
             if (UserRole.CUSTOMER.equals(role)) {
                 purchaseRequests = purchaseRequestBusiness.findByCustomerId(userId, pageable);
             } else if (UserRole.ADMIN.equals(role)) {
-                switch (type != null ? type.toLowerCase() : "") {
-                    case "unassigned":
-                        purchaseRequests = purchaseRequestBusiness.findUnassignedRequests(pageable);
-                        break;
-                    case "assigned":
-                        purchaseRequests = purchaseRequestBusiness.findAssignedRequestsByAdminId(userId, pageable);
-                        break;
-                    default:
-                        throw new AppException(HttpStatus.BAD_REQUEST.value(), "Sai loại Yêu cầu. Sử dụng 'Chưa được nhận' or 'Đã được nhận'.");
-                }
+                purchaseRequests = switch (type != null ? type.toLowerCase() : "") {
+                    case "unassigned" -> purchaseRequestBusiness.findUnassignedRequests(pageable);
+                    case "assigned" -> purchaseRequestBusiness.findAssignedRequestsByAdminId(userId, pageable);
+                    default ->
+                            throw new AppException(HttpStatus.BAD_REQUEST.value(), "Sai loại Yêu cầu. Sử dụng 'Chưa được nhận' or 'Đã được nhận'.");
+                };
             }
             if (purchaseRequests == null || purchaseRequests.isEmpty()) {
                 log.debug("getPurchaseRequests() end | response: empty");
@@ -223,6 +223,42 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
             return response;
         } catch (Exception e) {
             log.error("getPurchaseRequests() error | message : {}", e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    @Override
+    @Transactional
+    public MessageResponse createSubRequest(SubRequestModel subRequestModel) {
+        try {
+            log.debug("createSubRequest() PurchaseRequestServiceImpl start | subRequestModel: {}", subRequestModel);
+            List<RequestItem> items = requestItemBusiness.findAllById(subRequestModel.getItemIds());
+            if (items.isEmpty()) {
+                throw new AppException(HttpStatus.NOT_FOUND.value(), "Không tìm thấy yêu cầu mua hàng nào với ID đã cho");
+            }
+            UUID purchaseRequestId = items.get(0).getPurchaseRequest().getId();
+            if (items.stream().anyMatch(i -> !i.getPurchaseRequest().getId().equals(purchaseRequestId))) {
+                throw new AppException(HttpStatus.BAD_REQUEST.value(), "Tất cả các sản phầm phải thuộc cùng một yêu cầu mua hàng");
+            }
+            if (!AuthUtils.getCurrentUserId().equals(items.get(0).getPurchaseRequest().getAdmin().getId())) {
+                throw new AppException(HttpStatus.FORBIDDEN.value(), "Người dùng hiện tại không phải là quản trị viên của yêu cầu mua hàng này");
+            }
+            if (items.stream().anyMatch(i -> i.getSubRequest() != null)) {
+                throw new AppException(HttpStatus.BAD_REQUEST.value(), "Một hoặc nhiều sản phẩm đã có nhóm");
+            }
+            SubRequest subRequest = subRequestBusiness.create(SubRequest.builder()
+                    .contactInfo(subRequestModel.getContactInfo())
+                    .seller(subRequestModel.getSeller())
+                    .ecommercePlatform(subRequestModel.getEcommercePlatform())
+                    .build());
+            items.forEach(item -> item.setSubRequest(subRequest));
+            List<RequestItem> savedItem = requestItemBusiness.saveAll(items);
+            if (savedItem.isEmpty() || savedItem.size() != items.size()) {
+                throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Không thể tạo nhóm yêu cầu");
+            }
+            return new MessageResponse("Tạo nhóm yêu cầu thành công", true);
+        } catch (Exception e) {
+            log.error("createSubRequest() PurchaseRequestServiceImpl error | message : {}", e.getMessage());
             throw e;
         }
     }
