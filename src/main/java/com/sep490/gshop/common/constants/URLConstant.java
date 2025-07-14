@@ -17,6 +17,6 @@ public class URLConstant {
     public static final String AI = "ai";
     public static final String PURCHASE_REQUEST = "purchase-request";
     public static final String BANK_ACCOUNT = "bank-account";
-
+    public static final String TRANSACTION = "transaction";
 
 }

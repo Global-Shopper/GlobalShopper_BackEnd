@@ -1,4 +1,4 @@
-package com.sep490.gshop.payload.request;
+package com.sep490.gshop.payload.request.purchaserequest;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,6 +15,7 @@ public class ItemRequestModel {
     private String link;
     private String name;
     private List<String> variants;
+    private List<String> images;
     private int quantity;
     private String note;
 }

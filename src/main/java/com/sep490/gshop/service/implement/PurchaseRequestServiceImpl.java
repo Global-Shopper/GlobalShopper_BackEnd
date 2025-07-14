@@ -11,7 +11,8 @@ import com.sep490.gshop.entity.*;
 import com.sep490.gshop.payload.dto.PurchaseRequestDTO;
 import com.sep490.gshop.payload.dto.RequestItemDTO;
 import com.sep490.gshop.payload.dto.SubRequestDTO;
-import com.sep490.gshop.payload.request.PurchaseRequestModel;
+import com.sep490.gshop.payload.request.purchaserequest.OfflineRequest;
+import com.sep490.gshop.payload.request.purchaserequest.OnlineRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.PurchaseRequestResponse;
 import com.sep490.gshop.service.PurchaseRequestService;
@@ -50,10 +51,10 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
 
 
     @Override
-    public PurchaseRequestResponse<List<RequestItemDTO>> createOnlinePurchaseRequest(PurchaseRequestModel purchaseRequestModel) {
+    public PurchaseRequestResponse<List<RequestItemDTO>> createOnlinePurchaseRequest(OnlineRequest onlineRequest) {
         try {
-            log.debug("createPurchaseRequest() PurchaseRequestServiceImpl start | request : {}", purchaseRequestModel);
-            ShippingAddress shippingAddress = shippingAddressBusiness.getById(UUID.fromString(purchaseRequestModel.getShippingAddressId()))
+            log.debug("createPurchaseRequest() PurchaseRequestServiceImpl start | request : {}", onlineRequest);
+            ShippingAddress shippingAddress = shippingAddressBusiness.getById(UUID.fromString(onlineRequest.getShippingAddressId()))
                     .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND.value(), "Không tìm thấy địa chỉ nhận hàng"));
             User user = userBusiness.getById(AuthUtils.getCurrentUserId()).orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND.value(), "Không tìm thấy người dùng hiện tại"));
 
@@ -66,7 +67,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                 purchaseRequest.setAdmin(null);
                 purchaseRequest.setExpiredAt(System.currentTimeMillis() + 24 * 60 * 60 * 1000);
                 PurchaseRequest finalPurchaseRequest = purchaseRequest;
-                List<RequestItem> requestItems = purchaseRequestModel.getItems().stream()
+                List<RequestItem> requestItems = onlineRequest.getItems().stream()
                         .map(item -> RequestItem.builder()
                                 .productName(item.getName())
                                 .purchaseRequest(finalPurchaseRequest)
@@ -74,6 +75,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                                 .quantity(item.getQuantity())
                                 .description(item.getNote())
                                 .variants(item.getVariants())
+                                .images(item.getImages())
                                 .build())
                         .toList();
                 purchaseRequest.setRequestItems(requestItems);
@@ -97,15 +99,11 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
     }
 
     @Override
-    public PurchaseRequestResponse<SubRequestDTO> createOfflinePurchaseRequest(PurchaseRequestModel purchaseRequestModel) {
+    public PurchaseRequestResponse<SubRequestDTO> createOfflinePurchaseRequest(OfflineRequest offlineRequest) {
         try {
-            log.debug("createOfflinePurchaseRequest() PurchaseRequestServiceImpl start | request : {}", purchaseRequestModel);
-            if (purchaseRequestModel.getContactInfo().isEmpty()) {
-                throw new AppException(HttpStatus.BAD_REQUEST.value(), "Thông tin liên hệ không được để trống");
-            }
-            ShippingAddress shippingAddress = shippingAddressBusiness.getById(UUID.fromString(purchaseRequestModel.getShippingAddressId()))
+            log.debug("createOfflinePurchaseRequest() PurchaseRequestServiceImpl start | request : {}", offlineRequest);
+            ShippingAddress shippingAddress = shippingAddressBusiness.getById(UUID.fromString(offlineRequest.getShippingAddressId()))
                     .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND.value(), "Không tìm thấy địa chỉ nhận hàng"));
-
             User user = userBusiness.getById(AuthUtils.getCurrentUserId()).orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND.value(), "Không tìm thấy người dùng hiện tại"));
 
             if (user instanceof Customer customer) {
@@ -115,12 +113,12 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                         .status(PurchaseRequestStatus.SENT)
                         .build();
                 SubRequest subRequest = SubRequest.builder()
-                        .contactInfo(purchaseRequestModel.getContactInfo())
+                        .contactInfo(offlineRequest.getContactInfo())
                         .build();
                 purchaseRequest.setAdmin(null);
                 purchaseRequest.setExpiredAt(System.currentTimeMillis() + 24 * 60 * 60 * 1000);
                 PurchaseRequest finalPurchaseRequest = purchaseRequest;
-                List<RequestItem> requestItems = purchaseRequestModel.getItems().stream()
+                List<RequestItem> requestItems = offlineRequest.getItems().stream()
                         .map(item -> RequestItem.builder()
                                 .productName(item.getName())
                                 .purchaseRequest(finalPurchaseRequest)
@@ -128,6 +126,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                                 .quantity(item.getQuantity())
                                 .description(item.getNote())
                                 .variants(item.getVariants())
+                                .images(item.getImages())
                                 .subRequest(subRequest)
                                 .build())
                         .toList();
@@ -186,10 +185,10 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
     }
 
     @Override
-    public Page<PurchaseRequestDTO> getPurchaseRequests(int page, int size, String type) {
+    public Page<PurchaseRequestDTO> getPurchaseRequests(int page, int size, Sort.Direction direction, String type) {
         try {
             log.debug("getPurchaseRequests() start | page: {}, size: {}, type: {}", page, size, type);
-            Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+            Sort sort = Sort.by(direction, "createdAt");
             Pageable pageable = PageRequest.of(page, size,sort);
             UserRole role = AuthUtils.getCurrentUser().getRole();
             UUID userId = AuthUtils.getCurrentUserId();
