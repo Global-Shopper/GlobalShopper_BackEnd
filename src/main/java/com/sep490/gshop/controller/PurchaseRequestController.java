@@ -4,13 +4,17 @@ import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.payload.dto.PurchaseRequestDTO;
 import com.sep490.gshop.payload.dto.RequestItemDTO;
 import com.sep490.gshop.payload.dto.SubRequestDTO;
-import com.sep490.gshop.payload.request.PurchaseRequestModel;
+import com.sep490.gshop.payload.request.purchaserequest.OfflineRequest;
+import com.sep490.gshop.payload.request.purchaserequest.OnlineRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.PurchaseRequestResponse;
 import com.sep490.gshop.service.PurchaseRequestService;
+import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
+import org.springdoc.core.converters.models.PageableAsQueryParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -32,18 +36,18 @@ public class PurchaseRequestController {
 
     @PostMapping("/online-request")
     @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<PurchaseRequestResponse<List<RequestItemDTO>>> createOnlinePurchaseRequest(@RequestBody PurchaseRequestModel purchaseRequestModel) {
-        log.info("Creating purchase request: {}", purchaseRequestModel);
-        PurchaseRequestResponse<List<RequestItemDTO>> createdPurchaseRequest = purchaseRequestService.createOnlinePurchaseRequest(purchaseRequestModel);
+    public ResponseEntity<PurchaseRequestResponse<List<RequestItemDTO>>> createOnlinePurchaseRequest(@Valid @RequestBody OnlineRequest onlineRequest) {
+        log.info("Creating purchase request: {}", onlineRequest);
+        PurchaseRequestResponse<List<RequestItemDTO>> createdPurchaseRequest = purchaseRequestService.createOnlinePurchaseRequest(onlineRequest);
         log.info("Purchase request created successfully: {}", createdPurchaseRequest);
         return ResponseEntity.ok(createdPurchaseRequest);
     }
 
     @PostMapping("/offline-request")
     @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<PurchaseRequestResponse<SubRequestDTO>> createOfflinePurchaseRequest(@RequestBody PurchaseRequestModel purchaseRequestModel) {
-        log.info("createOfflinePurchaseRequest() PurchaseRequestController start | model : {}", purchaseRequestModel);
-        PurchaseRequestResponse<SubRequestDTO> createdPurchaseRequest = purchaseRequestService.createOfflinePurchaseRequest(purchaseRequestModel);
+    public ResponseEntity<PurchaseRequestResponse<SubRequestDTO>> createOfflinePurchaseRequest(@Valid @RequestBody OfflineRequest offlineRequest) {
+        log.info("createOfflinePurchaseRequest() PurchaseRequestController start | model : {}", offlineRequest);
+        PurchaseRequestResponse<SubRequestDTO> createdPurchaseRequest = purchaseRequestService.createOfflinePurchaseRequest(offlineRequest);
         log.info("createOfflinePurchaseRequest() PurchaseRequestController end | createdPurchaseRequest : {}", createdPurchaseRequest);
         return ResponseEntity.ok(createdPurchaseRequest);
     }
@@ -58,13 +62,15 @@ public class PurchaseRequestController {
     }
 
     @GetMapping()
+    @PageableAsQueryParam
     @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
     public ResponseEntity<Page<PurchaseRequestDTO>> getPurchaseRequests(
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size,
-            @RequestParam String type) {
+            @RequestParam(value = "direction", defaultValue = "DESC") Sort.Direction direction,
+            @RequestParam(value = "type", defaultValue = "unassigned") String type) {
         log.info("getAllPurchaseRequests() PurchaseRequestController start | page: {}, size: {}", page, size);
-        Page<PurchaseRequestDTO> purchaseRequestDTO = purchaseRequestService.getPurchaseRequests(page, size, type);
+        Page<PurchaseRequestDTO> purchaseRequestDTO = purchaseRequestService.getPurchaseRequests(page, size, direction, type);
         log.info("getAllPurchaseRequests() PurchaseRequestController end | purchaseRequestDTO: {}", purchaseRequestDTO);
         return ResponseEntity.ok(purchaseRequestDTO);
     }
