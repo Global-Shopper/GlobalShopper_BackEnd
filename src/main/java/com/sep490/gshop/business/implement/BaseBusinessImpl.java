@@ -54,4 +54,9 @@ public abstract class BaseBusinessImpl<T, R extends JpaRepository<T, UUID>> impl
         return repository.count();
     }
 
+    @Override
+    public List<T> saveAll(List<T> entities) {
+        return repository.saveAll(entities);
+    }
+
 }
