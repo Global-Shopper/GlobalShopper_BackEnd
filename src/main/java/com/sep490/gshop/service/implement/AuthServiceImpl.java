@@ -35,6 +35,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.context.Context;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -96,7 +97,7 @@ public class AuthServiceImpl implements AuthService {
                             .errorCode(ErrorCode.EMAIL_UNCONFIRMED)
                             .build();
                 }
-                sendOTP(user.getEmail(), user.getName(), CacheType.OTP);
+                sendOTPWithTemplate(user.getEmail(), user.getName(), CacheType.OTP);
                 throw ErrorException.builder()
                         .message("Email chưa được xác thực. Vui lòng kiểm tra email để xác thực tài khoản")
                         .httpCode(401)
@@ -135,7 +136,7 @@ public class AuthServiceImpl implements AuthService {
             user.setGender(registerRequest.getGender());
             user.setRole(UserRole.CUSTOMER);
             user = userBusiness.create(user);
-            sendOTP(user.getEmail(), user.getName(), CacheType.OTP);
+            sendOTPWithTemplate(user.getEmail(), user.getName(), CacheType.OTP);
             log.debug("register() AuthServiceImpl End |");
             return MessageResponse.builder()
                     .message("Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản")
@@ -177,7 +178,7 @@ public class AuthServiceImpl implements AuthService {
                     throw new AppException(400, "Vui lòng đợi " + timeRemainStr + " để gửi lại mã OTP mới");
 
                 }
-                sendOTP(user.getEmail(), user.getName(), CacheType.OTP);
+                sendOTPWithTemplate(user.getEmail(), user.getName(), CacheType.OTP);
                 log.debug("resendOtp() AuthServiceImpl End | Mã OTP đã được gửi lại");
                 return MessageResponse.builder()
                         .message("Mã OTP đã được gửi lại. Vui lòng kiểm tra email")
@@ -216,7 +217,7 @@ public class AuthServiceImpl implements AuthService {
                 throw new AppException(400, "Vui lòng đợi " + timeRemainStr + " để gửi lại mã OTP mới");
             }
 
-            sendOTP(user.getEmail(), user.getName(), CacheType.OTP_RESET_PASSWORD);
+            sendOTPWithTemplate(user.getEmail(), user.getName(), CacheType.OTP_RESET_PASSWORD);
 
             return MessageResponse.builder()
                     .message("Mã OTP đã được gửi đến email của bạn. Vui lòng kiểm tra email để đặt lại mật khẩu")
@@ -419,7 +420,7 @@ public class AuthServiceImpl implements AuthService {
                         .isSuccess(false)
                         .build();
             }
-            sendOTP(currentEmail, customer.getName(), CacheType.OTP_CHANGE_MAIL);
+            sendOTPWithTemplate(currentEmail, customer.getName(), CacheType.OTP_CHANGE_MAIL);
             log.debug("changeMail() End | userId: {}, message: OTP đã được gửi đến email hiện tại", currentId);
             return MessageResponse.builder()
                     .message("Hãy xác nhận email hiện tại của bạn còn khả dụng trước khi tiếp tục. Mã OTP đã được gửi đến email để xác nhận.")
@@ -505,7 +506,11 @@ public class AuthServiceImpl implements AuthService {
         try {
             String token = jwtUtils.generateTempTokenChangeMail(user, email);
             String verificationLink = baseUrl + "/auth/verify-new-email?token=" + URLEncoder.encode(token, StandardCharsets.UTF_8);
-            emailService.sendEmail(email, "Xác thực email", "Vui lòng bấm vào link sau để xác thực email: " + verificationLink);
+            Context context = new Context();
+            context.setVariable("verificationLink", verificationLink);
+            context.setVariable("email", email);
+            context.setVariable("name", user.getName());
+            emailService.sendEmailTemplate(email, user.getName(), verificationLink, "urlMailTemplate", context);
             log.debug("sendVerificationEmail() End | Verification email sent to: {}", email);
             return MessageResponse.builder()
                     .message("Đã gửi xác thực đến email của bạn, vui lòng check mail")
@@ -523,5 +528,14 @@ public class AuthServiceImpl implements AuthService {
         emailService.sendEmail(email,
                 "Chào mừng bạn đến với GShop",
                 "Cảm ơn "+ name + " đã sử dụng dịch vụ tại GShop. Mã OTP của bạn là: " + otp );
+    }
+    private void sendOTPWithTemplate(String email, String name, CacheType cacheType) {
+        String otp = RandomUtil.randomNumber(6);
+        typedCacheService.put(cacheType, email, otp);
+        Context context = new Context();
+        context.setVariable("name", name);
+        context.setVariable("email", email);
+        context.setVariable("otp", otp);
+        emailService.sendEmailTemplate(email, name, otp, "otpMailTemplate", context);
     }
 }
