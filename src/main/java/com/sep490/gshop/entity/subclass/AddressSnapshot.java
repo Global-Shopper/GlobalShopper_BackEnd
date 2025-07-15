@@ -14,6 +14,10 @@ public class AddressSnapshot {
     private String name;
     private String phoneNumber;
     private String location;
+    private String provinceCode;
+    private String districtCode;
+    private String wardCode;
+    private String addressLine;
     private boolean isDefault;
 
     public AddressSnapshot(ShippingAddress shippingAddress) {
@@ -21,5 +25,9 @@ public class AddressSnapshot {
         this.phoneNumber = shippingAddress.getPhoneNumber();
         this.location = shippingAddress.getLocation();
         this.isDefault = shippingAddress.isDefault();
+        this.provinceCode = shippingAddress.getProvinceCode();
+        this.districtCode = shippingAddress.getDistrictCode();
+        this.wardCode = shippingAddress.getWardCode();
+        this.addressLine = shippingAddress.getAddressLine();
     }
 }
