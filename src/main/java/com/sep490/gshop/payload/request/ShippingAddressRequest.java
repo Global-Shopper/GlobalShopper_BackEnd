@@ -26,4 +26,12 @@ public class ShippingAddressRequest {
     @NotBlank(message = "Địa chỉ không được bỏ trống")
     private String location;
     private boolean isDefault;
+    @NotBlank(message = "Tỉnh không được bỏ trống")
+    private String provinceCode;
+    @NotBlank(message = "Quận/Huyện không được bỏ trống")
+    private String districtCode;
+    @NotBlank(message = "Phường/Xã không được bỏ trống")
+    private String wardCode;
+    @NotBlank(message = "Địa chỉ chi tiết không được bỏ trống")
+    private String addressLine;
 }

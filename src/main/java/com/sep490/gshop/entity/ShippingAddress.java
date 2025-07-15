@@ -20,6 +20,10 @@ public class ShippingAddress extends BaseEntity {
     private String tag; //Ex: home, office,...
     private String phoneNumber;
     private String location;
+    private String provinceCode;
+    private String districtCode;
+    private String wardCode;
+    private String addressLine;
     private boolean isDefault;
 
     @ManyToOne
