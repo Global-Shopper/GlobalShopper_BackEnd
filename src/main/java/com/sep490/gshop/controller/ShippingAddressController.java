@@ -66,18 +66,18 @@ public class ShippingAddressController {
     @GetMapping
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<List<ShippingAddressDTO>> getShippingAddresses() {
-        log.info("getShippingAddresses() Start");
+        log.info("getShippingAddresses() getShippingAddresses Start");
         List<ShippingAddressDTO> list = shippingAddressService.getShippingAddressesByCurrentUser();
-        log.info("getShippingAddresses() End | size: {}", list.size());
+        log.info("getShippingAddresses() getShippingAddresses End | size: {}", list.size());
         return ResponseEntity.ok(list);
     }
 
     @PutMapping("/default/{id}")
     @PreAuthorize("hasRole('CUSTOMER')")
     public MessageResponse updateShippingAddress(@PathVariable UUID id){
-        log.info("updateShippingAddress() Start | id: {}", id);
+        log.info("updateShippingAddress() updateShippingAddress Start | id: {}", id);
         var shipping = shippingAddressService.updateDefaultShippingAddress(id);
-        log.info("updateShippingAddress() End | dto: {}", shipping);
+        log.info("updateShippingAddress() updateShippingAddress End | dto: {}", shipping);
         return MessageResponse.builder().message("Update thành công").isSuccess(shipping).build();
     }
 
