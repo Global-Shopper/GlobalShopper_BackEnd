@@ -12,10 +12,10 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class ItemRequestModel {
-    private String link;
-    private String name;
+    private String productName;
+    private String productURL;
     private List<String> variants;
     private List<String> images;
     private int quantity;
-    private String note;
+    private String description;
 }

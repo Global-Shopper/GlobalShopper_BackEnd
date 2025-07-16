@@ -18,5 +18,5 @@ public class OnlineRequest {
     private String shippingAddressId;
     @NotNull(message = "Thông tin sản phẩm không được để trống")
     @Size(min = 1, message = "Danh sách sản phẩm không được để trống")
-    private List<ItemRequestModel> items;
+    private List<ItemRequestModel> requestItems;
 }

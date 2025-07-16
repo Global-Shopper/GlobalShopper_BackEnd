@@ -7,6 +7,7 @@ import com.sep490.gshop.payload.dto.SubRequestDTO;
 import com.sep490.gshop.payload.request.purchaserequest.OfflineRequest;
 import com.sep490.gshop.payload.request.purchaserequest.OnlineRequest;
 import com.sep490.gshop.payload.request.purchaserequest.SubRequestModel;
+import com.sep490.gshop.payload.request.purchaserequest.UpdateRequestModel;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.PurchaseRequestResponse;
 import com.sep490.gshop.service.PurchaseRequestService;
@@ -83,5 +84,15 @@ public class PurchaseRequestController {
         MessageResponse createdSubRequest = purchaseRequestService.createSubRequest(subRequestModel);
         log.info("createSubRequest() PurchaseRequestController end | createdSubRequest: {}", createdSubRequest);
         return ResponseEntity.ok(createdSubRequest);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
+    public ResponseEntity<MessageResponse> updateRequest(@PathVariable("id") String id, @Valid @RequestBody UpdateRequestModel updateRequestModel) {
+        log.info("updateRequest() PurchaseRequestController start | id: {}, updateRequestModel: {}", id, updateRequestModel);
+        MessageResponse response = purchaseRequestService.updatePurchaseRequest(id, updateRequestModel);
+        log.info("updateRequest() PurchaseRequestController end | response: {}", response);
+        return ResponseEntity.ok(response);
+
     }
 }
