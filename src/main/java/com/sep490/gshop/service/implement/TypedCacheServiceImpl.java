@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.sep490.gshop.common.enums.CacheType;
 import com.sep490.gshop.common.shared.CacheData;
+import com.sep490.gshop.payload.response.ExchangeRateResponse;
 import com.sep490.gshop.service.TypedCacheService;
 import com.sep490.gshop.utils.DateTimeUtil;
 import org.springframework.stereotype.Service;
@@ -59,5 +60,13 @@ public class TypedCacheServiceImpl<K, V> implements TypedCacheService<K, V> {
         }
         long remainingTime = (cacheData.getExpiredTime() - DateTimeUtil.getCurrentEpochMilli())/1000;
         return remainingTime > 0 ? remainingTime : 0;
+    }
+
+    @Override
+    public Cache<String, ExchangeRateResponse> exchangeRateCache() {
+        return Caffeine.newBuilder()
+                .expireAfterWrite(1, TimeUnit.HOURS)
+                .maximumSize(1)
+                .build();
     }
 }
