@@ -9,8 +9,9 @@ public enum CacheType {
     ORDER_CONFIRMATION(10),
     OTP_ATTEMPT(10),
     OTP_RESET_PASSWORD(5),
-    OTP_CHANGE_MAIL(5);
+    OTP_CHANGE_MAIL(5),
 
+    EXCHANGE_RATE(60);
     private final long ttlMinutes;
 
     CacheType(long ttlMinutes) {
