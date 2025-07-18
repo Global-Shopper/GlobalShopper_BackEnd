@@ -273,7 +273,9 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
             //Authentication and authorization
             PurchaseRequest purchaseRequest = purchaseRequestBusiness.getById(UUID.fromString(id))
                     .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND.value(), "Không tìm thấy yêu cầu mua hàng để cập nhật"));
-
+            if (purchaseRequest.getStatus() != PurchaseRequestStatus.SENT && purchaseRequest.getStatus() != PurchaseRequestStatus.INSUFFICIENT) {
+                throw new AppException(HttpStatus.BAD_REQUEST.value(), "Yêu cầu mua hàng không thể cập nhật khi không ở trạng thái Đã gửi");
+            }
             UserDetailsImpl user = AuthUtils.getCurrentUser();
             if ((UserRole.CUSTOMER.equals(user.getRole()) && !AuthUtils.getCurrentUserId().equals(purchaseRequest.getCustomer().getId())) ||
                 (UserRole.ADMIN.equals(user.getRole()) && !AuthUtils.getCurrentUserId().equals(purchaseRequest.getAdmin().getId()))) {
@@ -283,6 +285,17 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
             // Validate shipping address
             ShippingAddress shippingAddress = shippingAddressBusiness.getById(UUID.fromString(updateRequestModel.getShippingAddressId()))
                     .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND.value(), "Không tìm thấy địa chỉ nhận hàng để cập nhật"));
+
+            //Update subRequest contact info if request type is OFFLINE
+            SubRequest subRequest = purchaseRequest.getRequestItems().stream()
+                    .filter(item -> item.getSubRequest() != null)
+                    .findFirst()
+                    .map(RequestItem::getSubRequest)
+                    .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND.value(), "Không tìm thấy nhóm yêu cầu để cập nhật"));
+            if (RequestType.OFFLINE.equals(purchaseRequest.getRequestType()) && updateRequestModel.getContactInfo() != null){
+                subRequest.setContactInfo(updateRequestModel.getContactInfo());
+                subRequestBusiness.update(subRequest);
+            }
 
             // Validate request items
             List<RequestItem> requestItems = purchaseRequest.getRequestItems();
@@ -294,14 +307,18 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
 
             for (UpdateRequestItemModel item : updateRequestModel.getItems()) {
                 if (item.getId() == null ) {
-                    RequestItem requestItem = new RequestItem();
-                    requestItem.setProductName(item.getProductName());
-                    requestItem.setProductURL(item.getProductURL());
-                    requestItem.setQuantity(item.getQuantity());
-                    requestItem.setDescription(item.getDescription());
-                    requestItem.setVariants(item.getVariants());
-                    requestItem.setImages(item.getImages());
-                    requestItem.setPurchaseRequest(purchaseRequest);
+                    RequestItem requestItem = RequestItem.builder()
+                            .productName(item.getProductName())
+                            .productURL(item.getProductURL())
+                            .quantity(item.getQuantity())
+                            .description(item.getDescription())
+                            .variants(item.getVariants())
+                            .images(item.getImages())
+                            .purchaseRequest(purchaseRequest)
+                            .build();
+                    if (RequestType.OFFLINE.equals(purchaseRequest.getRequestType())) {
+                        requestItem.setSubRequest(subRequest);
+                    }
                     finalItemList.add(requestItem);
                 } else if (itemMap.containsKey(UUID.fromString(item.getId()))) {
                     RequestItem requestItem = itemMap.get(UUID.fromString(item.getId()));
@@ -332,4 +349,5 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
             throw e;
         }
     }
+    
 }
