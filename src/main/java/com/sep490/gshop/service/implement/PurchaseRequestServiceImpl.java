@@ -384,7 +384,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                         return subDTO;
                     }).collect(Collectors.toList());
             PurchaseRequestModel response = modelMapper.map(purchaseRequest, PurchaseRequestModel.class);
-            response.setItems(itemsWithoutSub);
+            response.setRequestItems(itemsWithoutSub);
             response.setSubRequests(subRequestModels);
             log.debug("getPurchaseRequestById() PurchaseRequestServiceImpl end | response: {}", response);
             return response;
