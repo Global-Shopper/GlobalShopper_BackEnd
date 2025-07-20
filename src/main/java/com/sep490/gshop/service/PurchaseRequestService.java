@@ -8,6 +8,7 @@ import com.sep490.gshop.payload.request.purchaserequest.OnlineRequest;
 import com.sep490.gshop.payload.request.purchaserequest.SubRequestModel;
 import com.sep490.gshop.payload.request.purchaserequest.UpdateRequestModel;
 import com.sep490.gshop.payload.response.MessageResponse;
+import com.sep490.gshop.payload.response.PurchaseRequestModel;
 import com.sep490.gshop.payload.response.PurchaseRequestResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
@@ -27,4 +28,6 @@ public interface PurchaseRequestService {
     MessageResponse createSubRequest(SubRequestModel subRequestModel);
 
     MessageResponse updatePurchaseRequest(String id, UpdateRequestModel updateRequestModel);
+
+    PurchaseRequestModel getPurchaseRequestById(String id);
 }
