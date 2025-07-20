@@ -22,6 +22,6 @@ public class PurchaseRequestModel {
     private AdminDTO admin;
     private CustomerDTO customer;
     private String requestType;
-    private List<RequestItemDTO> items;
+    private List<RequestItemDTO> requestItems;
     private List<SubRequestDTO> subRequests;
 }
