@@ -1,5 +1,4 @@
-package com.sep490.gshop.payload.dto;
-
+package com.sep490.gshop.payload.request.purchaserequest;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,15 +8,15 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class RequestItemDTO {
+public class UpdateRequestItemModel {
     private String id;
     private String productURL;
     private String productName;
     private List<String> variants;
     private List<String> images;
-    private String description;
     private int quantity;
+    private String description;
 }

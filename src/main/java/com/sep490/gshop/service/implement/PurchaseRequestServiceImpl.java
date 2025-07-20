@@ -5,14 +5,14 @@ import com.sep490.gshop.common.enums.PurchaseRequestStatus;
 import com.sep490.gshop.common.enums.RequestType;
 import com.sep490.gshop.common.enums.UserRole;
 import com.sep490.gshop.config.handler.AppException;
+import com.sep490.gshop.config.security.services.UserDetailsImpl;
 import com.sep490.gshop.entity.*;
 import com.sep490.gshop.payload.dto.PurchaseRequestDTO;
 import com.sep490.gshop.payload.dto.RequestItemDTO;
 import com.sep490.gshop.payload.dto.SubRequestDTO;
-import com.sep490.gshop.payload.request.purchaserequest.OfflineRequest;
-import com.sep490.gshop.payload.request.purchaserequest.OnlineRequest;
-import com.sep490.gshop.payload.request.purchaserequest.SubRequestModel;
+import com.sep490.gshop.payload.request.purchaserequest.*;
 import com.sep490.gshop.payload.response.MessageResponse;
+import com.sep490.gshop.payload.response.PurchaseRequestModel;
 import com.sep490.gshop.payload.response.PurchaseRequestResponse;
 import com.sep490.gshop.service.PurchaseRequestService;
 import com.sep490.gshop.utils.AuthUtils;
@@ -27,8 +27,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Log4j2
@@ -71,13 +74,13 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                 purchaseRequest.setAdmin(null);
                 purchaseRequest.setExpiredAt(System.currentTimeMillis() + 24 * 60 * 60 * 1000);
                 PurchaseRequest finalPurchaseRequest = purchaseRequest;
-                List<RequestItem> requestItems = onlineRequest.getItems().stream()
+                List<RequestItem> requestItems = onlineRequest.getRequestItems().stream()
                         .map(item -> RequestItem.builder()
-                                .productName(item.getName())
+                                .productName(item.getProductName())
                                 .purchaseRequest(finalPurchaseRequest)
-                                .productURL(item.getLink())
+                                .productURL(item.getProductURL())
                                 .quantity(item.getQuantity())
-                                .description(item.getNote())
+                                .description(item.getDescription())
                                 .variants(item.getVariants())
                                 .images(item.getImages())
                                 .build())
@@ -122,13 +125,13 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                 purchaseRequest.setAdmin(null);
                 purchaseRequest.setExpiredAt(System.currentTimeMillis() + 24 * 60 * 60 * 1000);
                 PurchaseRequest finalPurchaseRequest = purchaseRequest;
-                List<RequestItem> requestItems = offlineRequest.getItems().stream()
+                List<RequestItem> requestItems = offlineRequest.getRequestItems().stream()
                         .map(item -> RequestItem.builder()
-                                .productName(item.getName())
+                                .productName(item.getProductName())
                                 .purchaseRequest(finalPurchaseRequest)
-                                .productURL(item.getLink())
+                                .productURL(item.getProductURL())
                                 .quantity(item.getQuantity())
-                                .description(item.getNote())
+                                .description(item.getDescription())
                                 .variants(item.getVariants())
                                 .images(item.getImages())
                                 .subRequest(subRequest)
@@ -262,4 +265,133 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
             throw e;
         }
     }
+
+    @Override
+    @Transactional
+    public MessageResponse updatePurchaseRequest(String id, UpdateRequestModel updateRequestModel) {
+        try {
+            log.debug("updatePurchaseRequest() PurchaseRequestServiceImpl start | id: {}, updateRequestModel: {}", id, updateRequestModel);
+            //Authentication and authorization
+            PurchaseRequest purchaseRequest = purchaseRequestBusiness.getById(UUID.fromString(id))
+                    .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND.value(), "Không tìm thấy yêu cầu mua hàng để cập nhật"));
+            if (purchaseRequest.getStatus() != PurchaseRequestStatus.SENT && purchaseRequest.getStatus() != PurchaseRequestStatus.INSUFFICIENT) {
+                throw new AppException(HttpStatus.BAD_REQUEST.value(), "Yêu cầu mua hàng không thể cập nhật khi không ở trạng thái Đã gửi");
+            }
+            UserDetailsImpl user = AuthUtils.getCurrentUser();
+            if ((UserRole.CUSTOMER.equals(user.getRole()) && !AuthUtils.getCurrentUserId().equals(purchaseRequest.getCustomer().getId())) ||
+                (UserRole.ADMIN.equals(user.getRole()) && !AuthUtils.getCurrentUserId().equals(purchaseRequest.getAdmin().getId()))) {
+                throw new AppException(HttpStatus.FORBIDDEN.value(), "Người dùng hiện tại không có quyền cập nhật yêu cầu mua hàng này");
+            }
+
+            // Validate shipping address
+            ShippingAddress shippingAddress = shippingAddressBusiness.getById(UUID.fromString(updateRequestModel.getShippingAddressId()))
+                    .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND.value(), "Không tìm thấy địa chỉ nhận hàng để cập nhật"));
+
+            //Update subRequest contact info if request type is OFFLINE
+            SubRequest subRequest = purchaseRequest.getRequestItems().stream()
+                    .filter(item -> item.getSubRequest() != null)
+                    .findFirst()
+                    .map(RequestItem::getSubRequest)
+                    .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND.value(), "Không tìm thấy nhóm yêu cầu để cập nhật"));
+            if (RequestType.OFFLINE.equals(purchaseRequest.getRequestType()) && updateRequestModel.getContactInfo() != null){
+                subRequest.setContactInfo(updateRequestModel.getContactInfo());
+                subRequestBusiness.update(subRequest);
+            }
+
+            // Validate request items
+            List<RequestItem> requestItems = purchaseRequest.getRequestItems();
+
+            Map<UUID, RequestItem> itemMap = requestItems.stream()
+                    .collect(Collectors.toMap(RequestItem::getId, i -> i));
+
+            List<RequestItem> finalItemList = new ArrayList<>();
+
+            for (UpdateRequestItemModel item : updateRequestModel.getItems()) {
+                if (item.getId() == null ) {
+                    RequestItem requestItem = RequestItem.builder()
+                            .productName(item.getProductName())
+                            .productURL(item.getProductURL())
+                            .quantity(item.getQuantity())
+                            .description(item.getDescription())
+                            .variants(item.getVariants())
+                            .images(item.getImages())
+                            .purchaseRequest(purchaseRequest)
+                            .build();
+                    if (RequestType.OFFLINE.equals(purchaseRequest.getRequestType())) {
+                        requestItem.setSubRequest(subRequest);
+                    }
+                    finalItemList.add(requestItem);
+                } else if (itemMap.containsKey(UUID.fromString(item.getId()))) {
+                    RequestItem requestItem = itemMap.get(UUID.fromString(item.getId()));
+                    requestItem.setProductName(item.getProductName());
+                    requestItem.setProductURL(item.getProductURL());
+                    requestItem.setQuantity(item.getQuantity());
+                    requestItem.setDescription(item.getDescription());
+                    requestItem.setVariants(item.getVariants());
+                    requestItem.setImages(item.getImages());
+                    finalItemList.add(requestItem);
+                } else {
+                    throw new AppException(HttpStatus.NOT_FOUND.value(), "Không tìm thấy sản phẩm với ID: " + item.getId());
+                }
+
+            }
+            for (RequestItem item : requestItems) {
+                if (!finalItemList.contains(item)) {
+                    requestItemBusiness.delete(item.getId());
+                }
+            }
+            purchaseRequest.setShippingAddress(shippingAddress);
+            purchaseRequest.setRequestItems(finalItemList);
+            purchaseRequest = purchaseRequestBusiness.update(purchaseRequest);
+            log.debug("updatePurchaseRequest() PurchaseRequestServiceImpl end | isSuccess : true, purchaseRequest: {}", purchaseRequest.getId());
+            return new MessageResponse("Cập nhật yêu cầu mua hàng thành công", true);
+        } catch (Exception e) {
+            log.error("updatePurchaseRequest() PurchaseRequestServiceImpl error | message : {}", e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
+    public PurchaseRequestModel getPurchaseRequestById(String id) {
+        try {
+            log.debug("getPurchaseRequestById() PurchaseRequestServiceImpl start | id: {}", id);
+            PurchaseRequest purchaseRequest = purchaseRequestBusiness.getById(UUID.fromString(id))
+                    .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND.value(), "Không tìm thấy yêu cầu mua hàng với ID: " + id));
+            if (!AuthUtils.getCurrentUserId().equals(purchaseRequest.getCustomer().getId())
+                    && AuthUtils.getCurrentUser().getRole() != UserRole.ADMIN) {
+                throw new AppException(HttpStatus.FORBIDDEN.value(), "Bạn không có quyền xem yêu cầu mua hàng này");
+            }
+
+            List<RequestItem> allItems = purchaseRequest.getRequestItems();
+
+            // RequestItems without SubRequest
+            List<RequestItemDTO> itemsWithoutSub = allItems.stream()
+                    .filter(item -> item.getSubRequest() == null)
+                    .map(requestItem -> modelMapper.map(requestItem, RequestItemDTO.class))
+                    .collect(Collectors.toList());
+
+            // Group by SubRequest
+            Map<SubRequest, List<RequestItem>> subRequestMap = allItems.stream()
+                    .filter(item -> item.getSubRequest() != null)
+                    .collect(Collectors.groupingBy(RequestItem::getSubRequest));
+
+            List<SubRequestDTO> subRequestModels = subRequestMap.entrySet().stream()
+                    .map(entry -> {
+                        SubRequestDTO subDTO = modelMapper.map(entry.getKey(), SubRequestDTO.class);
+                        subDTO.setRequestItems(entry.getValue().stream()
+                                .map(requestItem -> modelMapper.map(requestItem, RequestItemDTO.class))
+                                .collect(Collectors.toList()));
+                        return subDTO;
+                    }).collect(Collectors.toList());
+            PurchaseRequestModel response = modelMapper.map(purchaseRequest, PurchaseRequestModel.class);
+            response.setItems(itemsWithoutSub);
+            response.setSubRequests(subRequestModels);
+            log.debug("getPurchaseRequestById() PurchaseRequestServiceImpl end | response: {}", response);
+            return response;
+        } catch (Exception e) {
+            log.error("getPurchaseRequestById() PurchaseRequestServiceImpl error | message : {}", e.getMessage());
+            throw e;
+        }
+    }
+
 }

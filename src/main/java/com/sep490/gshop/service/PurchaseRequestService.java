@@ -6,7 +6,9 @@ import com.sep490.gshop.payload.dto.SubRequestDTO;
 import com.sep490.gshop.payload.request.purchaserequest.OfflineRequest;
 import com.sep490.gshop.payload.request.purchaserequest.OnlineRequest;
 import com.sep490.gshop.payload.request.purchaserequest.SubRequestModel;
+import com.sep490.gshop.payload.request.purchaserequest.UpdateRequestModel;
 import com.sep490.gshop.payload.response.MessageResponse;
+import com.sep490.gshop.payload.response.PurchaseRequestModel;
 import com.sep490.gshop.payload.response.PurchaseRequestResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
@@ -24,4 +26,8 @@ public interface PurchaseRequestService {
     Page<PurchaseRequestDTO> getPurchaseRequests(int page, int size, Sort.Direction direction, String type);
 
     MessageResponse createSubRequest(SubRequestModel subRequestModel);
+
+    MessageResponse updatePurchaseRequest(String id, UpdateRequestModel updateRequestModel);
+
+    PurchaseRequestModel getPurchaseRequestById(String id);
 }

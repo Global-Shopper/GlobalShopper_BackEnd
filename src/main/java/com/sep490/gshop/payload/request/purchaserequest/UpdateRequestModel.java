@@ -14,13 +14,11 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class OfflineRequest {
+public class UpdateRequestModel {
     @NotBlank(message = "Thông tin địa chỉ giao hàng không được để trống")
     private String shippingAddressId;
-    @NotNull(message = "Thông tin cửa hàng không được để trống")
-    @Size(min = 1, message = "Thông tin liên hệ của cửa hàng không được để trống")
     private List<String> contactInfo;
     @NotNull(message = "Thông tin sản phẩm không được để trống")
     @Size(min = 1,message = "Thông tin cửa hàng không được để trống")
-    private List<ItemRequestModel> requestItems;
+    private List<UpdateRequestItemModel> items;
 }
