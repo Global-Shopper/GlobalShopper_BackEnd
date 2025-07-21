@@ -10,6 +10,7 @@ import com.sep490.gshop.payload.response.MessageWithBankInformationResponse;
 import com.sep490.gshop.payload.response.MoneyChargeResponse;
 import com.sep490.gshop.service.WalletService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,9 +23,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @RestController
 @RequestMapping(URLConstant.WALLET)
@@ -80,6 +79,19 @@ public class WalletController {
             HttpHeaders headers = new HttpHeaders();
             headers.add("Location", domainRedirect + "/wallet/deposit" + "?vnp_ResponseCode=" + status);
             return new ResponseEntity<>(headers, HttpStatus.FOUND);
+        }
+    }
+
+    @GetMapping("/ipn")
+    @Operation(summary = "IPN callback from VNPay")
+    public ResponseEntity<String> ipnCallback(HttpServletRequest request) {
+        log.info("IPN Callback Start");
+        try {
+            log.info("IPN Callback Request | parameters: {}", Collections.list(request.getParameterNames()));
+            return ResponseEntity.ok("IPN Callback received successfully.");
+        } catch (Exception e) {
+            log.error("IPN Callback Exception | message: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing IPN callback.");
         }
     }
 
