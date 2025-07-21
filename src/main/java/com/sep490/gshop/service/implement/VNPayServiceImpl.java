@@ -51,16 +51,7 @@ public class VNPayServiceImpl {
             vnpParams.put("vnp_CreateDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
             vnpParams.put("vnp_IpAddr", "167.99.74.201");
 
-            StringBuilder signDataBuilder = new StringBuilder();
-            for (Map.Entry<String, String> entry : vnpParams.entrySet()) {
-                signDataBuilder.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8.toString()));
-                signDataBuilder.append("=");
-                signDataBuilder.append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8.toString()));
-                signDataBuilder.append("&");
-            }
-            signDataBuilder.deleteCharAt(signDataBuilder.length() - 1);
-
-            String signData = signDataBuilder.toString();
+            String signData = generateSignData(vnpParams);
             String signed = generateHMAC(vnpHasSecret, signData);
 
             vnpParams.put("vnp_SecureHash", signed);
@@ -105,23 +96,13 @@ public class VNPayServiceImpl {
         }
     }
 
-    public String handleVNPayIPN(Map<String, String> params) {
+    public String handleVNPayIPN(Map<String, String> params) throws UnsupportedEncodingException {
         log.info("handleVNPayIPN() Start | parameters: {}", params);
         String vnpSecureHash = params.remove("vnp_SecureHash");
         params.remove("vnp_SecureHashType");
+        Map<String, String> vnpParams = new TreeMap<>(params);
 
-        List<String> sortedKeys = new ArrayList<>(params.keySet());
-        Collections.sort(sortedKeys);
-
-        StringBuilder signData = new StringBuilder();
-        for (int i = 0; i < sortedKeys.size(); i++) {
-            String key = sortedKeys.get(i);
-            String value = params.get(key);
-            signData.append(key).append("=").append(value);
-            if (i < sortedKeys.size() - 1) {
-                signData.append("&");
-            }
-        }
+        String signData = generateSignData(vnpParams);
 
         String calculatedHash = generateHMAC(vnpHasSecret, signData.toString());
 
@@ -132,6 +113,18 @@ public class VNPayServiceImpl {
             log.info("VNPay IPN: Invalid signature");
             return "INVALID";
         }
+    }
+
+    private String generateSignData(Map<String, String> params) throws UnsupportedEncodingException {
+        StringBuilder signDataBuilder = new StringBuilder();
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            signDataBuilder.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8.toString()));
+            signDataBuilder.append("=");
+            signDataBuilder.append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8.toString()));
+            signDataBuilder.append("&");
+        }
+        signDataBuilder.deleteCharAt(signDataBuilder.length() - 1);
+        return signDataBuilder.toString();
     }
 
 }
