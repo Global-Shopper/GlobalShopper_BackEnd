@@ -13,4 +13,5 @@ public class WalletRequest {
     @NotNull(message = "Nhập số tiền cần thực hiện giao dịch")
     @Range(min = 10000, max = 50000000, message = "Số tiền nạp phải lớn hơn hoặc bằng 10.000 VNĐ")
     private double balance;
+    private String redirectUri;
 }

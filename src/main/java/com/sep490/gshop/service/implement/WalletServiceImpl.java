@@ -99,7 +99,7 @@ public class WalletServiceImpl implements WalletService {
             transactionBusiness.create(transaction);
             var url = vnPayServiceImpl.createURL(request.getBalance(),
                     "Nạp tiền vào tài khoản " + customer.getName(),
-                    customer.getEmail(), txnRef);
+                    customer.getEmail(), txnRef, request.getRedirectUri());
 
             log.debug("depositMoney() End | url: {}", url);
             String formattedAmount = formatAmount(request.getBalance());
@@ -436,7 +436,7 @@ public class WalletServiceImpl implements WalletService {
     @Override
     public void ipnCallback(HttpServletRequest request) {
         try {
-            log.info("IPN Callback Start");
+            log.debug("ipnCallback() WalletServiceImpl Callback Start");
             Map<String, String> params = new HashMap<>();
             request.getParameterMap().forEach((key, values) -> {
                 if (values.length > 0) {
@@ -464,11 +464,12 @@ public class WalletServiceImpl implements WalletService {
                 transaction.setBalanceBefore(balanceBefore);
                 wallet.setBalance(balanceBefore + transaction.getAmount());
                 walletBusiness.update(wallet);
-                log.info("IPN Callback: Successfully processed transaction with ref: {}", vnpTxnRef);
+                log.debug("ipnCallback() WalletServiceImpl | Successfully processed transaction with ref: {}", vnpTxnRef);
             } else {
                 transaction.setStatus(TransactionStatus.FAIL);
-                log.warn("IPN Callback: Failed to process transaction with ref: {}", vnpTxnRef);
+                log.debug("ipnCallback() WalletServiceImpl | Failed to process transaction with ref: {}", vnpTxnRef);
             }
+            log.info("IPN Callback: ReferenceCode: {} | status: {} | transactionStatus: {}", transaction.getReferenceCode(), transaction.getStatus(), params.get("vnp_TransactionStatus"));
             transactionBusiness.update(transaction);
         } catch (Exception e) {
             log.error("IPN Callback Exception | message: {}", e.getMessage(), e);

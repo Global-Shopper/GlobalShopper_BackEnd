@@ -33,8 +33,9 @@ public class VNPayServiceImpl {
 
 
 
-    public String createURL(double money, String reason, String userEmail, String txnRef) {
+    public String createURL(double money, String reason, String userEmail, String txnRef, String returnUri) {
         try {
+            log.debug("createURL() VNPayServiceImpl Start | money: {}, reason: {}, userEmail: {}, txnRef: {}, returnUri: {}", money, reason, userEmail, txnRef, returnUri);
             String currCode = "VND";
             Map<String, String> vnpParams = new TreeMap<>();
             vnpParams.put("vnp_Version", "2.1.0");
@@ -46,8 +47,7 @@ public class VNPayServiceImpl {
             vnpParams.put("vnp_OrderInfo", reason + " số tiền: " + money + " mã xử lý: " + txnRef);
             vnpParams.put("vnp_OrderType", "other");
             vnpParams.put("vnp_Amount", ((int) money) + "00");
-            String returnUrlWithEmail = returnURL + "/wallet/check-payment-vnpay" + "?email=" + URLEncoder.encode(userEmail, StandardCharsets.UTF_8.toString());
-            vnpParams.put("vnp_ReturnUrl", returnUrlWithEmail);
+            vnpParams.put("vnp_ReturnUrl", returnUri);
             vnpParams.put("vnp_CreateDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
             vnpParams.put("vnp_IpAddr", "167.99.74.201");
 
@@ -97,20 +97,20 @@ public class VNPayServiceImpl {
     }
 
     public String handleVNPayIPN(Map<String, String> params) throws UnsupportedEncodingException {
-        log.info("handleVNPayIPN() Start | parameters: {}", params);
+        log.debug("handleVNPayIPN() VNPayServiceImpl Start | parameters: {}", params);
         String vnpSecureHash = params.remove("vnp_SecureHash");
         params.remove("vnp_SecureHashType");
         Map<String, String> vnpParams = new TreeMap<>(params);
 
         String signData = generateSignData(vnpParams);
 
-        String calculatedHash = generateHMAC(vnpHasSecret, signData.toString());
+        String calculatedHash = generateHMAC(vnpHasSecret, signData);
 
         if (calculatedHash.equalsIgnoreCase(vnpSecureHash)) {
-            log.info("VNPay IPN: Valid signature, transaction reference: {}", params.get("vnp_TxnRef"));
+            log.debug("VNPay IPN: Valid signature, transaction reference: {}", params.get("vnp_TxnRef"));
             return params.get("vnp_ResponseCode");
         } else {
-            log.info("VNPay IPN: Invalid signature");
+            log.debug("VNPay IPN: Invalid signature, transaction reference: {}", params.get("vnp_TxnRef"));
             return "INVALID";
         }
     }

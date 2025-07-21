@@ -81,8 +81,9 @@ public class WalletController {
     public ResponseEntity<String> ipnCallback(HttpServletRequest request) {
         log.info("IPN Callback Start");
         try {
-            log.info("IPN Callback Request | parameters: {}", Collections.list(request.getParameterNames()));
+            log.info("ipnCallback() WalletController start");
             walletService.ipnCallback(request);
+            log.info("ipnCallback() WalletController end");
             return ResponseEntity.ok("IPN Callback received successfully.");
         } catch (Exception e) {
             log.error("IPN Callback Exception | message: {}", e.getMessage(), e);
