@@ -69,17 +69,11 @@ public class WalletController {
     public ResponseEntity<Boolean> checkPaymentVNPay(
             @RequestParam("email") String email,
             @RequestParam("vnp_ResponseCode") String status,
-            @RequestParam("vnp_Amount") String amount) {
-        var check = walletService.processVNPayReturn(email, status, amount);
-        if(check) {
-            HttpHeaders headers = new HttpHeaders();
-            headers.add("Location", domainRedirect + "/wallet/deposit" + "?vnp_ResponseCode=" + status);
-            return new ResponseEntity<>(headers, HttpStatus.FOUND);
-        }else {
-            HttpHeaders headers = new HttpHeaders();
-            headers.add("Location", domainRedirect + "/wallet/deposit" + "?vnp_ResponseCode=" + status);
-            return new ResponseEntity<>(headers, HttpStatus.FOUND);
-        }
+            @RequestParam("vnp_Amount") String amount,
+            @RequestParam("vnp_TxnRef") String txnRef) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Location", domainRedirect + "/wallet/deposit" + "?vnp_ResponseCode=" + status);
+        return new ResponseEntity<>(headers, HttpStatus.FOUND);
     }
 
     @GetMapping("/ipn")
@@ -88,6 +82,7 @@ public class WalletController {
         log.info("IPN Callback Start");
         try {
             log.info("IPN Callback Request | parameters: {}", Collections.list(request.getParameterNames()));
+            walletService.ipnCallback(request);
             return ResponseEntity.ok("IPN Callback received successfully.");
         } catch (Exception e) {
             log.error("IPN Callback Exception | message: {}", e.getMessage(), e);

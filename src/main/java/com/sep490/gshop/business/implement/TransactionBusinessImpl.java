@@ -29,4 +29,9 @@ public class TransactionBusinessImpl extends BaseBusinessImpl<Transaction, Trans
     public Page<Transaction> findAll(Pageable pageable) {
         return repository.findAll(pageable);
     }
+
+    @Override
+    public Transaction getTransactionByReferenceCode(String referenceCode) {
+        return repository.findByReferenceCode(referenceCode);
+    }
 }

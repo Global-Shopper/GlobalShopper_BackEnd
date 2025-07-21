@@ -7,6 +7,7 @@ import com.sep490.gshop.payload.request.WithdrawRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.MessageWithBankInformationResponse;
 import com.sep490.gshop.payload.response.MoneyChargeResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,8 +18,10 @@ public interface WalletService {
     MoneyChargeResponse depositMoney(@Valid WalletRequest request);
     MessageResponse withdrawMoneyRequest(@Valid WithdrawRequest request);
     WalletDTO getWalletByCurrent();
-    boolean processVNPayReturn(String email, String status, String amount);
+    boolean processVNPayReturn(String email, String status, String amount, String vnpTxnRef);
     List<WithdrawTicketDTO> getWithdrawTicketsWithPendingStatus();
     MessageWithBankInformationResponse processWithdrawRequest(UUID refundTicketId, boolean isApproved, String reason);
     MessageResponse uploadTransferBill(UUID withdrawTicketId, MultipartFile multipartFile);
+
+    void ipnCallback(HttpServletRequest request);
 }

@@ -11,4 +11,5 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
     Page<Transaction> findAllByCustomerId(UUID userId, Pageable pageable);
     Page<Transaction> findAllByCreatedAtBetween(Long from, Long to, Pageable pageable);
     Page<Transaction> findByCustomerIsNull(Pageable pageable);
+    Transaction findByReferenceCode(String referenceCode);
 }

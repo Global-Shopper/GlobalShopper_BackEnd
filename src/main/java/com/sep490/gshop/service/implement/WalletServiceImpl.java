@@ -19,6 +19,7 @@ import com.sep490.gshop.service.CloudinaryService;
 import com.sep490.gshop.service.WalletService;
 import com.sep490.gshop.utils.AuthUtils;
 import com.sep490.gshop.utils.FileUploadUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
@@ -28,7 +29,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.text.DecimalFormat;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -81,9 +84,22 @@ public class WalletServiceImpl implements WalletService {
                             .message("Không tìm thấy ví của bạn")
                             .build());
 
+
+            String txnRef = UUID.randomUUID().toString().replace("-", "");
+            Transaction transaction = Transaction.builder()
+                    .amount(request.getBalance())
+                    .type(TransactionType.DEPOSIT)
+                    .customer(customer)
+                    .balanceBefore(wallet.getBalance())
+                    .balanceAfter(wallet.getBalance() + request.getBalance())
+                    .status(TransactionStatus.PENDING)
+                    .description("Nạp tiền vào tài khoản")
+                    .referenceCode(txnRef)
+                    .build();
+            transactionBusiness.create(transaction);
             var url = vnPayServiceImpl.createURL(request.getBalance(),
                     "Nạp tiền vào tài khoản " + customer.getName(),
-                    customer.getEmail());
+                    customer.getEmail(), txnRef);
 
             log.debug("depositMoney() End | url: {}", url);
             String formattedAmount = formatAmount(request.getBalance());
@@ -102,7 +118,7 @@ public class WalletServiceImpl implements WalletService {
 
     @Override
     @Transactional
-    public boolean processVNPayReturn(String email, String status, String amount) {
+    public boolean processVNPayReturn(String email, String status, String amount, String vnpTxnRef) {
         log.debug("processVNPayReturn() Start | email: {}", email);
 
         Transaction transaction = new Transaction();
@@ -417,6 +433,47 @@ public class WalletServiceImpl implements WalletService {
         }
     }
 
+    @Override
+    public void ipnCallback(HttpServletRequest request) {
+        try {
+            log.info("IPN Callback Start");
+            Map<String, String> params = new HashMap<>();
+            request.getParameterMap().forEach((key, values) -> {
+                if (values.length > 0) {
+                    params.put(key, values[0]);
+                }
+            });
+            String status = vnPayServiceImpl.handleVNPayIPN(params);
+            String vnpTxnRef = params.get("vnp_TxnRef");
+
+            Transaction transaction = transactionBusiness.getTransactionByReferenceCode(vnpTxnRef);
+            if (transaction == null) {
+                log.error("IPN Callback: Transaction not found for ref: {}", vnpTxnRef);
+                return;
+            }
+            if ("00".equals(status)) {
+                transaction.setStatus(TransactionStatus.SUCCESS);
+                Wallet wallet = walletBusiness.getById(transaction.getCustomer().getWallet().getId())
+                        .orElseThrow(() -> {
+                            transaction.setStatus(TransactionStatus.FAIL);
+                            transaction.setDescription("Không tìm thấy ví của bạn");
+                            transactionBusiness.create(transaction);
+                            throw new AppException(404, "Không tìm thấy ví của bạn");
+                        });
+                double balanceBefore = wallet.getBalance();
+                transaction.setBalanceBefore(balanceBefore);
+                wallet.setBalance(balanceBefore + transaction.getAmount());
+                walletBusiness.update(wallet);
+                log.info("IPN Callback: Successfully processed transaction with ref: {}", vnpTxnRef);
+            } else {
+                transaction.setStatus(TransactionStatus.FAIL);
+                log.warn("IPN Callback: Failed to process transaction with ref: {}", vnpTxnRef);
+            }
+            transactionBusiness.update(transaction);
+        } catch (Exception e) {
+            log.error("IPN Callback Exception | message: {}", e.getMessage(), e);
+        }
+    }
 
 
 }

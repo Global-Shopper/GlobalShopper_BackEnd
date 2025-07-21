@@ -4,6 +4,7 @@ import com.sep490.gshop.common.enums.TransactionStatus;
 import com.sep490.gshop.common.enums.TransactionType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +13,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Transaction extends BaseEntity {
 
     @ManyToOne
@@ -26,6 +28,7 @@ public class Transaction extends BaseEntity {
     private double amount;
     private double balanceBefore;
     private double balanceAfter;
+    private String referenceCode;
 
 
     @Enumerated(EnumType.STRING)

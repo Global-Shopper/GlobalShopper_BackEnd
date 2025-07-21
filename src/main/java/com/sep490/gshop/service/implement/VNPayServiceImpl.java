@@ -1,6 +1,7 @@
 package com.sep490.gshop.service.implement;
 
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -32,9 +33,8 @@ public class VNPayServiceImpl {
 
 
 
-    public String createURL(double money, String reason, String userEmail) {
+    public String createURL(double money, String reason, String userEmail, String txnRef) {
         try {
-            String txnRef = UUID.randomUUID().toString().replace("-", "");
             String currCode = "VND";
             Map<String, String> vnpParams = new TreeMap<>();
             vnpParams.put("vnp_Version", "2.1.0");
@@ -102,6 +102,35 @@ public class VNPayServiceImpl {
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             log.error("generateHMAC() Exception | message: {}", e.getMessage());
             return "";
+        }
+    }
+
+    public String handleVNPayIPN(Map<String, String> params) {
+        log.info("handleVNPayIPN() Start | parameters: {}", params);
+        String vnpSecureHash = params.remove("vnp_SecureHash");
+        params.remove("vnp_SecureHashType");
+
+        List<String> sortedKeys = new ArrayList<>(params.keySet());
+        Collections.sort(sortedKeys);
+
+        StringBuilder signData = new StringBuilder();
+        for (int i = 0; i < sortedKeys.size(); i++) {
+            String key = sortedKeys.get(i);
+            String value = params.get(key);
+            signData.append(key).append("=").append(value);
+            if (i < sortedKeys.size() - 1) {
+                signData.append("&");
+            }
+        }
+
+        String calculatedHash = generateHMAC(vnpHasSecret, signData.toString());
+
+        if (calculatedHash.equalsIgnoreCase(vnpSecureHash)) {
+            log.info("VNPay IPN: Valid signature, transaction reference: {}", params.get("vnp_TxnRef"));
+            return params.get("vnp_ResponseCode");
+        } else {
+            log.info("VNPay IPN: Invalid signature");
+            return "INVALID";
         }
     }
 
