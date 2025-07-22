@@ -40,7 +40,7 @@ public class FeedbackServiceImpl implements FeedbackService {
             log.debug("createFeedback() End | dto: {}", dto);
             return dto;
         } catch (Exception e) {
-            log.error("createFeedback() Exception | request: {}, message: {}", request, e.getMessage(), e);
+            log.error("createFeedback() Exception | request: {}, message: {}", request, e.getMessage());
             throw e;
         }
     }
@@ -59,7 +59,7 @@ public class FeedbackServiceImpl implements FeedbackService {
             log.debug("updateFeedback() End | dto: {}", dto);
             return dto;
         } catch (Exception e) {
-            log.error("updateFeedback() Exception | id: {}, message: {}", id, e.getMessage(), e);
+            log.error("updateFeedback() Exception | id: {}, message: {}", id, e.getMessage());
             throw e;
         }
     }
@@ -72,7 +72,7 @@ public class FeedbackServiceImpl implements FeedbackService {
             log.debug("deleteFeedback() End | id: {}, result: {}", id, success);
             return success;
         } catch (Exception e) {
-            log.error("deleteFeedback() Exception | id: {}, message: {}", id, e.getMessage(), e);
+            log.error("deleteFeedback() Exception | id: {}, message: {}", id, e.getMessage());
             throw e;
         }
     }
@@ -87,7 +87,7 @@ public class FeedbackServiceImpl implements FeedbackService {
             log.debug("getAllFeedback() End | size: {}", entitysList.size());
             return entitysList;
         } catch (Exception e) {
-            log.error("getAllFeedback() Exception | message: {}", e.getMessage(), e);
+            log.error("getAllFeedback() Exception | message: {}", e.getMessage());
             throw e;
         }
     }
@@ -102,7 +102,7 @@ public class FeedbackServiceImpl implements FeedbackService {
             log.debug("getFeedbackById() End | dto: {}", dto);
             return dto;
         } catch (Exception e) {
-            log.error("getFeedbackById() Exception | id: {}, message: {}", id, e.getMessage(), e);
+            log.error("getFeedbackById() Exception | id: {}, message: {}", id, e.getMessage());
             throw e;
         }
     }

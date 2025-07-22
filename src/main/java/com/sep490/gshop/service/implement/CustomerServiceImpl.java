@@ -49,7 +49,7 @@ public class CustomerServiceImpl implements CustomerService {
             log.debug("getAllCustomers() CustomerServiceImpl End | Customers size: {}", customers.size());
             return customers;
         } catch (Exception e) {
-            log.error("getAllCustomers() CustomerServiceImpl Error | message: {}", e.getMessage(), e);
+            log.error("getAllCustomers() CustomerServiceImpl Error | message: {}", e.getMessage());
             throw e;
         }
     }
@@ -65,7 +65,7 @@ public class CustomerServiceImpl implements CustomerService {
             log.debug("createCustomer() CustomerServiceImpl End | Created Customer: {}", createdCustomer);
             return createdCustomer;
         } catch (Exception e) {
-            log.error("createCustomer() CustomerServiceImpl Error | message: {}", e.getMessage(), e);
+            log.error("createCustomer() CustomerServiceImpl Error | message: {}", e.getMessage());
             throw e;
         }
     }
