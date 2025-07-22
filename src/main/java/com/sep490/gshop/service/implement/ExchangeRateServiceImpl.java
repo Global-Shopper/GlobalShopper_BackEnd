@@ -64,10 +64,10 @@ public class ExchangeRateServiceImpl implements ExchangeRateService {
             return response;
 
         } catch (IOException ioe) {
-            log.error("getRates() IOException: {}", ioe.getMessage(), ioe);
+            log.error("getRates() IOException: {}", ioe.getMessage());
             throw new RuntimeException("Lỗi IO khi gọi API tỷ giá", ioe);
         } catch (Exception e) {
-            log.error("getRates() Exception: {}", e.getMessage(), e);
+            log.error("getRates() Exception: {}", e.getMessage());
             throw e;
         }
     }
@@ -98,7 +98,7 @@ public class ExchangeRateServiceImpl implements ExchangeRateService {
                     exchangeRate
             );
         } catch (Exception e) {
-            log.error("convertToVND() Exception: {}", e.getMessage(), e);
+            log.error("convertToVND() Exception: {}", e.getMessage());
             throw e;
         }
     }

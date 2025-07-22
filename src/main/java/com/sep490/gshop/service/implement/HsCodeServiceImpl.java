@@ -40,7 +40,7 @@ public class HsCodeServiceImpl implements HsCodeService {
             // Dùng .map() trực tiếp trả về Page<HsCodeDTO>
             return pageData.map(hs -> modelMapper.map(hs, HsCodeDTO.class));
         } catch (Exception e) {
-            log.error("findAll() Exception: {}", e.getMessage(), e);
+            log.error("findAll() Exception: {}", e.getMessage());
             throw e;
         }
     }

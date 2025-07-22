@@ -72,7 +72,7 @@ public class UserServiceImpl implements UserService {
             log.info("createUser() UserServiceImpl end | Created User: {}", createdUser);
             return createdUser;
         } catch (Exception e) {
-            log.error("Error in createUser() UserServiceImpl: {}", e.getMessage(), e);
+            log.error("Error in createUser() UserServiceImpl: {}", e.getMessage());
             throw e;
         }
     }
@@ -87,7 +87,7 @@ public class UserServiceImpl implements UserService {
             log.info("getUserById() UserServiceImpl end | User: {}", userDTO);
             return userDTO;
         } catch (Exception e) {
-            log.error("Error in getUserById() UserServiceImpl: {}", e.getMessage(), e);
+            log.error("Error in getUserById() UserServiceImpl: {}", e.getMessage());
             throw e;
         }
     }
@@ -114,7 +114,7 @@ public class UserServiceImpl implements UserService {
             log.info("updateUser() UserServiceImpl end | Updated User: {}", updatedUserDTO);
             return updatedUserDTO;
         } catch (Exception e) {
-            log.error("Error in updateUser() UserServiceImpl: {}", e.getMessage(), e);
+            log.error("Error in updateUser() UserServiceImpl: {}", e.getMessage());
             throw e;
         }
     }
@@ -130,7 +130,7 @@ public class UserServiceImpl implements UserService {
             log.info("deleteUser() UserServiceImpl end | User with id {} deleted successfully", id);
             return true;
         } catch (Exception e) {
-            log.error("Error in deleteUser() UserServiceImpl: {}", e.getMessage(), e);
+            log.error("Error in deleteUser() UserServiceImpl: {}", e.getMessage());
             throw e;
         }
     }
