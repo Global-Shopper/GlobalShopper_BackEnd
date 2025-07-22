@@ -8,6 +8,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface QuotationDetailBusiness extends BaseBusiness<QuotationDetail>{
-    Optional<QuotationDetail> findByQuotationAndRequestItem(Quotation quotation, RequestItem requestItem);
+    boolean existsByQuotationAndRequestItem(Quotation quotation, RequestItem requestItem);
     List<QuotationDetail> findByQuotation(Quotation quotation);
 }

@@ -18,9 +18,8 @@ public class Quotation extends BaseEntity {
 
     @Column(columnDefinition = "TEXT")
     private String note;
-
-    private boolean isAccepted;
-
+    private double shippingEstimate;
+    private long expiredDate;
     @OneToOne
     @JoinColumn(name = "sub_request_id", nullable = false, unique = true)
     private SubRequest subRequest;

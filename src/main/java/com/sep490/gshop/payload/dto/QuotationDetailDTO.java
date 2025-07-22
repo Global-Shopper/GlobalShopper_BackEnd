@@ -1,5 +1,6 @@
 package com.sep490.gshop.payload.dto;
 
+import com.sep490.gshop.common.enums.TaxRegion;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,7 +17,8 @@ public class QuotationDetailDTO {
     private String requestItemId;
     private double basePrice;
     private double serviceFee;
-    private double shippingEstimate;
     private String note;
     private Map<String, Double> taxAmounts;
+    private double totalVNDPrice;
+
 }

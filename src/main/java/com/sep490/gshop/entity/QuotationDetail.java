@@ -25,10 +25,9 @@ public class QuotationDetail extends BaseEntity {
 
     private double basePrice;
     private double serviceFee;
-    private double shippingEstimate;
 
     @ElementCollection
-    @CollectionTable(name = "quotation_detail_tax_rate_snapshots", joinColumns = @JoinColumn(name = "quotation_detail_id"))
+    @CollectionTable(name = "tax_rate_snapshots", joinColumns = @JoinColumn(name = "quotation_detail_id"))
     private List<TaxRateSnapshot> taxRates = new ArrayList<>();
 
     private String note;

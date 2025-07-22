@@ -10,6 +10,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface QuotationDetailRepository extends JpaRepository<QuotationDetail, UUID> {
-    Optional<QuotationDetail> findByQuotationAndRequestItem(Quotation quotation, RequestItem requestItem);
+    boolean existsByQuotationAndRequestItem(Quotation quotation, RequestItem requestItem);
     List<QuotationDetail> findByQuotation(Quotation quotation);
 }

@@ -20,8 +20,8 @@ public class QuotationDetailImpl extends BaseBusinessImpl<QuotationDetail, Quota
     }
 
     @Override
-    public Optional<QuotationDetail> findByQuotationAndRequestItem(Quotation quotation, RequestItem requestItem) {
-        return repository.findByQuotationAndRequestItem(quotation, requestItem);
+    public boolean existsByQuotationAndRequestItem(Quotation quotation, RequestItem requestItem) {
+        return repository.existsByQuotationAndRequestItem(quotation, requestItem);
     }
 
     @Override

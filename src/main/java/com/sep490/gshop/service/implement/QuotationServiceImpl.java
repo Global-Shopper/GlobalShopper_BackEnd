@@ -7,13 +7,14 @@ import com.sep490.gshop.entity.subclass.TaxRateSnapshot;
 import com.sep490.gshop.payload.dto.QuotationDTO;
 import com.sep490.gshop.payload.dto.QuotationDetailDTO;
 import com.sep490.gshop.payload.request.QuotationDetailRequest;
-import com.sep490.gshop.payload.request.QuotationInputRequest;
+import com.sep490.gshop.payload.request.QuotationRequest;
 import com.sep490.gshop.payload.response.CurrencyConvertResponse;
 import com.sep490.gshop.payload.response.TaxCalculationResult;
 import com.sep490.gshop.service.ExchangeRateService;
 import com.sep490.gshop.service.QuotationService;
 import com.sep490.gshop.service.TaxRateService;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,26 +52,30 @@ public class QuotationServiceImpl implements QuotationService {
 
     @Override
     @Transactional
-    public QuotationDTO createOrUpdateQuotation(QuotationInputRequest input) {
-        log.info("createOrUpdateQuotation() - Start | subRequestId: {}", input.getSubRequestId());
+    public QuotationDTO createQuotation(@Valid QuotationRequest input) {
+        log.debug("createQuotation() - Start | subRequestId: {}", input.getSubRequestId());
         try {
             UUID subRequestId = UUID.fromString(input.getSubRequestId());
-            Quotation quotation = quotationBusiness.findBySubRequest(subRequestId)
-                    .orElseGet(() -> {
-                        SubRequest sub = subRequestBusiness.getById(subRequestId)
-                                .orElseThrow(() -> AppException.builder()
-                                        .message("Không tìm thấy sub request")
-                                        .code(404)
-                                        .build());
-                        Quotation q = new Quotation();
-                        q.setSubRequest(sub);
-                        q.setAccepted(false);
-                        q.setNote(input.getNote());
-                        quotationBusiness.create(q);
-                        return q;
-                    });
 
+            Optional<Quotation> optionalQuotation = quotationBusiness.findBySubRequest(subRequestId);
+            if (optionalQuotation.isPresent()) {
+                throw AppException.builder()
+                        .message("Quotation đã tồn tại cho subRequestId này, không cho phép tạo lại")
+                        .code(400)
+                        .build();
+            }
+
+            SubRequest sub = subRequestBusiness.getById(subRequestId)
+                    .orElseThrow(() -> AppException.builder()
+                            .message("Không tìm thấy sub request")
+                            .code(404)
+                            .build());
+            Quotation quotation = new Quotation();
+            quotation.setSubRequest(sub);
             quotation.setNote(input.getNote());
+            quotation.setExpiredDate(input.getExpiredDate());
+            quotation.setShippingEstimate(input.getShippingEstimate());
+            quotationBusiness.create(quotation);
 
             List<QuotationDetailDTO> detailDTOs = new ArrayList<>();
             for (QuotationDetailRequest detailReq : input.getDetails()) {
@@ -80,18 +85,16 @@ public class QuotationServiceImpl implements QuotationService {
                                 .code(404)
                                 .build());
 
-                QuotationDetail detail = quotationDetailBusiness.findByQuotationAndRequestItem(quotation, item)
-                        .orElseGet(() -> {
-                            QuotationDetail d = new QuotationDetail();
-                            d.setQuotation(quotation);
-                            d.setRequestItem(item);
-                            return d;
-                        });
-
-                detail.setBasePrice(detailReq.getBasePrice());
-                detail.setServiceFee(detailReq.getServiceFee());
-                detail.setShippingEstimate(detailReq.getShippingEstimate());
-                detail.setNote(detailReq.getNote());
+                boolean exists = quotationDetailBusiness.existsByQuotationAndRequestItem(quotation, item);
+                if (exists) {
+                    throw AppException.builder().message("Báo giá cho item này đã tồn tại !!!").code(400).build();
+                }
+                if(item.getSubRequest().getId() != subRequestId){
+                    throw AppException.builder().message("Request item không thuộc về sub request này").code(400).build();
+                }
+                QuotationDetail detail = modelMapper.map(detailReq, QuotationDetail.class);
+                detail.setQuotation(quotation);
+                detail.setRequestItem(item);
 
                 HsCode hsCode = hsCodeBusiness.getById(detailReq.getHsCodeId())
                         .orElseThrow(() -> AppException.builder()
@@ -112,32 +115,34 @@ public class QuotationServiceImpl implements QuotationService {
                 QuotationDetailDTO detailDTO = modelMapper.map(detail, QuotationDetailDTO.class);
                 detailDTO.setTaxAmounts(taxResult.getTaxAmounts());
                 detailDTO.setRequestItemId(detailReq.getRequestItemId());
+                String type = detailReq.getCurrency() != null ? detailReq.getCurrency().toUpperCase(Locale.ROOT) : "USD";
+                double total = calculateTotalPrice(detailDTO);
+                double totalPriceEstimate = total;
+                if (!"VND".equalsIgnoreCase(type)) {
+                    CurrencyConvertResponse convertResponse = exchangeRateService.convertToVND(BigDecimal.valueOf(total), type);
+                    if (convertResponse != null && convertResponse.getConvertedAmount() != null) {
+                        totalPriceEstimate = convertResponse.getConvertedAmount().doubleValue();
+                    }
+                }
+                detailDTO.setTotalVNDPrice(totalPriceEstimate);
                 detailDTOs.add(detailDTO);
             }
-
             QuotationDTO dto = modelMapper.map(quotation, QuotationDTO.class);
             dto.setDetails(detailDTOs);
             dto.setSubRequestId(input.getSubRequestId());
-
-            String type = input.getType() != null ? input.getType().toUpperCase(Locale.ROOT) : "USD";
-
-            double total = calculateTotalPrice(detailDTOs);
-
-            double totalPriceEstimate = total;
-            if (!"VND".equalsIgnoreCase(type)) {
-                CurrencyConvertResponse convertResponse = exchangeRateService.convertToVND(BigDecimal.valueOf(total), type);
-                if (convertResponse != null && convertResponse.getConvertedAmount() != null) {
-                    totalPriceEstimate = convertResponse.getConvertedAmount().doubleValue();
-                }
+            double total = 0;
+            for(QuotationDetailDTO quotationDetailDTO : detailDTOs) {
+                total += quotationDetailDTO.getTotalVNDPrice();
             }
 
-            dto.setTotalPriceEstimate(totalPriceEstimate);
-
-            log.info("createOrUpdateQuotation() - End | subRequestId: {} - totalPriceEstimate: {}", input.getSubRequestId(), totalPriceEstimate);
+            //total = total + dto.getShippingEstimate();
+            dto.setTotalPriceEstimate(total);
+            dto.setShippingEstimate(input.getShippingEstimate());
+            log.debug("createQuotation() - End | subRequestId: {}", input.getSubRequestId());
             return dto;
 
-        }catch (Exception e) {
-            log.error("createOrUpdateQuotation() - Exception: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("createQuotation() - Exception: {}", e.getMessage());
             throw AppException.builder()
                     .message("Lỗi khi tạo báo giá: " + e.getMessage())
                     .code(500)
@@ -146,36 +151,78 @@ public class QuotationServiceImpl implements QuotationService {
     }
 
 
-
-    public double calculateTotalPrice(List<QuotationDetailDTO> details) {
+    public double calculateTotalPrice(QuotationDetailDTO detail) {
         double total = 0;
-        for (QuotationDetailDTO d : details) {
-            double lineTotal = d.getBasePrice() + d.getServiceFee() + d.getShippingEstimate();
-            if (d.getTaxAmounts() != null) {
-                for (Double v : d.getTaxAmounts().values()) {
+            double lineTotal = detail.getBasePrice() + detail.getServiceFee();
+            if (detail.getTaxAmounts() != null) {
+                for (Double v : detail.getTaxAmounts().values()) {
                     lineTotal += v;
                 }
             }
             total += lineTotal;
-        }
         return total;
     }
 
+    @Override
+    public List<QuotationDTO> findAllQuotations() {
+        log.debug("findAllQuotations() - Start");
+        try {
+            List<Quotation> quotations = quotationBusiness.getAll();
+            List<QuotationDTO> dtos = new ArrayList<>();
+            for (Quotation quotation : quotations) {
+                QuotationDTO dto = modelMapper.map(quotation, QuotationDTO.class);
+                dto.setDetails(
+                        quotation.getDetails()
+                                .stream()
+                                .map(detail -> modelMapper.map(detail, QuotationDetailDTO.class))
+                                .toList()
+                );
+                dto.setSubRequestId(quotation.getSubRequest().getId().toString());
 
+                dtos.add(dto);
+            }
+            log.debug("findAllQuotations() - End | total found: {}", dtos.size());
+            return dtos;
+
+        } catch (Exception e) {
+            log.error("findAllQuotations() - Exception: {}", e.getMessage());
+            throw AppException.builder()
+                    .message("Lỗi khi lấy danh sách báo giá: " + e.getMessage())
+                    .code(500)
+                    .build();
+        }
+    }
 
     @Override
     public QuotationDTO getQuotationById(String quotationId) {
-        UUID id = UUID.fromString(quotationId);
-        Quotation quotation = quotationBusiness.getById(id)
-                .orElseThrow(() -> AppException.builder().message("Không tìm thấy Quotation").code(404).build());
+        log.debug("getQuotationById() - Start | quotationId: {}", quotationId);
+        try {
+            UUID id = UUID.fromString(quotationId);
+            Quotation quotation = quotationBusiness.getById(id)
+                    .orElseThrow(() -> AppException.builder()
+                            .message("Không tìm thấy Quotation")
+                            .code(404)
+                            .build());
 
-        QuotationDTO dto = modelMapper.map(quotation, QuotationDTO.class);
-        dto.setDetails(
-                quotation.getDetails()
-                        .stream()
-                        .map(m -> modelMapper.map(m, QuotationDetailDTO.class))
-                        .toList()
-        );
-        return dto;
+            QuotationDTO dto = modelMapper.map(quotation, QuotationDTO.class);
+            dto.setDetails(
+                    quotation.getDetails()
+                            .stream()
+                            .map(m -> modelMapper.map(m, QuotationDetailDTO.class))
+                            .toList()
+            );
+            dto.setSubRequestId(quotation.getSubRequest().getId().toString());
+
+            log.debug("getQuotationById() - End | quotationId: {}", quotationId);
+            return dto;
+
+        }  catch (Exception e) {
+            log.error("getQuotationById() - Exception: {}", e.getMessage());
+            throw AppException.builder()
+                    .message("Lỗi lấy báo giá: " + e.getMessage())
+                    .code(500)
+                    .build();
+        }
     }
+
 }
