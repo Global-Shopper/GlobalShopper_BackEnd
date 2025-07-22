@@ -1,0 +1,35 @@
+package com.sep490.gshop.entity;
+
+import com.sep490.gshop.entity.subclass.TaxRateSnapshot;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+public class QuotationDetail extends BaseEntity {
+
+    @ManyToOne
+    @JoinColumn(name = "quotation_id")
+    private Quotation quotation;
+
+    @ManyToOne
+    @JoinColumn(name = "request_item_id")
+    private RequestItem requestItem;
+
+    private double basePrice;
+    private double serviceFee;
+
+    @ElementCollection
+    @CollectionTable(name = "tax_rate_snapshots", joinColumns = @JoinColumn(name = "quotation_detail_id"))
+    private List<TaxRateSnapshot> taxRates = new ArrayList<>();
+
+    private String note;
+
+}

@@ -25,4 +25,9 @@ public class RequestItemBusinessImpl extends BaseBusinessImpl<RequestItem, Reque
                 .toList();
         return repository.findAllById(uuidIds);
     }
+
+    @Override
+    public List<RequestItem> findAllBySubRequestId(UUID id) {
+        return repository.findAllBySubRequestId(id);
+    }
 }
