@@ -23,7 +23,7 @@ public interface PurchaseRequestService {
 
     MessageResponse checkPurchaseRequest(String id);
 
-    Page<PurchaseRequestDTO> getPurchaseRequests(int page, int size, Sort.Direction direction, String type);
+    Page<PurchaseRequestModel> getPurchaseRequests(int page, int size, Sort.Direction direction, String type);
 
     MessageResponse createSubRequest(SubRequestModel subRequestModel);
 

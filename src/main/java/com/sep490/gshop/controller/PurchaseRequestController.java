@@ -67,13 +67,13 @@ public class PurchaseRequestController {
     @GetMapping()
     @PageableAsQueryParam
     @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
-    public ResponseEntity<Page<PurchaseRequestDTO>> getPurchaseRequests(
+    public ResponseEntity<Page<PurchaseRequestModel>> getPurchaseRequests(
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "direction", defaultValue = "DESC") Sort.Direction direction,
             @RequestParam(value = "type", defaultValue = "unassigned") String type) {
         log.info("getAllPurchaseRequests() PurchaseRequestController start | page: {}, size: {}", page, size);
-        Page<PurchaseRequestDTO> purchaseRequestDTO = purchaseRequestService.getPurchaseRequests(page, size, direction, type);
+        Page<PurchaseRequestModel> purchaseRequestDTO = purchaseRequestService.getPurchaseRequests(page, size, direction, type);
         log.info("getAllPurchaseRequests() PurchaseRequestController end | purchaseRequestDTO: {}", purchaseRequestDTO);
         return ResponseEntity.ok(purchaseRequestDTO);
     }

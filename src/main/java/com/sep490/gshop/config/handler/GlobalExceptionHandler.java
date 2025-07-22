@@ -1,6 +1,7 @@
 package com.sep490.gshop.config.handler;
 
 import com.sep490.gshop.payload.response.ErrorResponse;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authorization.AuthorizationDeniedException;
@@ -13,10 +14,18 @@ import java.util.HashMap;
 import java.util.Map;
 
 @ControllerAdvice
+@Log4j2
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorMessage> handleGeneralException(Exception ex) {
+        StackTraceElement element = ex.getStackTrace()[0];
+        log.error("Exception occurred at {}.{}({}:{}): {}",
+                element.getClassName(),
+                element.getMethodName(),
+                element.getFileName(),
+                element.getLineNumber(),
+                ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorMessage(HttpStatus.BAD_REQUEST.value(),new Date(), ex.getMessage()));
     }

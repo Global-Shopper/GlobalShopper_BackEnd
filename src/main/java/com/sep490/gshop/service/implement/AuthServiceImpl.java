@@ -430,7 +430,7 @@ public class AuthServiceImpl implements AuthService {
             log.error("changeMail() AppException | userId: {}, message: {}", currentId, ae.getMessage());
             throw ae;
         } catch (Exception e) {
-            log.error("changeMail() Unexpected Exception | userId: {}, message: {}", currentId, e.getMessage(), e);
+            log.error("changeMail() Unexpected Exception | userId: {}, message: {}", currentId, e.getMessage());
             throw e;
         }
     }
@@ -517,7 +517,7 @@ public class AuthServiceImpl implements AuthService {
                     .isSuccess(true)
                     .build();
         } catch (Exception e) {
-            log.error("sendVerificationEmail() Unexpected Exception | email: {}, message: {}", email, e.getMessage(), e);
+            log.error("sendVerificationEmail() Unexpected Exception | email: {}, message: {}", email, e.getMessage());
             throw e;
         }
     }

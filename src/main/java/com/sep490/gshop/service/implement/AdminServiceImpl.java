@@ -61,7 +61,7 @@ public class AdminServiceImpl implements AdminService {
             log.debug("createAdmin() End | adminId: {}", createdAdmin.getId());
             return dto;
         } catch (Exception e) {
-            log.error("createAdmin() Exception | message: {}", e.getMessage(), e);
+            log.error("createAdmin() Exception | message: {}", e.getMessage());
             throw new AppException(500, "Failed to create admin: " + e.getMessage());
         }
     }
