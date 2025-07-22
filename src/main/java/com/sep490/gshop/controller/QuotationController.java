@@ -18,11 +18,12 @@ public class QuotationController {
     @Autowired
     private QuotationService quotationService;
 
-    @PostMapping("/detail/batch")
-    public ResponseEntity<List<QuotationDetailDTO>> createOrUpdateDetailBatch(
-            @RequestBody QuotationDetailBatchRequest batchInput
+    @PostMapping("/batch")
+    public ResponseEntity<QuotationDTO> createOrUpdateQuotation(
+            @RequestBody QuotationInputRequest input
     ) {
-        List<QuotationDetailDTO> result = quotationService.createOrUpdateQuotationDetails(batchInput);
-        return ResponseEntity.ok(result);
+        QuotationDTO dto = quotationService.createOrUpdateQuotation(input);
+        return ResponseEntity.ok(dto);
     }
+
 }

@@ -14,7 +14,8 @@ import java.util.List;
 public class QuotationDTO {
     private String id;
     private String note;
-    private boolean accepted;
     private String subRequestId;
+    private long expiredDate;
     private List<QuotationDetailDTO> details;
+    private double totalPriceEstimate;
 }

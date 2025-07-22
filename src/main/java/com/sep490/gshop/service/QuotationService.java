@@ -9,6 +9,6 @@ import com.sep490.gshop.payload.request.QuotationInputRequest;
 import java.util.List;
 
 public interface QuotationService {
-    List<QuotationDetailDTO> createOrUpdateQuotationDetails(QuotationDetailBatchRequest batchInput);
+    QuotationDTO createOrUpdateQuotation(QuotationInputRequest input);
     QuotationDTO getQuotationById(String quotationId);
 }

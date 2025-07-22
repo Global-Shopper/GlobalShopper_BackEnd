@@ -12,7 +12,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class QuotationDetailRequest {
-    private String subRequestId;
     private String requestItemId;
     private String hsCodeId;
     private TaxRegion region;

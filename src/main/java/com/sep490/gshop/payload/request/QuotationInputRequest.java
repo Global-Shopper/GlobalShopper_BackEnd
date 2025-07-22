@@ -15,4 +15,5 @@ public class QuotationInputRequest {
     private String subRequestId;
     private String note;
     private List<QuotationDetailRequest> details;
+    private String type;
 }
