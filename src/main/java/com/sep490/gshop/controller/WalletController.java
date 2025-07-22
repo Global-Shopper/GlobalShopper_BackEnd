@@ -47,7 +47,7 @@ public class WalletController {
             log.info("getWallet() End | result: {}", wallet);
             return ResponseEntity.ok(wallet);
         } catch (Exception e) {
-            log.error("getWallet() Exception | message: {}", e.getMessage(), e);
+            log.error("getWallet() Exception | message: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -60,7 +60,7 @@ public class WalletController {
             log.info("depositMoney() End | response: {}", response);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("depositMoney() Exception | message: {}", e.getMessage(), e);
+            log.error("depositMoney() Exception | message: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -86,7 +86,7 @@ public class WalletController {
             log.info("ipnCallback() WalletController end");
             return ResponseEntity.ok("IPN Callback received successfully.");
         } catch (Exception e) {
-            log.error("IPN Callback Exception | message: {}", e.getMessage(), e);
+            log.error("IPN Callback Exception | message: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing IPN callback.");
         }
     }
@@ -101,7 +101,7 @@ public class WalletController {
             log.info("POST /api/wallet/withdraw End | response: {}", response);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("POST /api/wallet/withdraw Exception | message: {}", e.getMessage(), e);
+            log.error("POST /api/wallet/withdraw Exception | message: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -116,7 +116,7 @@ public class WalletController {
             log.info("GET /api/refund-tickets/withdraw End | found {} tickets", tickets.size());
             return ResponseEntity.ok(tickets);
         } catch (Exception e) {
-            log.error("GET /api/refund-tickets/withdraw Exception | message: {}", e.getMessage(), e);
+            log.error("GET /api/refund-tickets/withdraw Exception | message: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
         }
     }
@@ -134,7 +134,7 @@ public class WalletController {
             log.info("processWithdraw() End | isSuccess: {}, message: {}", response.isSuccess(), response.getMessage());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("processWithdraw() Exception | message: {}", e.getMessage(), e);
+            log.error("processWithdraw() Exception | message: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -154,7 +154,7 @@ public class WalletController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("uploadTransferBill() Controller Exception | withdrawTicketId: {}, message: {}", withdrawTicketId, e.getMessage(), e);
+            log.error("uploadTransferBill() Controller Exception | withdrawTicketId: {}, message: {}", withdrawTicketId, e.getMessage());
             return ResponseEntity.status(500).body(
                     MessageResponse.builder()
                             .isSuccess(false)

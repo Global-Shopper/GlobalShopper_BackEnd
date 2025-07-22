@@ -86,7 +86,7 @@ public class OrderServiceImpl implements OrderService {
             log.debug("createOrder() End | orderId: {}", order.getId());
             return modelMapper.map(orderBusiness.create(order), OrderDTO.class);
         } catch (Exception e) {
-            log.error("createOrder() Exception | message: {}", e.getMessage(), e);
+            log.error("createOrder() Exception | message: {}", e.getMessage());
             throw new AppException(500, "Failed to create order: " + e.getMessage());
         }
     }
@@ -105,7 +105,7 @@ public class OrderServiceImpl implements OrderService {
             Order updatedOrder = orderBusiness.update(existingOrder);
             return modelMapper.map(updatedOrder, OrderDTO.class);
         } catch (Exception e) {
-            log.error("updateOrder() Exception | orderId: {}, message: {}", orderId, e.getMessage(), e);
+            log.error("updateOrder() Exception | orderId: {}, message: {}", orderId, e.getMessage());
             throw new AppException(500, "Failed to update order");
         }
     }
@@ -118,7 +118,7 @@ public class OrderServiceImpl implements OrderService {
                     .orElseThrow(() -> new AppException(404, "Order not found"));
             return modelMapper.map(order, OrderDTO.class);
         } catch (Exception e) {
-            log.error("getOrderById() Exception | orderId: {}, message: {}", orderId, e.getMessage(), e);
+            log.error("getOrderById() Exception | orderId: {}, message: {}", orderId, e.getMessage());
             throw new AppException(500, "Failed to get order");
         }
     }
@@ -131,7 +131,7 @@ public class OrderServiceImpl implements OrderService {
                     .map(order -> modelMapper.map(order, OrderDTO.class))
                     .collect(Collectors.toList());
         } catch (Exception e) {
-            log.error("getAllOrders() Exception | message: {}", e.getMessage(), e);
+            log.error("getAllOrders() Exception | message: {}", e.getMessage());
             throw new AppException(500, "Failed to get orders");
         }
     }
@@ -143,7 +143,7 @@ public class OrderServiceImpl implements OrderService {
             orderBusiness.delete(orderId);
             return true;
         } catch (Exception e) {
-            log.error("deleteOrder() Exception | orderId: {}, message: {}", orderId, e.getMessage(), e);
+            log.error("deleteOrder() Exception | orderId: {}, message: {}", orderId, e.getMessage());
             throw new AppException(500, "Failed to delete order");
         }
     }

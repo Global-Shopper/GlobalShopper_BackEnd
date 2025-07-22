@@ -110,7 +110,7 @@ public class WalletServiceImpl implements WalletService {
                     .build();
 
         } catch (Exception e) {
-            log.error("depositMoney() Unexpected Exception | message: {}", e.getMessage(), e);
+            log.error("depositMoney() Unexpected Exception | message: {}", e.getMessage());
             throw e;
         }
     }
@@ -472,7 +472,7 @@ public class WalletServiceImpl implements WalletService {
             log.info("IPN Callback: ReferenceCode: {} | status: {} | transactionStatus: {}", transaction.getReferenceCode(), transaction.getStatus(), params.get("vnp_TransactionStatus"));
             transactionBusiness.update(transaction);
         } catch (Exception e) {
-            log.error("IPN Callback Exception | message: {}", e.getMessage(), e);
+            log.error("IPN Callback Exception | message: {}", e.getMessage());
         }
     }
 

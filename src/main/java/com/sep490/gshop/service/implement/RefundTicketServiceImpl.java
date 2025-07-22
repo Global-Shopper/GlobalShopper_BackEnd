@@ -51,7 +51,7 @@ public class RefundTicketServiceImpl implements RefundTicketService {
            RefundTicketDTO createdTicket = modelMapper.map(refundTicketBusiness.create(newRefundTicket), RefundTicketDTO.class);
            return createdTicket;
         } catch (Exception e) {
-            log.error("createNewRefundTicket() Exception | entity: {}, message: {}", refundTicket, e.getMessage(), e);
+            log.error("createNewRefundTicket() Exception | entity: {}, message: {}", refundTicket, e.getMessage());
             throw e;
         }
     }
@@ -67,7 +67,7 @@ public class RefundTicketServiceImpl implements RefundTicketService {
             log.debug("createNewRefundTicket() End | entity: {}", refundTicket);
             return modelMapper.map(refundTicketBusiness.create(newRefundTicket), RefundTicketDTO.class);
         }catch (Exception e) {
-            log.error("createNewRefundTicket() Exception | entity: {}, message: {}", refundTicket, e.getMessage(), e);
+            log.error("createNewRefundTicket() Exception | entity: {}, message: {}", refundTicket, e.getMessage());
             throw e;
         }
     }
@@ -83,7 +83,7 @@ public class RefundTicketServiceImpl implements RefundTicketService {
             log.debug("getRefundTicketById() End | RefundTicketDTO: {}", refundDTO);
             return refundDTO;
         } catch (Exception e) {
-            log.error("createNewRefundTicket() Exception | id: {}, message: {}", id, e.getMessage(), e);
+            log.error("createNewRefundTicket() Exception | id: {}, message: {}", id, e.getMessage());
             throw e;
         }
     }
@@ -98,7 +98,7 @@ public class RefundTicketServiceImpl implements RefundTicketService {
             log.debug("getAllRefundTickets() End | Size: {}", entitysList.size());
             return entitysList;
         } catch (Exception e) {
-            log.error("createNewRefundTicket() Exception | message: {}", e.getMessage(), e);
+            log.error("createNewRefundTicket() Exception | message: {}", e.getMessage());
             throw e;
         }
     }
@@ -106,16 +106,16 @@ public class RefundTicketServiceImpl implements RefundTicketService {
     @Override
     public RefundTicketDTO updateRefundTicket(UUID id, RefundTicketRequest request) {
         try {
-            log.debug("updateRefundTicket() Start | id: {}, request: {}", id, request);
+            log.debug("updateRefundTicket() updateRefundTicket Start | id: {}, request: {}", id, request);
             var entityFound = refundTicketBusiness.getById(id)
                     .orElseThrow(() -> new EntityNotFoundException("Refund ticket not found"));
             entityFound.setEvidence(request.getEvidence());
             entityFound.setReason(request.getReason());
             RefundTicketDTO dto = modelMapper.map(refundTicketBusiness.update(entityFound), RefundTicketDTO.class);
-            log.debug("updateRefundTicket() End | Updated RefundTicketDTO: {}", dto);
+            log.debug("updateRefundTicket() updateRefundTicket End | Updated RefundTicketDTO: {}", dto);
             return dto;
         } catch (Exception e) {
-            log.error("createNewRefundTicket() Exception | entity: {}, message: {}", request, e.getMessage(), e);
+            log.error("createNewRefundTicket() updateRefundTicket Exception | entity: {}, message: {}", request, e.getMessage());
             throw e;
         }
     }
@@ -128,7 +128,7 @@ public class RefundTicketServiceImpl implements RefundTicketService {
             log.debug("deleteRefundTicket() End | id: {}, result: {}", id, result);
             return result;
         } catch (Exception e) {
-            log.error("createNewRefundTicket() Exception | id: {}, message: {}", id, e.getMessage(), e);
+            log.error("createNewRefundTicket() deleteRefundTicket Exception | id: {}, message: {}", id, e.getMessage());
             throw e;
         }
     }

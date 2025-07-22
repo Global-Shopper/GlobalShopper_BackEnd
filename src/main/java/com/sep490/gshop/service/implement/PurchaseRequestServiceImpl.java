@@ -192,7 +192,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
     }
 
     @Override
-    public Page<PurchaseRequestDTO> getPurchaseRequests(int page, int size, Sort.Direction direction, String type) {
+    public Page<PurchaseRequestModel> getPurchaseRequests(int page, int size, Sort.Direction direction, String type) {
         try {
             log.debug("getPurchaseRequests() start | page: {}, size: {}, type: {}", page, size, type);
             Sort sort = Sort.by(direction, "createdAt");
@@ -214,18 +214,11 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                 log.debug("getPurchaseRequests() end | response: empty");
                 return Page.empty();
             }
-            Page<PurchaseRequestDTO> response = purchaseRequests.map(purchaseRequest -> {
-                PurchaseRequestDTO dto = modelMapper.map(purchaseRequest, PurchaseRequestDTO.class);
-                List<RequestItemDTO> requestItems = purchaseRequest.getRequestItems().stream()
-                        .map(item -> modelMapper.map(item, RequestItemDTO.class))
-                        .toList();
-                dto.setRequestItems(requestItems);
-                return dto;
-            });
+            Page<PurchaseRequestModel> response = purchaseRequests.map(this::convertToPurchaseRequestModel);
             log.debug("getPurchaseRequests() end | response: {}", response);
             return response;
         } catch (Exception e) {
-            log.error("getPurchaseRequests() error | message : {}", e.getMessage(), e);
+            log.error("getPurchaseRequests() error | message : {}", e.getMessage());
             throw e;
         }
     }
@@ -362,36 +355,43 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                 throw new AppException(HttpStatus.FORBIDDEN.value(), "Bạn không có quyền xem yêu cầu mua hàng này");
             }
 
-            List<RequestItem> allItems = purchaseRequest.getRequestItems();
+            PurchaseRequestModel response = convertToPurchaseRequestModel(purchaseRequest);
 
-            // RequestItems without SubRequest
-            List<RequestItemDTO> itemsWithoutSub = allItems.stream()
-                    .filter(item -> item.getSubRequest() == null)
-                    .map(requestItem -> modelMapper.map(requestItem, RequestItemDTO.class))
-                    .collect(Collectors.toList());
-
-            // Group by SubRequest
-            Map<SubRequest, List<RequestItem>> subRequestMap = allItems.stream()
-                    .filter(item -> item.getSubRequest() != null)
-                    .collect(Collectors.groupingBy(RequestItem::getSubRequest));
-
-            List<SubRequestDTO> subRequestModels = subRequestMap.entrySet().stream()
-                    .map(entry -> {
-                        SubRequestDTO subDTO = modelMapper.map(entry.getKey(), SubRequestDTO.class);
-                        subDTO.setRequestItems(entry.getValue().stream()
-                                .map(requestItem -> modelMapper.map(requestItem, RequestItemDTO.class))
-                                .collect(Collectors.toList()));
-                        return subDTO;
-                    }).collect(Collectors.toList());
-            PurchaseRequestModel response = modelMapper.map(purchaseRequest, PurchaseRequestModel.class);
-            response.setRequestItems(itemsWithoutSub);
-            response.setSubRequests(subRequestModels);
             log.debug("getPurchaseRequestById() PurchaseRequestServiceImpl end | response: {}", response);
             return response;
         } catch (Exception e) {
             log.error("getPurchaseRequestById() PurchaseRequestServiceImpl error | message : {}", e.getMessage());
             throw e;
         }
+    }
+
+    private PurchaseRequestModel convertToPurchaseRequestModel(PurchaseRequest purchaseRequest) {
+        List<RequestItem> allItems = purchaseRequest.getRequestItems();
+
+        // RequestItems without SubRequest
+        List<RequestItemDTO> itemsWithoutSub = allItems.stream()
+                .filter(item -> item.getSubRequest() == null)
+                .map(requestItem -> modelMapper.map(requestItem, RequestItemDTO.class))
+                .toList();
+
+        // Group by SubRequest
+        Map<SubRequest, List<RequestItem>> subRequestMap = allItems.stream()
+                .filter(item -> item.getSubRequest() != null)
+                .collect(Collectors.groupingBy(RequestItem::getSubRequest));
+
+        List<SubRequestDTO> subRequestModels = subRequestMap.entrySet().stream()
+                .map(entry -> {
+                    SubRequestDTO subDTO = modelMapper.map(entry.getKey(), SubRequestDTO.class);
+                    subDTO.setRequestItems(entry.getValue().stream()
+                            .map(requestItem -> modelMapper.map(requestItem, RequestItemDTO.class))
+                            .toList());
+                    return subDTO;
+                }).toList();
+
+        PurchaseRequestModel response = modelMapper.map(purchaseRequest, PurchaseRequestModel.class);
+        response.setRequestItems(itemsWithoutSub);
+        response.setSubRequests(subRequestModels);
+        return response;
     }
 
 }

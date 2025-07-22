@@ -49,7 +49,7 @@ public class TransactionServiceImpl implements TransactionService {
 
             return transactions.map(transaction -> modelMapper.map(transaction, TransactionDTO.class));
         } catch (Exception e) {
-            log.error("getAll() Exception: {}", e.getMessage(), e);
+            log.error("getAll() Exception: {}", e.getMessage());
             throw e;
         }
     }
