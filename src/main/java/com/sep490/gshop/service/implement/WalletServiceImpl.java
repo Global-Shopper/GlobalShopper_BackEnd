@@ -162,7 +162,7 @@ public class WalletServiceImpl implements WalletService {
 
             if (!"00".equals(status)) {
                 transaction.setStatus(TransactionStatus.FAIL);
-                transaction.setDescription("Thanh toán VNPay không thành công hoặc dữ liệu không hợp lệ, mã trạng thái: " + status);
+                transaction.setDescription("Nạp tiền vào tài khoản không thành công");
                 transaction.setBalanceAfter(balanceBefore);
                 transactionBusiness.create(transaction);
                 log.warn("Thanh toán thất bại với mã trạng thái: {}", status);
