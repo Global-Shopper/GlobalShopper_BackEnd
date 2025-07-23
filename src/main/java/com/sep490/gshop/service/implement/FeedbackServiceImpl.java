@@ -5,7 +5,6 @@ import com.sep490.gshop.business.OrderBusiness;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.Feedback;
 import com.sep490.gshop.payload.dto.FeedbackDTO;
-import com.sep490.gshop.payload.dto.RefundTicketDTO;
 import com.sep490.gshop.payload.request.FeedbackRequest;
 import com.sep490.gshop.service.FeedbackService;
 import lombok.extern.log4j.Log4j2;
@@ -51,10 +50,8 @@ public class FeedbackServiceImpl implements FeedbackService {
         try {
             var foundEntity = feedbackBusiness.getById(id)
                     .orElseThrow(() -> new AppException(404, "Feedback is not found"));
-            // Bổ sung cập nhật các trường từ request vào entity
             foundEntity.setComment(request.getComment());
             foundEntity.setRating(request.getRating());
-            // ... các trường khác nếu có
             FeedbackDTO dto = modelMapper.map(feedbackBusiness.update(foundEntity), FeedbackDTO.class);
             log.debug("updateFeedback() End | dto: {}", dto);
             return dto;

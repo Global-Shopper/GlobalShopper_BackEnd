@@ -4,6 +4,7 @@ import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.payload.dto.QuotationDTO;
 import com.sep490.gshop.payload.request.QuotationRequest;
 import com.sep490.gshop.service.QuotationService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,7 @@ public class QuotationController {
     private QuotationService quotationService;
 
     @PostMapping
+    @Operation(summary = "Tạo báo giá cho sub request (Bao gồm nhiều request item")
     public ResponseEntity<QuotationDTO> createQuotation(@RequestBody @Valid QuotationRequest request) {
         log.info("createQuotation() - Start | subRequestId: {}", request.getSubRequestId());
         QuotationDTO dto = quotationService.createQuotation(request);
@@ -29,6 +31,7 @@ public class QuotationController {
     }
 
     @GetMapping
+    @Operation(summary = "Lấy danh sách tất cả các báo giá")
     public ResponseEntity<List<QuotationDTO>> findAllQuotations() {
         log.info("findAllQuotations() - Start");
         List<QuotationDTO> dtos = quotationService.findAllQuotations();
@@ -37,6 +40,7 @@ public class QuotationController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Tìm báo giá theo id")
     public ResponseEntity<QuotationDTO> getQuotationById(@PathVariable("id") String id) {
         log.info("getQuotationById() - Start | quotationId: {}", id);
         QuotationDTO dto = quotationService.getQuotationById(id);

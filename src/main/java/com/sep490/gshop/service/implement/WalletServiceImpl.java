@@ -115,8 +115,6 @@ public class WalletServiceImpl implements WalletService {
         }
     }
 
-
-    @Override
     @Transactional
     public boolean processVNPayReturn(String email, String status, String amount, String vnpTxnRef) {
         log.debug("processVNPayReturn() Start | email: {}", email);
@@ -186,10 +184,6 @@ public class WalletServiceImpl implements WalletService {
             return false;
         }
     }
-
-
-
-
 
     private String formatAmount(double amount) {
         DecimalFormat df;
