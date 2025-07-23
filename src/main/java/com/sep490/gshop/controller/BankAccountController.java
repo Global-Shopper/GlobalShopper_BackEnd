@@ -6,6 +6,7 @@ import com.sep490.gshop.payload.request.BankAccountRequest;
 import com.sep490.gshop.payload.request.BankAccountUpdateRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.service.BankAccountService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,7 @@ public class BankAccountController {
     private BankAccountService bankAccountService;
     @PostMapping
     @PreAuthorize("hasRole('CUSTOMER')")
+    @Operation(summary = "Tạo tài khoản ngân hàng mới cho khách hàng hiện tại")
     public ResponseEntity<BankAccountDTO> createBankAccount(@Valid @RequestBody BankAccountRequest request) {
         log.info("createBankAccount() Start | request: {}", request);
         BankAccountDTO created = bankAccountService.createBankAccount(request);
@@ -35,6 +37,7 @@ public class BankAccountController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('CUSTOMER')")
+    @Operation(summary = "Cập nhật thông tin tài khoản ngân hàng theo ID dành cho khách hàng")
     public ResponseEntity<BankAccountDTO> updateBankAccount(
             @PathVariable UUID id,
             @Valid @RequestBody BankAccountUpdateRequest request) {
@@ -46,6 +49,7 @@ public class BankAccountController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('CUSTOMER')")
+    @Operation(summary = "Tìm tài khoản ngân hàng theo ID dành cho khách hàng")
     public ResponseEntity<BankAccountDTO> getBankAccountByCurrent(@PathVariable UUID id) {
         log.info("getBankAccountByCurrent() Start | id: {}", id);
         BankAccountDTO dto = bankAccountService.getBankAccountByCurrent(id);
@@ -55,6 +59,7 @@ public class BankAccountController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('CUSTOMER')")
+    @Operation(summary = "Xóa tài khoản ngân hàng theo ID (của khách hàng hiện tại)")
     public ResponseEntity<MessageResponse> deleteBankAccount(@PathVariable UUID id) {
         log.info("deleteBankAccount() Start | id: {}", id);
         MessageResponse response = bankAccountService.deleteBankAccount(id);
@@ -64,6 +69,7 @@ public class BankAccountController {
 
     @GetMapping
     @PreAuthorize("hasRole('CUSTOMER')")
+    @Operation(summary = "Lấy danh sách tất cả tài khoản ngân hàng của khách hàng hiện tại")
     public ResponseEntity<List<BankAccountDTO>> getAllBankAccountsByCurrent() {
         log.info("getAllBankAccountsByCurrent() Start");
         List<BankAccountDTO> list = bankAccountService.getAllBankAccountsByCurrent();

@@ -25,23 +25,17 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderBusiness orderBusiness;
     private final ModelMapper modelMapper;
-    private final CustomerBusiness customerBusiness;
     private final ShippingAddressBusiness shippingAddressBusiness;
-    private final OrderItemBusiness orderItemBusiness;
     private final ProductBusiness productBusiness;
 
     @Autowired
     public OrderServiceImpl(OrderBusiness orderBusiness,
                             ModelMapper modelMapper,
-                            CustomerBusiness customerBusiness,
                             ShippingAddressBusiness shippingAddressBusiness,
-                            OrderItemBusiness orderItemBusiness,
                             ProductBusiness productBusiness) {
         this.orderBusiness = orderBusiness;
         this.modelMapper = modelMapper;
-        this.customerBusiness = customerBusiness;
         this.shippingAddressBusiness = shippingAddressBusiness;
-        this.orderItemBusiness = orderItemBusiness;
         this.productBusiness = productBusiness;
     }
 
@@ -50,12 +44,6 @@ public class OrderServiceImpl implements OrderService {
     public OrderDTO createOrder(OrderRequest orderRequest) {
         log.debug("createOrder() Start | request: {}", orderRequest);
         try {
-
-            // Cần implement Current context ở đây
-//            Customer customer = customerBusiness.getCurrentCustomer()
-//                    .orElseThrow(() -> new AppException(401, "Unauthorized"));
-
-
             ShippingAddress shippingAddress = shippingAddressBusiness.getById(UUID.fromString(orderRequest.getShippingAddressId()))
                     .orElseThrow(() -> new AppException(404, "Shipping address not found"));
             AddressSnapshot addressSnapshot = new AddressSnapshot(shippingAddress);
@@ -99,7 +87,6 @@ public class OrderServiceImpl implements OrderService {
             Order existingOrder = orderBusiness.getById(orderId)
                     .orElseThrow(() -> new AppException(404, "Order not found"));
 
-            //Sample, can tham khao them
             existingOrder.setStatus(OrderStatus.ARRIVED_IN_DESTINATION);
 
             Order updatedOrder = orderBusiness.update(existingOrder);

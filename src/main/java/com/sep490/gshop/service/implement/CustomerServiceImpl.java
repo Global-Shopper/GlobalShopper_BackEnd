@@ -1,12 +1,10 @@
 package com.sep490.gshop.service.implement;
 
 import com.sep490.gshop.business.CustomerBusiness;
-import com.sep490.gshop.business.ShippingAddressBusiness;
 import com.sep490.gshop.common.enums.UserRole;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.Customer;
 import com.sep490.gshop.payload.dto.CustomerDTO;
-import com.sep490.gshop.payload.dto.ShippingAddressDTO;
 import com.sep490.gshop.payload.request.CustomerRequest;
 import com.sep490.gshop.payload.request.CustomerUpdateRequest;
 import com.sep490.gshop.payload.response.CloudinaryResponse;
@@ -30,13 +28,11 @@ public class CustomerServiceImpl implements CustomerService {
     private CustomerBusiness customerBusiness;
     private ModelMapper modelMapper;
     private CloudinaryService cloudinaryService;
-    private ShippingAddressBusiness shippingAddressBusiness;
     @Autowired
-    public CustomerServiceImpl(CustomerBusiness customerBusiness, ModelMapper modelMapper, CloudinaryService cloudinaryService, ShippingAddressBusiness shippingAddressBusiness) {
+    public CustomerServiceImpl(CustomerBusiness customerBusiness, ModelMapper modelMapper, CloudinaryService cloudinaryService) {
         this.customerBusiness = customerBusiness;
         this.modelMapper = modelMapper;
         this.cloudinaryService = cloudinaryService;
-        this.shippingAddressBusiness = shippingAddressBusiness;
     }
 
     @Override

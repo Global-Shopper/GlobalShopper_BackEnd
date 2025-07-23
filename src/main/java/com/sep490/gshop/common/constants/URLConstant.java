@@ -19,5 +19,6 @@ public class URLConstant {
     public static final String BANK_ACCOUNT = "bank-account";
     public static final String TRANSACTION = "transaction";
     public static final String QUOTATION = "quotation";
-
+    public static final String CURRENCY = "currency";
+    public static final String HS_CODE = "hs-code";
 }

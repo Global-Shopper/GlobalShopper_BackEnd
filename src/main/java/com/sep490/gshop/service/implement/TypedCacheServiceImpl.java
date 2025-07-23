@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 public class TypedCacheServiceImpl<K, V> implements TypedCacheService<K, V> {
 
     private final ConcurrentHashMap<CacheType, Cache<K, CacheData<V>>> cacheMap = new ConcurrentHashMap<>();
-
+    private Cache<String, ExchangeRateResponse> exchangeRateCache;
     private Cache<K, CacheData<V>> getCache(CacheType type) {
         return cacheMap.computeIfAbsent(type, t ->
                 Caffeine.newBuilder()
@@ -64,9 +64,17 @@ public class TypedCacheServiceImpl<K, V> implements TypedCacheService<K, V> {
 
     @Override
     public Cache<String, ExchangeRateResponse> exchangeRateCache() {
-        return Caffeine.newBuilder()
-                .expireAfterWrite(1, TimeUnit.HOURS)
-                .maximumSize(1)
-                .build();
+        if (exchangeRateCache == null) {
+            synchronized(this) {
+                if (exchangeRateCache == null) {
+                    exchangeRateCache = Caffeine.newBuilder()
+                            .expireAfterWrite(1, TimeUnit.HOURS)
+                            .maximumSize(1)
+                            .build();
+                }
+            }
+        }
+        return exchangeRateCache;
     }
+
 }

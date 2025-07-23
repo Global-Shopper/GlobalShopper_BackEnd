@@ -32,8 +32,16 @@ public class ExchangeRateServiceImpl implements ExchangeRateService {
         this.cacheService = cacheService;
     }
 
+    @Override
     public ExchangeRateResponse getRates(String fromCurrency) {
-        String cacheKey = fromCurrency + "_RATES";
+        String cacheKey = fromCurrency.toUpperCase() + "_RATES";
+
+        ExchangeRateResponse cached = cacheService.get(CacheType.EXCHANGE_RATE, cacheKey);
+        if (cached != null) {
+            log.debug("getRates() - Trả về dữ liệu từ cache cho key: {}", cacheKey);
+            return cached;
+        }
+
         String requestUrl = String.format("%s/%s/latest/%s", domain, apiKey, fromCurrency);
 
         log.debug("getRates() Start | Gọi API tỷ giá: {}", requestUrl);
@@ -60,26 +68,31 @@ public class ExchangeRateServiceImpl implements ExchangeRateService {
             }
 
             cacheService.put(CacheType.EXCHANGE_RATE, cacheKey, response);
-            log.debug("getRates() End | Lưu cache tỷ giá thành công.");
-            return response;
+            log.debug("getRates() End | Lưu cache tỷ giá thành công cho key: {}", cacheKey);
 
+            return response;
         } catch (IOException ioe) {
-            log.error("getRates() IOException: {}", ioe.getMessage());
+            log.error("getRates() IOException: {}", ioe.getMessage(), ioe);
             throw new RuntimeException("Lỗi IO khi gọi API tỷ giá", ioe);
         } catch (Exception e) {
-            log.error("getRates() Exception: {}", e.getMessage());
+            log.error("getRates() Exception: {}", e.getMessage(), e);
             throw e;
         }
     }
 
+    @Override
     public CurrencyConvertResponse convertToVND(BigDecimal amount, String fromCurrency) {
         log.debug("convertToVND() Start | amount: {}, fromCurrency: {}", amount, fromCurrency);
         try {
+
             ExchangeRateResponse rateResponse = getRates(fromCurrency);
             Map<String, BigDecimal> rates = rateResponse.getConversionRates();
 
             if (!rates.containsKey(fromCurrency.toUpperCase()) || !rates.containsKey("VND")) {
-                throw AppException.builder().message("Không hỗ trợ loại tiền tệ: " + fromCurrency).code(400).build();
+                throw AppException.builder()
+                        .message("Không hỗ trợ loại tiền tệ: " + fromCurrency)
+                        .code(400)
+                        .build();
             }
 
             BigDecimal rateFrom = rates.get(fromCurrency.toUpperCase());
@@ -98,7 +111,7 @@ public class ExchangeRateServiceImpl implements ExchangeRateService {
                     exchangeRate
             );
         } catch (Exception e) {
-            log.error("convertToVND() Exception: {}", e.getMessage());
+            log.error("convertToVND() Exception: {}", e.getMessage(), e);
             throw e;
         }
     }
