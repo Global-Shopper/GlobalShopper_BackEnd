@@ -24,4 +24,6 @@ public class PurchaseRequestModel {
     private String requestType;
     private List<RequestItemDTO> requestItems;
     private List<SubRequestDTO> subRequests;
+    private long createdAt;
+    private long expiredAt;
 }
