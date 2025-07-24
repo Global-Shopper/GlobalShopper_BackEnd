@@ -14,22 +14,21 @@ import java.util.List;
 @NoArgsConstructor
 @Data
 public class QuotationDetail extends BaseEntity {
+    private double basePrice;
+    private double serviceFee;
+    private String currency;
+    private double ExchangeRate;
+    private double totalVNDPrice;
+    @ElementCollection
+    @CollectionTable(name = "tax_rate_snapshots", joinColumns = @JoinColumn(name = "quotation_detail_id"))
+    private List<TaxRateSnapshot> taxRates = new ArrayList<>();
+    @Column(columnDefinition = "TEXT")
+    private String note;
 
     @ManyToOne
     @JoinColumn(name = "quotation_id")
     private Quotation quotation;
-
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "request_item_id")
     private RequestItem requestItem;
-
-    private double basePrice;
-    private double serviceFee;
-
-    @ElementCollection
-    @CollectionTable(name = "tax_rate_snapshots", joinColumns = @JoinColumn(name = "quotation_detail_id"))
-    private List<TaxRateSnapshot> taxRates = new ArrayList<>();
-
-    private String note;
-
 }

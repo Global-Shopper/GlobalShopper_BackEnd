@@ -1,6 +1,7 @@
 package com.sep490.gshop.entity;
 
 import com.sep490.gshop.common.enums.TaxRegion;
+import com.sep490.gshop.common.enums.TaxType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -19,15 +20,14 @@ public class TaxRate {
     @UuidGenerator
     @GeneratedValue
     UUID id;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "hs_code", referencedColumnName = "hs_code")
     private HsCode hsCode;
     @Enumerated(EnumType.STRING)
     private TaxRegion region;
 
-    @Column(name = "tax_type", length = 50)
-    private String taxType;
+    @Enumerated(EnumType.STRING)
+    private TaxType taxType;
 
     @Column(name = "rate")
     private Double rate;

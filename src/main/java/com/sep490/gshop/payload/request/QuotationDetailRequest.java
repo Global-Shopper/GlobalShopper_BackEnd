@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class QuotationDetailRequest {
+
     @NotNull(message = "requestItemId không được để trống")
     private String requestItemId;
 
@@ -33,8 +34,5 @@ public class QuotationDetailRequest {
 
     @NotBlank(message = "currency không được để trống")
     private String currency;
-
-    @DecimalMin(value = "0.0", inclusive = false, message = "totalVNDPrice phải lớn hơn 0")
-    private double totalVNDPrice;
 
 }

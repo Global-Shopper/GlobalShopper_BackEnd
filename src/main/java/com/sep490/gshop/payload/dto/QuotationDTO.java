@@ -1,6 +1,5 @@
 package com.sep490.gshop.payload.dto;
 
-import com.sep490.gshop.payload.request.QuotationDetailRequest;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

@@ -70,14 +70,27 @@ public class QuotationServiceImpl implements QuotationService {
                             .message("Không tìm thấy sub request")
                             .code(404)
                             .build());
+
             Quotation quotation = new Quotation();
             quotation.setSubRequest(sub);
             quotation.setNote(input.getNote());
             quotation.setExpiredDate(input.getExpiredDate());
             quotation.setShippingEstimate(input.getShippingEstimate());
+
+            int totalRequestItems = sub.getRequestItems().size();
+            if (input.getDetails().size() < totalRequestItems) {
+                throw AppException.builder().message("Bạn cần điền đủ thông tin của các request item mới được tạo báo giá").code(400).build();
+            } else if (input.getDetails().size() > totalRequestItems) {
+                throw AppException.builder().message("Request items không nằm trong sub request (bị dư)").code(400).build();
+            }
+
+            // Bước 1: Lưu quotation trước để có ID
             quotationBusiness.create(quotation);
 
+            // Bước 2: Tạo list chi tiết và set quotation cho các detail
+            List<QuotationDetail> detailEntities = new ArrayList<>();
             List<QuotationDetailDTO> detailDTOs = new ArrayList<>();
+
             for (QuotationDetailRequest detailReq : input.getDetails()) {
                 RequestItem item = requestItemBusiness.getById(UUID.fromString(detailReq.getRequestItemId()))
                         .orElseThrow(() -> AppException.builder()
@@ -85,13 +98,13 @@ public class QuotationServiceImpl implements QuotationService {
                                 .code(404)
                                 .build());
 
-                boolean exists = quotationDetailBusiness.existsByQuotationAndRequestItem(quotation, item);
-                if (exists) {
-                    throw AppException.builder().message("Báo giá cho item này đã tồn tại !!!").code(400).build();
+                if (!item.getSubRequest().getId().equals(subRequestId)) {
+                    throw AppException.builder()
+                            .message("Request item không thuộc về sub request này")
+                            .code(400)
+                            .build();
                 }
-                if(item.getSubRequest().getId() != subRequestId){
-                    throw AppException.builder().message("Request item không thuộc về sub request này").code(400).build();
-                }
+
                 QuotationDetail detail = modelMapper.map(detailReq, QuotationDetail.class);
                 detail.setQuotation(quotation);
                 detail.setRequestItem(item);
@@ -110,39 +123,48 @@ public class QuotationServiceImpl implements QuotationService {
 
                 TaxCalculationResult taxResult = taxRateService.calculateTaxes(detailReq.getBasePrice(), taxRates);
 
-                quotationDetailBusiness.create(detail);
-
-                QuotationDetailDTO detailDTO = modelMapper.map(detail, QuotationDetailDTO.class);
-                detailDTO.setTaxAmounts(taxResult.getTaxAmounts());
-                detailDTO.setRequestItemId(detailReq.getRequestItemId());
                 String currency = detailReq.getCurrency() != null ? detailReq.getCurrency().toUpperCase(Locale.ROOT) : "USD";
-                double total = calculateTotalPrice(detailDTO);
+                double total = calculateTotalPrice(modelMapper.map(detail, QuotationDetailDTO.class));
                 double totalPriceEstimate = total;
                 if (!"VND".equalsIgnoreCase(currency)) {
                     CurrencyConvertResponse convertResponse = exchangeRateService.convertToVND(BigDecimal.valueOf(total), currency);
                     if (convertResponse != null && convertResponse.getConvertedAmount() != null) {
                         totalPriceEstimate = convertResponse.getConvertedAmount().doubleValue();
+                        detail.setExchangeRate(convertResponse.getExchangeRate().doubleValue());
+                        detail.setCurrency(currency);
                     }
                 }
+                detail.setTotalVNDPrice(totalPriceEstimate);
+
+                detailEntities.add(detail);
+
+                QuotationDetailDTO detailDTO = modelMapper.map(detail, QuotationDetailDTO.class);
+                detailDTO.setTaxAmounts(taxResult.getTaxAmounts());
+                detailDTO.setRequestItemId(UUID.fromString(detailReq.getRequestItemId()));
                 detailDTO.setTotalVNDPrice(totalPriceEstimate);
                 detailDTOs.add(detailDTO);
             }
+
+            // Bước 3: Gán list detail vào quotation và lưu update lại quotation
+            quotation.setDetails(detailEntities);
+            quotationBusiness.update(quotation);
+
+            // Bước 4: Tính tổng tiền và set vào quotation
+            double total = detailDTOs.stream().mapToDouble(QuotationDetailDTO::getTotalVNDPrice).sum();
+            quotation.setTotalPriceEstimate(total);
+            quotationBusiness.update(quotation);
+
             QuotationDTO dto = modelMapper.map(quotation, QuotationDTO.class);
             dto.setDetails(detailDTOs);
             dto.setSubRequestId(input.getSubRequestId());
-            double total = 0;
-            for(QuotationDetailDTO quotationDetailDTO : detailDTOs) {
-                total += quotationDetailDTO.getTotalVNDPrice();
-            }
-
-            //total = total + dto.getShippingEstimate();
             dto.setTotalPriceEstimate(total);
             dto.setShippingEstimate(input.getShippingEstimate());
+
             log.debug("createQuotation() - End | subRequestId: {}", input.getSubRequestId());
             return dto;
 
         } catch (Exception e) {
-            log.error("createQuotation() - Exception: {}", e.getMessage());
+            log.error("createQuotation() - Exception: {}", e.getMessage(), e);
             throw AppException.builder()
                     .message("Lỗi khi tạo báo giá: " + e.getMessage())
                     .code(500)
@@ -171,12 +193,14 @@ public class QuotationServiceImpl implements QuotationService {
             List<QuotationDTO> dtos = new ArrayList<>();
             for (Quotation quotation : quotations) {
                 QuotationDTO dto = modelMapper.map(quotation, QuotationDTO.class);
-                dto.setDetails(
-                        quotation.getDetails()
-                                .stream()
-                                .map(detail -> modelMapper.map(detail, QuotationDetailDTO.class))
-                                .toList()
-                );
+
+                List<QuotationDetailDTO> detailDTOs = new ArrayList<>();
+                for (QuotationDetail detail : quotation.getDetails()) {
+                    QuotationDetailDTO detailDTO = enrichQuotationDetailDto(detail);
+                    detailDTOs.add(detailDTO);
+                }
+                dto.setDetails(detailDTOs);
+                dto.setTotalPriceEstimate(quotation.getTotalPriceEstimate());
                 dto.setSubRequestId(quotation.getSubRequest().getId().toString());
 
                 dtos.add(dto);
@@ -185,13 +209,14 @@ public class QuotationServiceImpl implements QuotationService {
             return dtos;
 
         } catch (Exception e) {
-            log.error("findAllQuotations() - Exception: {}", e.getMessage());
+            log.error("findAllQuotations() - Exception: {}", e.getMessage(), e);
             throw AppException.builder()
                     .message("Lỗi khi lấy danh sách báo giá: " + e.getMessage())
                     .code(500)
                     .build();
         }
     }
+
 
     @Override
     public QuotationDTO getQuotationById(String quotationId) {
@@ -205,24 +230,56 @@ public class QuotationServiceImpl implements QuotationService {
                             .build());
 
             QuotationDTO dto = modelMapper.map(quotation, QuotationDTO.class);
-            dto.setDetails(
-                    quotation.getDetails()
-                            .stream()
-                            .map(m -> modelMapper.map(m, QuotationDetailDTO.class))
-                            .toList()
-            );
+
+            List<QuotationDetailDTO> detailDTOs = new ArrayList<>();
+
+            for (QuotationDetail detail : quotation.getDetails()) {
+                QuotationDetailDTO detailDTO = enrichQuotationDetailDto(detail);
+                detailDTO.setRequestItemId(detail.getRequestItem().getId());
+                detailDTOs.add(detailDTO);
+            }
+            double total = 0;
+            for (QuotationDetailDTO detailDTO : detailDTOs) {
+                total += detailDTO.getTotalVNDPrice();
+            }
+            dto.setDetails(detailDTOs);
+            dto.setTotalPriceEstimate(total);
             dto.setSubRequestId(quotation.getSubRequest().getId().toString());
 
             log.debug("getQuotationById() - End | quotationId: {}", quotationId);
             return dto;
 
-        }  catch (Exception e) {
-            log.error("getQuotationById() - Exception: {}", e.getMessage());
+        } catch (AppException ae) {
+            log.error("getQuotationById() - AppException: {}", ae.getMessage());
+            throw ae;
+        } catch (Exception e) {
+            log.error("getQuotationById() - Exception: {}", e.getMessage(), e);
             throw AppException.builder()
-                    .message("Lỗi lấy báo giá: " + e.getMessage())
+                    .message("Lỗi khi lấy Quotation: " + e.getMessage())
                     .code(500)
                     .build();
         }
     }
+
+    private QuotationDetailDTO enrichQuotationDetailDto(QuotationDetail detail) {
+        QuotationDetailDTO detailDTO = modelMapper.map(detail, QuotationDetailDTO.class);
+        detailDTO.setRequestItemId(detail.getRequestItem() != null ? detail.getRequestItem().getId() : null);
+        List<TaxRate> taxRates = detail.getTaxRates() != null ?
+                detail.getTaxRates().stream()
+                        .map(snapshot -> {
+                            TaxRate taxRate = new TaxRate();
+                            taxRate.setTaxType(snapshot.getTaxType());
+                            taxRate.setRate(snapshot.getRate());
+                            taxRate.setRegion(snapshot.getRegion());
+                            return taxRate;
+                        }).toList() : List.of();
+
+        TaxCalculationResult taxResult = taxRateService.calculateTaxes(detail.getBasePrice(), taxRates);
+        detailDTO.setTaxAmounts(taxResult.getTaxAmounts());
+        detailDTO.setTotalVNDPrice(detail.getTotalVNDPrice());
+        return detailDTO;
+    }
+
+
 
 }
