@@ -5,6 +5,7 @@ import com.sep490.gshop.payload.dto.WithdrawTicketDTO;
 import com.sep490.gshop.payload.dto.WalletDTO;
 import com.sep490.gshop.payload.request.WalletRequest;
 import com.sep490.gshop.payload.request.WithdrawRequest;
+import com.sep490.gshop.payload.response.IPNResponse;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.MessageWithBankInformationResponse;
 import com.sep490.gshop.payload.response.MoneyChargeResponse;
@@ -81,17 +82,11 @@ public class WalletController {
 
     @GetMapping("/ipn")
     @Operation(summary = "IPN callback từ VNPay")
-    public ResponseEntity<String> ipnCallback(HttpServletRequest request) {
+    public ResponseEntity<IPNResponse> ipnCallback(HttpServletRequest request) {
         log.info("IPN Callback Start");
-        try {
-            log.info("ipnCallback() WalletController start");
-            walletService.ipnCallback(request);
-            log.info("ipnCallback() WalletController end");
-            return ResponseEntity.ok("IPN Callback received successfully.");
-        } catch (Exception e) {
-            log.error("IPN Callback Exception | message: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing IPN callback.");
-        }
+        IPNResponse response = walletService.ipnCallback(request);
+        log.info("IPN Callback End | response: {}", response);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/withdraw-request")

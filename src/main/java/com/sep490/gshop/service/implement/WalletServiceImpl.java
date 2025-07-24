@@ -11,10 +11,7 @@ import com.sep490.gshop.payload.dto.WalletDTO;
 import com.sep490.gshop.payload.dto.WithdrawTicketDTO;
 import com.sep490.gshop.payload.request.WalletRequest;
 import com.sep490.gshop.payload.request.WithdrawRequest;
-import com.sep490.gshop.payload.response.CloudinaryResponse;
-import com.sep490.gshop.payload.response.MessageResponse;
-import com.sep490.gshop.payload.response.MessageWithBankInformationResponse;
-import com.sep490.gshop.payload.response.MoneyChargeResponse;
+import com.sep490.gshop.payload.response.*;
 import com.sep490.gshop.service.CloudinaryService;
 import com.sep490.gshop.service.WalletService;
 import com.sep490.gshop.utils.AuthUtils;
@@ -28,11 +25,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.swing.text.html.Option;
 import java.text.DecimalFormat;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -428,9 +423,10 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
-    public void ipnCallback(HttpServletRequest request) {
+    public IPNResponse ipnCallback(HttpServletRequest request) {
         try {
             log.debug("ipnCallback() WalletServiceImpl Callback Start");
+            IPNResponse ipnResponse = new IPNResponse();
             Map<String, String> params = new HashMap<>();
             request.getParameterMap().forEach((key, values) -> {
                 if (values.length > 0) {
@@ -443,30 +439,53 @@ public class WalletServiceImpl implements WalletService {
             Transaction transaction = transactionBusiness.getTransactionByReferenceCode(vnpTxnRef);
             if (transaction == null) {
                 log.error("IPN Callback: Transaction not found for ref: {}", vnpTxnRef);
-                return;
+                return IPNResponse.builder()
+                        .rspCode("99")
+                        .message("Transaction not found")
+                        .build();
+            }
+            if (!TransactionStatus.PENDING.equals(transaction.getStatus())) {
+                log.warn("ipnCallback() WalletServiceImpl | Transaction already processed with status: {}", transaction.getStatus());
+                return IPNResponse.builder()
+                        .rspCode("00")
+                        .message("Transaction already processed")
+                        .build();
             }
             if ("00".equals(status)) {
                 transaction.setStatus(TransactionStatus.SUCCESS);
-                Wallet wallet = walletBusiness.getById(transaction.getCustomer().getWallet().getId())
-                        .orElseThrow(() -> {
-                            transaction.setStatus(TransactionStatus.FAIL);
-                            transaction.setDescription("Không tìm thấy ví của bạn");
-                            transactionBusiness.create(transaction);
-                            throw new AppException(404, "Không tìm thấy ví của bạn");
-                        });
+                Optional<Wallet> walletOpt = walletBusiness.getById(transaction.getCustomer().getWallet().getId());
+                if (walletOpt.isEmpty()) {
+                    log.error("ipnCallback() WalletServiceImpl | Wallet not found for customer id: {}", transaction.getCustomer().getId());
+                    transaction.setStatus(TransactionStatus.FAIL);
+                    transactionBusiness.update(transaction);
+                    return IPNResponse.builder()
+                            .rspCode("99")
+                            .message("Wallet not found")
+                            .build();
+                }
+                Wallet wallet = walletOpt.get();
                 double balanceBefore = wallet.getBalance();
                 transaction.setBalanceBefore(balanceBefore);
                 wallet.setBalance(balanceBefore + transaction.getAmount());
                 walletBusiness.update(wallet);
                 log.debug("ipnCallback() WalletServiceImpl | Successfully processed transaction with ref: {}", vnpTxnRef);
+                ipnResponse.setRspCode("00");
+                ipnResponse.setMessage("Transaction successful");
             } else {
                 transaction.setStatus(TransactionStatus.FAIL);
                 log.debug("ipnCallback() WalletServiceImpl | Failed to process transaction with ref: {}", vnpTxnRef);
+                ipnResponse.setRspCode("99");
+                ipnResponse.setMessage("Transaction failed with status: " + status);
             }
-            log.info("IPN Callback: ReferenceCode: {} | status: {} | transactionStatus: {}", transaction.getReferenceCode(), transaction.getStatus(), params.get("vnp_TransactionStatus"));
             transactionBusiness.update(transaction);
+            log.info("IPN Callback: ReferenceCode: {} | status: {} | transactionStatus: {}", transaction.getReferenceCode(), transaction.getStatus(), params.get("vnp_TransactionStatus"));
+            return ipnResponse;
         } catch (Exception e) {
             log.error("IPN Callback Exception | message: {}", e.getMessage());
+            return IPNResponse.builder()
+                    .rspCode("99")
+                    .message("Error processing IPN callback: " + e.getMessage())
+                    .build();
         }
     }
 

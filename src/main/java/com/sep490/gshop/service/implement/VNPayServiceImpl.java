@@ -46,6 +46,7 @@ public class VNPayServiceImpl {
             vnpParams.put("vnp_Amount", ((int) money) + "00");
             vnpParams.put("vnp_ReturnUrl", returnUri);
             vnpParams.put("vnp_CreateDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+            vnpParams.put("vnp_ExpireDate", LocalDateTime.now().plusMinutes(15).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
             vnpParams.put("vnp_IpAddr", "167.99.74.201");
 
             String signData = generateSignData(vnpParams);
