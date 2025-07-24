@@ -6,7 +6,6 @@ import com.sep490.gshop.business.WalletBusiness;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.*;
 import com.sep490.gshop.payload.dto.BankAccountDTO;
-import com.sep490.gshop.payload.dto.ShippingAddressDTO;
 import com.sep490.gshop.payload.request.BankAccountRequest;
 import com.sep490.gshop.payload.request.BankAccountUpdateRequest;
 import com.sep490.gshop.payload.response.MessageResponse;

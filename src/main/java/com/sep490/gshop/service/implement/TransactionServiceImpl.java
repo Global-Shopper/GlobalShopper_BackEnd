@@ -4,7 +4,6 @@ import com.sep490.gshop.business.CustomerBusiness;
 import com.sep490.gshop.business.TransactionBusiness;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.Transaction;
-import com.sep490.gshop.payload.dto.ShippingAddressDTO;
 import com.sep490.gshop.payload.dto.TransactionDTO;
 import com.sep490.gshop.service.TransactionService;
 import com.sep490.gshop.utils.AuthUtils;
@@ -17,7 +16,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service

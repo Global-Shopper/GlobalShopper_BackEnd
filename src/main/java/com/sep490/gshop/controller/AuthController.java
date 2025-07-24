@@ -30,6 +30,7 @@ public class AuthController {
     }
 
     @PostMapping("login")
+    @Operation(summary = "Đăng nhập tài khoản")
     public ResponseEntity<AuthUserResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
         log.info("login() AuthController start | email: {}", loginRequest.getEmail());
         AuthUserResponse jwt = authService.login(loginRequest.getEmail(), loginRequest.getPassword());
@@ -38,6 +39,7 @@ public class AuthController {
     }
 
     @PostMapping("register")
+    @Operation(summary = "Đăng ký tài khoản mới")
     public ResponseEntity<MessageResponse> register(@Valid @RequestBody RegisterRequest registerRequest) {
         log.info("register() AuthController start | email: {}", registerRequest.getEmail());
         MessageResponse response = authService.register(registerRequest);
@@ -46,6 +48,7 @@ public class AuthController {
     }
 
     @PostMapping("/verify-otp")
+    @Operation(summary = "Xác thực OTP đăng nhập hoặc đăng ký")
     public ResponseEntity<AuthUserResponse> verifyOtp(String email, String otp) {
         log.info("verifyOtp() AuthController start | email: {}", email);
         AuthUserResponse response = authService.verifyOtp(email, otp);
@@ -54,6 +57,7 @@ public class AuthController {
     }
 
     @GetMapping("/resend-otp")
+    @Operation(summary = "Gửi lại mã OTP xác thực cho email")
     public ResponseEntity<MessageResponse> resendOtp(String email) {
         log.info("resendOtp() AuthController start | email: {}", email);
         MessageResponse response = authService.resendOtp(email);
@@ -61,6 +65,7 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
     @GetMapping("/forgot-password")
+    @Operation(summary = "Nhập email để gửi otp cho quên mật khẩu")
     public ResponseEntity<MessageResponse> requestForgotPassword(@RequestParam String email) {
         log.info("requestForgotPassword() start | email: {}", email);
         MessageResponse response = authService.forgotPassword(email);
@@ -69,6 +74,7 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password/verify")
+    @Operation(summary = "Xác thực OTP khi quên mật khẩu")
     public ResetPasswordValidResponse verifyForgotPasswordOtp(@RequestParam String otp, @RequestParam String email) {
         log.info("verifyForgotPasswordOtp() start | email: {}", email);
         ResetPasswordValidResponse response = authService.verifyOtpResetPassword(otp, email);
@@ -76,6 +82,7 @@ public class AuthController {
         return response;
     }
     @PutMapping("/change-password")
+    @Operation(summary = "Đổi mật khẩu")
     public ResponseEntity<MessageResponse> changePassword(@RequestBody ChangePasswordRequest changePasswordRequest) {
         log.info("changePassword() AuthController start");
         MessageResponse newMessage = authService.changePassword(changePasswordRequest.getOldPassword(), changePasswordRequest.getNewPassword());
@@ -83,6 +90,7 @@ public class AuthController {
         return ResponseEntity.ok(newMessage);
     }
     @PutMapping("/forgot-password/reset")
+    @Operation(summary = "Đổi mật khẩu")
     public AuthUserResponse resetForgotPassword(@RequestBody ResetPasswordRequest resetPasswordRequest) {
         log.info("resetForgotPassword() start");
         AuthUserResponse response = authService.resetPassword(resetPasswordRequest.getPassword(), resetPasswordRequest.getToken());

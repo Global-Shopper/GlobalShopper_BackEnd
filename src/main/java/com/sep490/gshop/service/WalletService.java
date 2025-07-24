@@ -4,6 +4,7 @@ import com.sep490.gshop.payload.dto.WalletDTO;
 import com.sep490.gshop.payload.dto.WithdrawTicketDTO;
 import com.sep490.gshop.payload.request.WalletRequest;
 import com.sep490.gshop.payload.request.WithdrawRequest;
+import com.sep490.gshop.payload.response.IPNResponse;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.MessageWithBankInformationResponse;
 import com.sep490.gshop.payload.response.MoneyChargeResponse;
@@ -18,10 +19,9 @@ public interface WalletService {
     MoneyChargeResponse depositMoney(@Valid WalletRequest request);
     MessageResponse withdrawMoneyRequest(@Valid WithdrawRequest request);
     WalletDTO getWalletByCurrent();
-    boolean processVNPayReturn(String email, String status, String amount, String vnpTxnRef);
     List<WithdrawTicketDTO> getWithdrawTicketsWithPendingStatus();
     MessageWithBankInformationResponse processWithdrawRequest(UUID refundTicketId, boolean isApproved, String reason);
     MessageResponse uploadTransferBill(UUID withdrawTicketId, MultipartFile multipartFile);
 
-    void ipnCallback(HttpServletRequest request);
+    IPNResponse ipnCallback(HttpServletRequest request);
 }

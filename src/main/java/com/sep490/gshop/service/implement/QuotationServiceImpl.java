@@ -115,11 +115,11 @@ public class QuotationServiceImpl implements QuotationService {
                 QuotationDetailDTO detailDTO = modelMapper.map(detail, QuotationDetailDTO.class);
                 detailDTO.setTaxAmounts(taxResult.getTaxAmounts());
                 detailDTO.setRequestItemId(detailReq.getRequestItemId());
-                String type = detailReq.getCurrency() != null ? detailReq.getCurrency().toUpperCase(Locale.ROOT) : "USD";
+                String currency = detailReq.getCurrency() != null ? detailReq.getCurrency().toUpperCase(Locale.ROOT) : "USD";
                 double total = calculateTotalPrice(detailDTO);
                 double totalPriceEstimate = total;
-                if (!"VND".equalsIgnoreCase(type)) {
-                    CurrencyConvertResponse convertResponse = exchangeRateService.convertToVND(BigDecimal.valueOf(total), type);
+                if (!"VND".equalsIgnoreCase(currency)) {
+                    CurrencyConvertResponse convertResponse = exchangeRateService.convertToVND(BigDecimal.valueOf(total), currency);
                     if (convertResponse != null && convertResponse.getConvertedAmount() != null) {
                         totalPriceEstimate = convertResponse.getConvertedAmount().doubleValue();
                     }

@@ -5,6 +5,7 @@ import com.sep490.gshop.payload.dto.WithdrawTicketDTO;
 import com.sep490.gshop.payload.dto.WalletDTO;
 import com.sep490.gshop.payload.request.WalletRequest;
 import com.sep490.gshop.payload.request.WithdrawRequest;
+import com.sep490.gshop.payload.response.IPNResponse;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.MessageWithBankInformationResponse;
 import com.sep490.gshop.payload.response.MoneyChargeResponse;
@@ -40,6 +41,7 @@ public class WalletController {
     }
 
     @GetMapping
+    @Operation(summary = "Lấy thông tin ví của người dùng hiện tại")
     public ResponseEntity<WalletDTO> getWallet() {
         log.info("getWallet() Start");
         try {
@@ -53,6 +55,7 @@ public class WalletController {
     }
 
     @PostMapping
+    @Operation(summary = "Nạp tiền vào ví người dùng hiện tại")
     public ResponseEntity<MoneyChargeResponse> depositMoney(@Valid @RequestBody WalletRequest walletRequest) {
         log.info("depositMoney() Start | request: {}", walletRequest);
         try {
@@ -66,6 +69,7 @@ public class WalletController {
     }
 
     @GetMapping("/check-payment-vnpay")
+    @Operation(summary = "Kiểm tra trạng thái thanh toán VNPay và chuyển hướng")
     public ResponseEntity<Boolean> checkPaymentVNPay(
             @RequestParam("email") String email,
             @RequestParam("vnp_ResponseCode") String status,
@@ -77,18 +81,12 @@ public class WalletController {
     }
 
     @GetMapping("/ipn")
-    @Operation(summary = "IPN callback from VNPay")
-    public ResponseEntity<String> ipnCallback(HttpServletRequest request) {
+    @Operation(summary = "IPN callback từ VNPay")
+    public ResponseEntity<IPNResponse> ipnCallback(HttpServletRequest request) {
         log.info("IPN Callback Start");
-        try {
-            log.info("ipnCallback() WalletController start");
-            walletService.ipnCallback(request);
-            log.info("ipnCallback() WalletController end");
-            return ResponseEntity.ok("IPN Callback received successfully.");
-        } catch (Exception e) {
-            log.error("IPN Callback Exception | message: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing IPN callback.");
-        }
+        IPNResponse response = walletService.ipnCallback(request);
+        log.info("IPN Callback End | response: {}", response);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/withdraw-request")

@@ -1,7 +1,6 @@
 package com.sep490.gshop.service.implement;
 
 import com.sep490.gshop.service.EmailService;
-import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

@@ -30,7 +30,7 @@ public class ShippingAddressController {
         this.shippingAddressService = shippingAddressService;
     }
 
-    @Operation(summary = "Create new shipping address for current user")
+    @Operation(summary = "Tạo địa chỉ giao hàng mới cho khách hàng hiện tại")
     @PostMapping
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ShippingAddressDTO> createShippingAddress(@Valid @RequestBody ShippingAddressRequest request) {
@@ -40,7 +40,7 @@ public class ShippingAddressController {
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
 
-    @Operation(summary = "Update shipping address by ID for current user")
+    @Operation(summary = "Cập nhật địa chỉ giao hàng theo ID cho khách hàng hiện tại")
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ShippingAddressDTO> updateShippingAddress(
@@ -52,7 +52,7 @@ public class ShippingAddressController {
         return ResponseEntity.ok(dto);
     }
 
-    @Operation(summary = "Get shipping address by ID for current user")
+    @Operation(summary = "Lấy thông tin địa chỉ giao hàng theo ID cho khách hàng hiện tại")
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ShippingAddressDTO> getShippingAddress(@PathVariable UUID id) {
@@ -62,7 +62,7 @@ public class ShippingAddressController {
         return ResponseEntity.ok(dto);
     }
 
-    @Operation(summary = "Get all shipping addresses of current user")
+    @Operation(summary = "Lấy danh sách tất cả địa chỉ giao hàng của khách hàng hiện tại")
     @GetMapping
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<List<ShippingAddressDTO>> getShippingAddresses() {
@@ -74,6 +74,7 @@ public class ShippingAddressController {
 
     @PutMapping("/default/{id}")
     @PreAuthorize("hasRole('CUSTOMER')")
+    @Operation(summary = "Cập nhật địa chỉ giao hàng mặc định theo ID cho khách hàng hiện tại")
     public MessageResponse updateShippingAddress(@PathVariable UUID id){
         log.info("updateShippingAddress() updateShippingAddress Start | id: {}", id);
         var shipping = shippingAddressService.updateDefaultShippingAddress(id);
@@ -81,7 +82,7 @@ public class ShippingAddressController {
         return MessageResponse.builder().message("Update thành công").isSuccess(shipping).build();
     }
 
-    @Operation(summary = "Delete shipping address by ID for current user")
+    @Operation(summary = "Xoá địa chỉ giao hàng theo ID cho khách hàng hiện tại")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('CUSTOMER')")
     public MessageResponse deleteShippingAddress(@PathVariable UUID id) {
