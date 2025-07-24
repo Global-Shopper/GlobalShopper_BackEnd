@@ -12,6 +12,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -45,8 +47,11 @@ public class VNPayServiceImpl {
             vnpParams.put("vnp_OrderType", "other");
             vnpParams.put("vnp_Amount", ((int) money) + "00");
             vnpParams.put("vnp_ReturnUrl", returnUri);
-            vnpParams.put("vnp_CreateDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
-            vnpParams.put("vnp_ExpireDate", LocalDateTime.now().plusMinutes(15).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+            ZonedDateTime vnTime = ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+            String createDate = vnTime.format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+            String expiredDate = vnTime.plusMinutes(15).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+            vnpParams.put("vnp_CreateDate", createDate);
+            vnpParams.put("vnp_ExpireDate", expiredDate);
             vnpParams.put("vnp_IpAddr", "167.99.74.201");
 
             String signData = generateSignData(vnpParams);
