@@ -20,6 +20,7 @@ public class Quotation extends BaseEntity {
     private String note;
     private double shippingEstimate;
     private long expiredDate;
+    private double totalPriceEstimate;
     @OneToOne
     @JoinColumn(name = "sub_request_id", nullable = false, unique = true)
     private SubRequest subRequest;
