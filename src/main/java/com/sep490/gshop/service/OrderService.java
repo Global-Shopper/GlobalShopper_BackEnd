@@ -2,6 +2,7 @@ package com.sep490.gshop.service;
 
 import com.sep490.gshop.payload.dto.OrderDTO;
 import com.sep490.gshop.payload.request.OrderRequest;
+import com.sep490.gshop.payload.request.order.CheckOutModel;
 
 import java.util.List;
 import java.util.UUID;
@@ -12,5 +13,6 @@ public interface OrderService {
         OrderDTO getOrderById(UUID orderId);
         List<OrderDTO> getAllOrders();
         boolean deleteOrder(UUID orderId);
+        OrderDTO checkoutOrder(CheckOutModel checkOutModel);
 }
 

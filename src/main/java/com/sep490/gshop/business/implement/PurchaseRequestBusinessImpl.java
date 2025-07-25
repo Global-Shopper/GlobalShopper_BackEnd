@@ -29,4 +29,9 @@ public class PurchaseRequestBusinessImpl extends BaseBusinessImpl<PurchaseReques
     public Page<PurchaseRequest> findAssignedRequestsByAdminId(UUID userId, Pageable pageable) {
         return repository.findByAdminId(userId, pageable);
     }
+
+    @Override
+    public PurchaseRequest findPurchaseRequestBySubRequestId(UUID subRequestId) {
+        return repository.findPurchaseRequestBySubRequestId(subRequestId);
+    }
 }
