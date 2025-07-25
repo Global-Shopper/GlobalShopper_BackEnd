@@ -14,7 +14,7 @@ public class TaxServiceImpl implements TaxRateService {
     @Override
     public TaxCalculationResult calculateTaxes(double basePrice, List<TaxRate> taxRates) {
         Map<TaxType, Double> taxAmountsEnum = new HashMap<>();
-        Map<String, Double> taxAmounts = new HashMap<>(); // Giữ taxAmounts theo String name để dễ map cho DTO
+        Map<String, Double> taxAmounts = new HashMap<>();
 
         double importTax = 0, exciseTax = 0, vatTax = 0;
         double vatBase = basePrice;
@@ -73,11 +73,10 @@ public class TaxServiceImpl implements TaxRateService {
             }
         }
 
-        // Tính tổng thuế
         double totalTax = taxAmounts.values().stream().mapToDouble(Double::doubleValue).sum();
 
         TaxCalculationResult result = new TaxCalculationResult();
-        result.setTaxAmounts(taxAmounts); // giữ map key String để dùng cho JSON
+        result.setTaxAmounts(taxAmounts);
         result.setTotalTax(totalTax);
         return result;
     }
