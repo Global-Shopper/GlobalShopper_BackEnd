@@ -8,17 +8,23 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class QuotationDetailDTO {
-    private String id;
-    private String requestItemId;
+    private UUID id;
+    private UUID requestItemId;
     private double basePrice;
     private double serviceFee;
+    private String currency;
+    private double exchangeRate;
+    private List<TaxRateSnapshotDTO> taxRates;
     private String note;
     private Map<String, Double> taxAmounts;
+    private double totalTaxAmount;
+    private double totalPriceBeforeExchange;
     private double totalVNDPrice;
-
 }

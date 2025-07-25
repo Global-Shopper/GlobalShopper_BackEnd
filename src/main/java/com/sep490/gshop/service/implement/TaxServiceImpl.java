@@ -1,5 +1,6 @@
 package com.sep490.gshop.service.implement;
 
+import com.sep490.gshop.common.enums.TaxType;
 import com.sep490.gshop.entity.TaxRate;
 import com.sep490.gshop.payload.response.TaxCalculationResult;
 import com.sep490.gshop.service.TaxRateService;
@@ -12,58 +13,67 @@ import java.util.Map;
 public class TaxServiceImpl implements TaxRateService {
     @Override
     public TaxCalculationResult calculateTaxes(double basePrice, List<TaxRate> taxRates) {
+        Map<TaxType, Double> taxAmountsEnum = new HashMap<>();
         Map<String, Double> taxAmounts = new HashMap<>();
+
         double importTax = 0, exciseTax = 0, vatTax = 0;
         double vatBase = basePrice;
 
         TaxRate importTaxRate = null;
+
         for (TaxRate tax : taxRates) {
-            String type = tax.getTaxType().toLowerCase();
-            if (type.contains("nhập khẩu tối ưu")) {
+            TaxType type = tax.getTaxType();
+            if (type == TaxType.NHAP_KHAU_TOI_UU) {
                 importTaxRate = tax;
                 break;
-            } else if (type.contains("nhập khẩu ưu đãi") && importTaxRate == null) {
+            } else if (type == TaxType.NHAP_KHAU_UU_DAI && importTaxRate == null) {
                 importTaxRate = tax;
             }
         }
+
         if (importTaxRate != null) {
             double rate = importTaxRate.getRate();
             importTax = basePrice * rate / 100;
-            taxAmounts.put(importTaxRate.getTaxType(), importTax);
+            taxAmountsEnum.put(importTaxRate.getTaxType(), importTax);
+            taxAmounts.put(importTaxRate.getTaxType().name(), importTax);
             vatBase += importTax;
         }
 
         for (TaxRate tax : taxRates) {
-            String type = tax.getTaxType().toLowerCase();
-            if (type.contains("tiêu thụ đặc biệt") || type.contains("excise")) {
+            TaxType type = tax.getTaxType();
+            if (type == TaxType.TIEU_THU_DAC_BIET) {
                 double exciseRate = tax.getRate();
                 exciseTax = basePrice * exciseRate / 100;
-                taxAmounts.put(tax.getTaxType(), exciseTax);
+                taxAmountsEnum.put(type, exciseTax);
+                taxAmounts.put(type.name(), exciseTax);
                 vatBase += exciseTax;
             }
         }
 
         for (TaxRate tax : taxRates) {
-            String type = tax.getTaxType().toLowerCase();
-            if (!(type.contains("nhập khẩu") || type.contains("vat") || type.contains("gtgt")
-                    || type.contains("tiêu thụ đặc biệt") || type.contains("excise"))) {
+            TaxType type = tax.getTaxType();
+            if (type != TaxType.NHAP_KHAU_TOI_UU
+                    && type != TaxType.NHAP_KHAU_UU_DAI
+                    && type != TaxType.VAT
+                    && type != TaxType.TIEU_THU_DAC_BIET) {
                 double otherTax = basePrice * tax.getRate() / 100;
-                taxAmounts.put(tax.getTaxType(), otherTax);
+                taxAmountsEnum.put(type, otherTax);
+                taxAmounts.put(type.name(), otherTax);
                 vatBase += otherTax;
             }
         }
 
         for (TaxRate tax : taxRates) {
-            String type = tax.getTaxType().toLowerCase();
-            if (type.contains("vat") || type.contains("gtgt")) {
+            TaxType type = tax.getTaxType();
+            if (type == TaxType.VAT) {
                 double vatRate = tax.getRate();
                 vatTax = vatBase * vatRate / 100;
-                taxAmounts.put(tax.getTaxType(), vatTax);
+                taxAmountsEnum.put(type, vatTax);
+                taxAmounts.put(type.name(), vatTax);
             }
         }
 
         double totalTax = taxAmounts.values().stream().mapToDouble(Double::doubleValue).sum();
-        double totalAfterTax = basePrice + totalTax;
 
         TaxCalculationResult result = new TaxCalculationResult();
         result.setTaxAmounts(taxAmounts);

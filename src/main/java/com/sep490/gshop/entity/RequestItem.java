@@ -29,7 +29,6 @@ public class RequestItem extends BaseEntity {
     private String description;
     private int quantity;
 
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "purchase_request_id", nullable = false)
     private PurchaseRequest purchaseRequest;
@@ -37,4 +36,7 @@ public class RequestItem extends BaseEntity {
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     @JoinColumn(name = "sub_request_id")
     private SubRequest subRequest;
+
+    @OneToOne(mappedBy = "requestItem")
+    private QuotationDetail quotationDetail;
 }
