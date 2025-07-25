@@ -15,8 +15,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Builder
 public class QuotationDetailDTO {
-
-    private String id;
+    private UUID id;
     private UUID requestItemId;
     private double basePrice;
     private double serviceFee;
@@ -25,5 +24,7 @@ public class QuotationDetailDTO {
     private List<TaxRateSnapshotDTO> taxRates;
     private String note;
     private Map<String, Double> taxAmounts;
+    private double totalTaxAmount;
+    private double totalPriceBeforeExchange;
     private double totalVNDPrice;
 }
