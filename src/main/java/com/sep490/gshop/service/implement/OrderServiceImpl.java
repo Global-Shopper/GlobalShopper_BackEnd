@@ -4,7 +4,9 @@ import com.sep490.gshop.business.*;
 import com.sep490.gshop.common.enums.OrderStatus;
 import com.sep490.gshop.common.enums.PurchaseRequestStatus;
 import com.sep490.gshop.common.enums.TransactionStatus;
+import com.sep490.gshop.common.enums.UserRole;
 import com.sep490.gshop.config.handler.AppException;
+import com.sep490.gshop.config.security.services.UserDetailsImpl;
 import com.sep490.gshop.entity.*;
 import com.sep490.gshop.entity.subclass.AddressSnapshot;
 import com.sep490.gshop.payload.dto.OrderDTO;
@@ -16,6 +18,8 @@ import jakarta.transaction.Transactional;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -124,12 +128,30 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<OrderDTO> getAllOrders() {
-        log.debug("getAllOrders() Start");
+    public Page<OrderDTO> getAllOrders(Pageable pageable, String type) {
+        log.debug("getAllOrders() OrderServiceImpl Start");
         try {
-            return orderBusiness.getAll().stream()
-                    .map(order -> modelMapper.map(order, OrderDTO.class))
-                    .collect(Collectors.toList());
+            UserDetailsImpl userDetails = AuthUtils.getCurrentUser();
+            if (UserRole.CUSTOMER.equals(userDetails.getRole())) {
+                Page<Order> orders = orderBusiness.getOrdersByCustomerId(userDetails.getId(), pageable);
+                log.debug("getAllOrders() OrderServiceImpl Customer End | size: {}", orders.getSize());
+                return orders.map(order -> modelMapper.map(order, OrderDTO.class));
+            } else if (UserRole.ADMIN.equals(userDetails.getRole())) {
+                if ("unassigned".equalsIgnoreCase(type)) {
+                    Page<Order> orders = orderBusiness.getUnassignedOrders(pageable);
+                    log.debug("getAllOrders() OrderServiceImpl unassigned End | size: {}", orders.getSize());
+                    return orders.map(order -> modelMapper.map(order, OrderDTO.class));
+                } else if ("assigned".equalsIgnoreCase(type)) {
+                    Page<Order> orders = orderBusiness.getAssignedOrdersByAdminId(userDetails.getId(), pageable);
+                    log.debug("getAllOrders() OrderServiceImpl assigned End | size: {}", orders.getSize());
+                    return orders.map(order -> modelMapper.map(order, OrderDTO.class));
+                } else {
+                    throw new AppException(400, "Loại order không hợp lệ");
+                }
+            } else {
+                log.error("getAllOrders() OrderServiceImpl Unauthorized access | userId: {}, role: {}", userDetails.getId(), userDetails.getRole());
+                throw new AppException(403, "Bạn không có quyền truy cập vào danh sách đơn hàng");
+            }
         } catch (Exception e) {
             log.error("getAllOrders() Exception | message: {}", e.getMessage());
             throw new AppException(500, "Failed to get orders");

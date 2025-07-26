@@ -7,7 +7,11 @@ import com.sep490.gshop.payload.request.order.CheckOutModel;
 import com.sep490.gshop.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.log4j.Log4j2;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springdoc.core.converters.models.PageableAsQueryParam;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -57,11 +61,12 @@ public class OrderController {
     }
 
     @Operation(summary = "Lấy tất cả đơn hàng")
+    @PageableAsQueryParam
     @GetMapping
-    public ResponseEntity<List<OrderDTO>> getAllOrders() {
+    public ResponseEntity<Page<OrderDTO>> getAllOrders(@ParameterObject Pageable pageable, @RequestParam(name = "type", defaultValue = "unassigned") String type) {
         log.info("getAllOrders() Start");
-        List<OrderDTO> list = orderService.getAllOrders();
-        log.info("getAllOrders() End | size: {}", list.size());
+        Page<OrderDTO> list = orderService.getAllOrders(pageable, type);
+        log.info("getAllOrders() End | size: {}", list.getSize());
         return ResponseEntity.ok(list);
     }
 
