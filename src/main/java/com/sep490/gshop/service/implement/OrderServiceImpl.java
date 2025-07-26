@@ -118,8 +118,13 @@ public class OrderServiceImpl implements OrderService {
     public OrderDTO getOrderById(UUID orderId) {
         log.debug("getOrderById() Start | orderId: {}", orderId);
         try {
+            UserDetailsImpl userDetails = AuthUtils.getCurrentUser();
             Order order = orderBusiness.getById(orderId)
                     .orElseThrow(() -> new AppException(404, "Order not found"));
+            if (UserRole.CUSTOMER.equals(userDetails.getRole()) && !order.getCustomer().getId().equals(userDetails.getId())) {
+                log.error("getOrderById() Unauthorized access | orderId: {}, userId: {}, role: {}", orderId, userDetails.getId(), userDetails.getRole());
+                throw new AppException(403, "Bạn không có quyền truy cập vào đơn hàng này");
+            }
             return modelMapper.map(order, OrderDTO.class);
         } catch (Exception e) {
             log.error("getOrderById() Exception | orderId: {}, message: {}", orderId, e.getMessage());

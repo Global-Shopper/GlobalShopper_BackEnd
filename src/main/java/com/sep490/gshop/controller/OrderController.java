@@ -56,7 +56,7 @@ public class OrderController {
     public ResponseEntity<OrderDTO> getOrderById(@PathVariable UUID orderId) {
         log.info("getOrderById() Start | orderId: {}", orderId);
         OrderDTO dto = orderService.getOrderById(orderId);
-        log.info("getOrderById() End | dto: {}", dto);
+        log.info("getOrderById() End | id: {}", dto.getId());
         return ResponseEntity.ok(dto);
     }
 
