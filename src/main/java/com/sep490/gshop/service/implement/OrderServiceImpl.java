@@ -12,6 +12,7 @@ import com.sep490.gshop.entity.subclass.AddressSnapshot;
 import com.sep490.gshop.payload.dto.OrderDTO;
 import com.sep490.gshop.payload.request.OrderRequest;
 import com.sep490.gshop.payload.request.order.CheckOutModel;
+import com.sep490.gshop.payload.request.order.ShippingInformationModel;
 import com.sep490.gshop.service.OrderService;
 import com.sep490.gshop.utils.AuthUtils;
 import jakarta.transaction.Transactional;
@@ -243,6 +244,29 @@ public class OrderServiceImpl implements OrderService {
         } catch (Exception e) {
             log.error("checkoutOrder() OrderServiceImpl Exception | subRequestId: {}, message: {}", checkOutModel.getSubRequestId(), e.getMessage());
             throw new AppException(500, "Failed to checkout order");
+        }
+    }
+
+    @Override
+    public OrderDTO updateShippingInfo(String orderId, ShippingInformationModel shippingInformationModel) {
+        log.debug("updateShippingInfo() Start | orderId: {}, shippingInformationModel: {}", orderId, shippingInformationModel);
+        try {
+            Order order = orderBusiness.getById(UUID.fromString(orderId))
+                    .orElseThrow(() -> new AppException(404, "Không tìm thấy đơn hàng"));
+
+            if (order.getStatus() != OrderStatus.ORDER_REQUESTED) {
+                log.error("updateShippingInfo() Invalid order status | orderId: {}, status: {}", orderId, order.getStatus());
+                throw new AppException(400, "Không thể cập nhật thông tin vận chuyển cho đơn hàng này");
+            }
+            order.setOrderCode(shippingInformationModel.getOrderCode());
+            order.setTrackingNumber(shippingInformationModel.getTrackingNumber());
+            order.setStatus(OrderStatus.PURCHASED);
+            Order updatedOrder = orderBusiness.update(order);
+            log.debug("updateShippingInfo() End | updatedOrder: {}", updatedOrder);
+            return modelMapper.map(updatedOrder, OrderDTO.class);
+        } catch (Exception e) {
+            log.error("updateShippingInfo() Exception | orderId: {}, message: {}", orderId, e.getMessage());
+            throw new AppException(500, "Failed to update shipping information");
         }
     }
 }

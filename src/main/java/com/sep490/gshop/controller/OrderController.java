@@ -4,6 +4,7 @@ import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.payload.dto.OrderDTO;
 import com.sep490.gshop.payload.request.OrderRequest;
 import com.sep490.gshop.payload.request.order.CheckOutModel;
+import com.sep490.gshop.payload.request.order.ShippingInformationModel;
 import com.sep490.gshop.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.log4j.Log4j2;
@@ -87,5 +88,15 @@ public class OrderController {
         OrderDTO orderDTO = orderService.checkoutOrder(checkOutModel);
         log.info("checkoutOrder() End | orderDTO: {}", orderDTO);
         return ResponseEntity.ok(orderDTO);
+    }
+
+    @PutMapping("/update-shipping/{orderId}")
+    @Operation(summary = "Cập nhật thông tin vận chuyển của đơn hàng")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<OrderDTO> updateShippingInfo(@PathVariable String orderId, @RequestBody ShippingInformationModel shippingInformationModel) {
+        log.info("updateShippingInfo() Start | orderId: {}, shippingInformationModel: {}", orderId, shippingInformationModel);
+        OrderDTO updatedOrder = orderService.updateShippingInfo(orderId, shippingInformationModel);
+        log.info("updateShippingInfo() End | updatedOrder: {}", updatedOrder);
+        return ResponseEntity.ok(updatedOrder);
     }
 }
