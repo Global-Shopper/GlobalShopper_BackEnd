@@ -1,14 +1,15 @@
 package com.sep490.gshop.entity;
 
-import com.sep490.gshop.entity.subclass.TaxRateSnapshot;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@EqualsAndHashCode(exclude = "subRequest", callSuper = false)
 @Entity
 @Table(name = "quotations")
 @Data
@@ -21,7 +22,7 @@ public class Quotation extends BaseEntity {
     private double shippingEstimate;
     private long expiredDate;
     private double totalPriceEstimate;
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sub_request_id", nullable = false, unique = true)
     private SubRequest subRequest;
 
