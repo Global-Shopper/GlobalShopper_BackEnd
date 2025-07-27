@@ -3,13 +3,11 @@ package com.sep490.gshop.entity;
 import com.sep490.gshop.common.enums.SubRequestStatus;
 import com.sep490.gshop.entity.converter.StringListConverter;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 
+@EqualsAndHashCode(exclude = "quotation", callSuper = false)
 @Entity
 @Table(name = "sub_requests")
 @Data
@@ -27,7 +25,7 @@ public class SubRequest extends BaseEntity {
     @OneToMany(mappedBy = "subRequest", fetch = FetchType.LAZY)
     private List<RequestItem> requestItems;
 
-    @OneToOne(mappedBy = "subRequest", fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "subRequest")
     private Quotation quotation;
 
 }
