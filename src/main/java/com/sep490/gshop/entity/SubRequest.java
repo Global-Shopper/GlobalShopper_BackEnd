@@ -1,5 +1,6 @@
 package com.sep490.gshop.entity;
 
+import com.sep490.gshop.common.enums.SubRequestStatus;
 import com.sep490.gshop.entity.converter.StringListConverter;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -21,7 +22,8 @@ public class SubRequest extends BaseEntity {
     private List<String> contactInfo;
     private String seller;
     private String ecommercePlatform;
-
+    @Enumerated(EnumType.STRING)
+    private SubRequestStatus status;
     @OneToMany(mappedBy = "subRequest", fetch = FetchType.LAZY)
     private List<RequestItem> requestItems;
 }

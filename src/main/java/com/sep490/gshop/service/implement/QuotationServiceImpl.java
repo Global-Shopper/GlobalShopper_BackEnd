@@ -1,6 +1,7 @@
 package com.sep490.gshop.service.implement;
 
 import com.sep490.gshop.business.*;
+import com.sep490.gshop.common.enums.SubRequestStatus;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.*;
 import com.sep490.gshop.entity.subclass.TaxRateSnapshot;
@@ -132,11 +133,11 @@ public class QuotationServiceImpl implements QuotationService {
                         .map(m -> modelMapper.map(m, TaxRateSnapshot.class))
                         .toList();
                 detail.setTaxRates(snapshots);
-
-                TaxCalculationResult taxResult = calculationUtil.calculateTaxes(detailReq.getBasePrice(), taxRates);
+                var basePriceWithQuantity = detailReq.getBasePrice() * item.getQuantity();
+                TaxCalculationResult taxResult = calculationUtil.calculateTaxes(basePriceWithQuantity, taxRates);
 
                 double totalDetail = calculationUtil.calculateTotalPrice(
-                        detailReq.getBasePrice(),
+                        basePriceWithQuantity,
                         detailReq.getServiceFee(),
                         taxResult.getTaxAmounts()
                 );
@@ -160,7 +161,7 @@ public class QuotationServiceImpl implements QuotationService {
 
                 QuotationDetailDTO detailDTO = modelMapper.map(detail, QuotationDetailDTO.class);
                 detailDTO.setTaxAmounts(taxResult.getTaxAmounts());
-                detailDTO.setRequestItemId(UUID.fromString(detailReq.getRequestItemId()));
+                detailDTO.setRequestItemId(detailReq.getRequestItemId());
                 detailDTO.setTotalVNDPrice(totalVNPrice);
                 detailDTO.setTotalTaxAmount(taxResult.getTotalTax());
                 detailDTO.setTotalPriceBeforeExchange(totalDetail);
@@ -175,7 +176,8 @@ public class QuotationServiceImpl implements QuotationService {
 
             quotation.setTotalPriceEstimate(total);
             quotationBusiness.update(quotation);
-
+            sub.setStatus(SubRequestStatus.QUOTED);
+            subRequestBusiness.update(sub);
             QuotationDTO dto = modelMapper.map(quotation, QuotationDTO.class);
             dto.setDetails(detailDTOs);
             dto.setSubRequestId(input.getSubRequestId());
@@ -277,7 +279,7 @@ public class QuotationServiceImpl implements QuotationService {
         QuotationDetailDTO detailDTO = modelMapper.map(detail, QuotationDetailDTO.class);
 
         UUID requestItemId = detail.getRequestItem() != null ? detail.getRequestItem().getId() : null;
-        detailDTO.setRequestItemId(requestItemId);
+        detailDTO.setRequestItemId(requestItemId.toString());
         List<TaxRate> taxRates = detail.getTaxRates() != null ?
                 detail.getTaxRates().stream()
                         .map(snapshot -> {
