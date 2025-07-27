@@ -18,13 +18,11 @@ public class AddressSnapshot {
     private String districtCode;
     private String wardCode;
     private String addressLine;
-    private boolean isDefault;
 
     public AddressSnapshot(ShippingAddress shippingAddress) {
         this.name = shippingAddress.getName();
         this.phoneNumber = shippingAddress.getPhoneNumber();
         this.location = shippingAddress.getLocation();
-        this.isDefault = shippingAddress.isDefault();
         this.provinceCode = shippingAddress.getProvinceCode();
         this.districtCode = shippingAddress.getDistrictCode();
         this.wardCode = shippingAddress.getWardCode();

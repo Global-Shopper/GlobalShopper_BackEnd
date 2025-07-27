@@ -26,4 +26,8 @@ public class SubRequest extends BaseEntity {
     private SubRequestStatus status;
     @OneToMany(mappedBy = "subRequest", fetch = FetchType.LAZY)
     private List<RequestItem> requestItems;
+
+    @OneToOne(mappedBy = "subRequest", fetch = FetchType.LAZY)
+    private Quotation quotation;
+
 }
