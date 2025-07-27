@@ -1,5 +1,6 @@
 package com.sep490.gshop.payload.dto;
 
+import com.sep490.gshop.common.enums.SubRequestStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,4 +20,5 @@ public class QuotationDTO {
     private List<QuotationDetailDTO> details;
     private double shippingEstimate;
     private double totalPriceEstimate;
+    private SubRequestStatus subRequestStatus;
 }
