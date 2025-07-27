@@ -14,11 +14,16 @@ public class OrderDTO {
     private String id;
     private String trackingNumber;
     private String orderCode;
+
+    private List<String> contactInfo;
+
     private String note;
     private OrderStatus status;
     private double totalPrice;
+    private double shippingFee;
 
     private CustomerDTO customer;
+    private AdminDTO admin;
     private List<OrderItemDTO> orderItems;
     private AddressSnapshotDTO shippingAddress;
 

@@ -12,4 +12,6 @@ public interface PurchaseRequestBusiness extends BaseBusiness<PurchaseRequest> {
     Page<PurchaseRequest> findUnassignedRequests(Pageable pageable);
 
     Page<PurchaseRequest> findAssignedRequestsByAdminId(UUID userId, Pageable pageable);
+
+    PurchaseRequest findPurchaseRequestBySubRequestId(UUID subRequestId);
 }

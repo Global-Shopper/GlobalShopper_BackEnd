@@ -2,17 +2,25 @@ package com.sep490.gshop.service.implement;
 
 import com.sep490.gshop.business.*;
 import com.sep490.gshop.common.enums.OrderStatus;
+import com.sep490.gshop.common.enums.PurchaseRequestStatus;
+import com.sep490.gshop.common.enums.TransactionStatus;
+import com.sep490.gshop.common.enums.UserRole;
 import com.sep490.gshop.config.handler.AppException;
+import com.sep490.gshop.config.security.services.UserDetailsImpl;
 import com.sep490.gshop.entity.*;
 import com.sep490.gshop.entity.subclass.AddressSnapshot;
-import com.sep490.gshop.entity.subclass.ProductSnapshot;
 import com.sep490.gshop.payload.dto.OrderDTO;
 import com.sep490.gshop.payload.request.OrderRequest;
+import com.sep490.gshop.payload.request.order.CheckOutModel;
+import com.sep490.gshop.payload.request.order.ShippingInformationModel;
 import com.sep490.gshop.service.OrderService;
+import com.sep490.gshop.utils.AuthUtils;
 import jakarta.transaction.Transactional;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,16 +35,28 @@ public class OrderServiceImpl implements OrderService {
     private final ModelMapper modelMapper;
     private final ShippingAddressBusiness shippingAddressBusiness;
     private final ProductBusiness productBusiness;
+    private final PurchaseRequestBusiness purchaseRequestBusiness;
+    private final RequestItemBusiness requestItemBusiness;
+    private final SubRequestBusiness subRequestBusiness;
+    private final WalletBusiness walletBusiness;
+    private final TransactionBusiness transactionBusiness;
+    private final UserBusiness userBusiness;
 
     @Autowired
     public OrderServiceImpl(OrderBusiness orderBusiness,
                             ModelMapper modelMapper,
                             ShippingAddressBusiness shippingAddressBusiness,
-                            ProductBusiness productBusiness) {
+                            ProductBusiness productBusiness, PurchaseRequestBusiness purchaseRequestBusiness, RequestItemBusiness requestItemBusiness, SubRequestBusiness subRequestBusiness, WalletBusiness walletBusiness, TransactionBusiness transactionBusiness, UserBusiness userBusiness) {
         this.orderBusiness = orderBusiness;
         this.modelMapper = modelMapper;
         this.shippingAddressBusiness = shippingAddressBusiness;
         this.productBusiness = productBusiness;
+        this.purchaseRequestBusiness = purchaseRequestBusiness;
+        this.requestItemBusiness = requestItemBusiness;
+        this.subRequestBusiness = subRequestBusiness;
+        this.walletBusiness = walletBusiness;
+        this.transactionBusiness = transactionBusiness;
+        this.userBusiness = userBusiness;
     }
 
     @Override
@@ -60,15 +80,13 @@ public class OrderServiceImpl implements OrderService {
                                 .orElseThrow(() -> new AppException(404, "Product not found"));
 
                         OrderItem item = new OrderItem();
-                        item.setProduct(new ProductSnapshot(product));
-                        item.setQuantity(itemRequest.getQuantity());
                         item.setOrder(order);
                         return item;
                     }).collect(Collectors.toList());
             order.setOrderItems(orderItems);
             var totalPrice = 0.0;
             for(OrderItem orderItem : orderItems) {
-                totalPrice += orderItem.getProduct().getPrice() * orderItem.getQuantity();
+                totalPrice += 0.0; // Assuming you will calculate the price based on the product and quantity
             }
             order.setTotalPrice(totalPrice);
             log.debug("createOrder() End | orderId: {}", order.getId());
@@ -101,8 +119,13 @@ public class OrderServiceImpl implements OrderService {
     public OrderDTO getOrderById(UUID orderId) {
         log.debug("getOrderById() Start | orderId: {}", orderId);
         try {
+            UserDetailsImpl userDetails = AuthUtils.getCurrentUser();
             Order order = orderBusiness.getById(orderId)
                     .orElseThrow(() -> new AppException(404, "Order not found"));
+            if (UserRole.CUSTOMER.equals(userDetails.getRole()) && !order.getCustomer().getId().equals(userDetails.getId())) {
+                log.error("getOrderById() Unauthorized access | orderId: {}, userId: {}, role: {}", orderId, userDetails.getId(), userDetails.getRole());
+                throw new AppException(403, "Bạn không có quyền truy cập vào đơn hàng này");
+            }
             return modelMapper.map(order, OrderDTO.class);
         } catch (Exception e) {
             log.error("getOrderById() Exception | orderId: {}, message: {}", orderId, e.getMessage());
@@ -111,12 +134,30 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<OrderDTO> getAllOrders() {
-        log.debug("getAllOrders() Start");
+    public Page<OrderDTO> getAllOrders(Pageable pageable, String type) {
+        log.debug("getAllOrders() OrderServiceImpl Start");
         try {
-            return orderBusiness.getAll().stream()
-                    .map(order -> modelMapper.map(order, OrderDTO.class))
-                    .collect(Collectors.toList());
+            UserDetailsImpl userDetails = AuthUtils.getCurrentUser();
+            if (UserRole.CUSTOMER.equals(userDetails.getRole())) {
+                Page<Order> orders = orderBusiness.getOrdersByCustomerId(userDetails.getId(), pageable);
+                log.debug("getAllOrders() OrderServiceImpl Customer End | size: {}", orders.getSize());
+                return orders.map(order -> modelMapper.map(order, OrderDTO.class));
+            } else if (UserRole.ADMIN.equals(userDetails.getRole())) {
+                if ("unassigned".equalsIgnoreCase(type)) {
+                    Page<Order> orders = orderBusiness.getUnassignedOrders(pageable);
+                    log.debug("getAllOrders() OrderServiceImpl unassigned End | size: {}", orders.getSize());
+                    return orders.map(order -> modelMapper.map(order, OrderDTO.class));
+                } else if ("assigned".equalsIgnoreCase(type)) {
+                    Page<Order> orders = orderBusiness.getAssignedOrdersByAdminId(userDetails.getId(), pageable);
+                    log.debug("getAllOrders() OrderServiceImpl assigned End | size: {}", orders.getSize());
+                    return orders.map(order -> modelMapper.map(order, OrderDTO.class));
+                } else {
+                    throw new AppException(400, "Loại order không hợp lệ");
+                }
+            } else {
+                log.error("getAllOrders() OrderServiceImpl Unauthorized access | userId: {}, role: {}", userDetails.getId(), userDetails.getRole());
+                throw new AppException(403, "Bạn không có quyền truy cập vào danh sách đơn hàng");
+            }
         } catch (Exception e) {
             log.error("getAllOrders() Exception | message: {}", e.getMessage());
             throw new AppException(500, "Failed to get orders");
@@ -132,6 +173,100 @@ public class OrderServiceImpl implements OrderService {
         } catch (Exception e) {
             log.error("deleteOrder() Exception | orderId: {}, message: {}", orderId, e.getMessage());
             throw new AppException(500, "Failed to delete order");
+        }
+    }
+
+    @Override
+    @Transactional
+    public OrderDTO checkoutOrder(CheckOutModel checkOutModel) {
+        try {
+            log.debug("checkoutOrder() OrderServiceImpl Start | subRequestId: {}", checkOutModel.getSubRequestId());
+            UUID userId = AuthUtils.getCurrentUserId();
+            UUID subRequestId = UUID.fromString(checkOutModel.getSubRequestId());
+            Customer user = (Customer) userBusiness.getByUserId(userId);
+            SubRequest subRequest = subRequestBusiness.getById(subRequestId)
+                    .orElseThrow(() -> new AppException(404, "Không tìm thấy yêu cầu"));
+            PurchaseRequest purchaseRequest = purchaseRequestBusiness.findPurchaseRequestBySubRequestId(subRequestId);
+            if (purchaseRequest == null) {
+                log.error("checkoutOrder() OrderServiceImpl PurchaseRequest not found | subRequestId: {}", subRequestId);
+                throw new AppException(404, "Không tìm thấy yêu cầu mua hàng");
+            }
+            if (!purchaseRequest.getCustomer().getId().equals(user.getId())) {
+                log.error("checkoutOrder() OrderServiceImpl Unauthorized | subRequestId: {}, userId: {}", subRequestId, userId);
+                throw new AppException(403, "Bạn không có quyền thực hiện hành động này");
+            }
+
+            if (subRequest.getQuotation() == null) {
+                log.error("checkoutOrder() OrderServiceImpl Invalid PurchaseRequest status | subRequestId: {}, status: {}", subRequestId, purchaseRequest.getStatus());
+                throw new AppException(400, "Yêu cầu mua hàng chưa được báo giá");
+            }
+            Order order = Order.builder()
+                    .status(OrderStatus.ORDER_REQUESTED)
+                    .customer(user)
+                    .shippingAddress(new AddressSnapshot(purchaseRequest.getShippingAddress()))
+                    .admin(purchaseRequest.getAdmin())
+                    .contactInfo(subRequest.getContactInfo())
+                    .seller(subRequest.getSeller())
+                    .ecommercePlatform(subRequest.getEcommercePlatform())
+                    .totalPrice(subRequest.getQuotation().getTotalPriceEstimate())
+                    .shippingFee(subRequest.getQuotation().getShippingEstimate())
+                    .build();
+            List<OrderItem> orderItems = subRequest.getRequestItems().stream()
+                    .map(requestItem -> {
+                        OrderItem orderItem = new OrderItem(requestItem);
+                        orderItem.setOrder(order);
+                        return orderItem;
+                    }).toList();
+            order.setOrderItems(orderItems);
+            //Assuming calculate total price based and shipping fee
+            double totalPrice = subRequest.getQuotation().getTotalPriceEstimate() + subRequest.getQuotation().getShippingEstimate();
+
+            if (totalPrice != checkOutModel.getTotalPriceEstimate()) {
+                log.error("checkoutOrder() OrderServiceImpl Total price mismatch | subRequestId: {}, expected: {}, actual: {}", subRequestId, checkOutModel.getTotalPriceEstimate(), totalPrice);
+                throw new AppException(400, "Tổng giá trị đơn hàng không khớp");
+            }
+            double balance = user.getWallet().getBalance();
+            if (balance < totalPrice) {
+                log.error("checkoutOrder() OrderServiceImpl Insufficient wallet balance | userId: {}, required: {}, available: {}", userId, totalPrice, balance);
+                throw new AppException(400, "Số dư ví không đủ để thanh toán");
+            }
+            Wallet wallet =  walletBusiness.checkoutOrder(totalPrice, user.getWallet(), UUID.fromString(checkOutModel.getSubRequestId()));
+            if (wallet == null || wallet.getBalance() != balance - totalPrice) {
+                Transaction transaction = transactionBusiness.getTransactionByReferenceCode(checkOutModel.getSubRequestId());
+                transaction.setStatus(TransactionStatus.FAIL);
+                transactionBusiness.update(transaction);
+                log.error("checkoutOrder() OrderServiceImpl Wallet checkout failed | userId: {}", userId);
+                throw new AppException(500, "Thanh toán không thành công");
+            }
+            OrderDTO res = modelMapper.map(orderBusiness.create(order), OrderDTO.class);
+            log.debug("checkoutOrder() OrderServiceImpl End | orderId: {}", order.getId());
+            return res;
+        } catch (Exception e) {
+            log.error("checkoutOrder() OrderServiceImpl Exception | subRequestId: {}, message: {}", checkOutModel.getSubRequestId(), e.getMessage());
+            throw new AppException(500, "Failed to checkout order");
+        }
+    }
+
+    @Override
+    public OrderDTO updateShippingInfo(String orderId, ShippingInformationModel shippingInformationModel) {
+        log.debug("updateShippingInfo() Start | orderId: {}, shippingInformationModel: {}", orderId, shippingInformationModel);
+        try {
+            Order order = orderBusiness.getById(UUID.fromString(orderId))
+                    .orElseThrow(() -> new AppException(404, "Không tìm thấy đơn hàng"));
+
+            if (order.getStatus() != OrderStatus.ORDER_REQUESTED) {
+                log.error("updateShippingInfo() Invalid order status | orderId: {}, status: {}", orderId, order.getStatus());
+                throw new AppException(400, "Không thể cập nhật thông tin vận chuyển cho đơn hàng này");
+            }
+            order.setOrderCode(shippingInformationModel.getOrderCode());
+            order.setTrackingNumber(shippingInformationModel.getTrackingNumber());
+            order.setStatus(OrderStatus.PURCHASED);
+            Order updatedOrder = orderBusiness.update(order);
+            log.debug("updateShippingInfo() End | updatedOrder: {}", updatedOrder);
+            return modelMapper.map(updatedOrder, OrderDTO.class);
+        } catch (Exception e) {
+            log.error("updateShippingInfo() Exception | orderId: {}, message: {}", orderId, e.getMessage());
+            throw new AppException(500, "Failed to update shipping information");
         }
     }
 }
