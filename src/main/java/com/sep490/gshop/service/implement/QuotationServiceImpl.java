@@ -188,7 +188,7 @@ public class QuotationServiceImpl implements QuotationService {
             return dto;
 
         } catch (Exception e) {
-            log.error("createQuotation() - Exception: {}", e.getMessage(), e);
+            log.error("createQuotation() - Exception: {}", e.getMessage());
             throw AppException.builder()
                     .message("Lỗi khi tạo báo giá: " + e.getMessage())
                     .code(500)
@@ -226,7 +226,7 @@ public class QuotationServiceImpl implements QuotationService {
             return dtos;
 
         } catch (Exception e) {
-            log.error("findAllQuotations() - Exception: {}", e.getMessage(), e);
+            log.error("findAllQuotations() - Exception: {}", e.getMessage());
             throw AppException.builder()
                     .message("Lỗi khi lấy danh sách báo giá: " + e.getMessage())
                     .code(500)
@@ -258,7 +258,7 @@ public class QuotationServiceImpl implements QuotationService {
             dto.setDetails(detailDTOs);
             dto.setTotalPriceEstimate(total);
             dto.setSubRequestId(quotation.getSubRequest().getId().toString());
-
+            dto.setSubRequestStatus(quotation.getSubRequest().getStatus());
             log.debug("getQuotationById() - End | quotationId: {}", quotationId);
             return dto;
 
@@ -266,7 +266,7 @@ public class QuotationServiceImpl implements QuotationService {
             log.error("getQuotationById() - AppException: {}", ae.getMessage());
             throw ae;
         } catch (Exception e) {
-            log.error("getQuotationById() - Exception: {}", e.getMessage(), e);
+            log.error("getQuotationById() - Exception: {}", e.getMessage());
             throw AppException.builder()
                     .message("Lỗi khi lấy Quotation: " + e.getMessage())
                     .code(500)

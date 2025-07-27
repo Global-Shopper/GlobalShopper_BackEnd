@@ -9,12 +9,14 @@ import com.sep490.gshop.payload.dto.RequestItemDTO;
 import com.sep490.gshop.payload.response.TaxCalculationResult;
 import com.sep490.gshop.service.RequestItemService;
 import com.sep490.gshop.service.TaxRateService;
+import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 @Service
+@Log4j2
 public class RequestItemServiceImpl implements RequestItemService {
     private RequestItemBusiness requestItemBusiness;
     private ModelMapper modelMapper;
@@ -27,12 +29,30 @@ public class RequestItemServiceImpl implements RequestItemService {
     }
     @Override
     public RequestItemDTO getRequestItem(UUID id) {
-        var requestItemFound = requestItemBusiness.getById(id).orElseThrow(() -> AppException.builder().message("Không tìm thấy request item").code(404).build());
-        var requestItemDTO = modelMapper.map(requestItemFound, RequestItemDTO.class);
-        var quotationDetailDTO =  enrichQuotationDetailDto(requestItemFound.getQuotationDetail());
-        requestItemDTO.setQuotationDetail(quotationDetailDTO);
-        return requestItemDTO;
+        log.debug("getRequestItem() - Start | id: {}", id);
+        try {
+            var requestItemFound = requestItemBusiness.getById(id).orElseThrow(() ->
+                    AppException.builder()
+                            .message("Không tìm thấy request item")
+                            .code(404)
+                            .build()
+            );
+            var requestItemDTO = modelMapper.map(requestItemFound, RequestItemDTO.class);
+
+            var quotationDetail = requestItemFound.getQuotationDetail();
+            if (quotationDetail != null) {
+                var quotationDetailDTO = enrichQuotationDetailDto(quotationDetail);
+                requestItemDTO.setQuotationDetail(quotationDetailDTO);
+            }
+            log.debug("getRequestItem() - End | id: {}", id);
+            return requestItemDTO;
+        } catch (Exception e) {
+            log.debug("getRequestItem() - Exception khi lấy request item id {}: {}", id, e.getMessage());
+            throw e;
+        }
     }
+
+
 
     private QuotationDetailDTO enrichQuotationDetailDto(QuotationDetail detail) {
         QuotationDetailDTO detailDTO = modelMapper.map(detail, QuotationDetailDTO.class);
