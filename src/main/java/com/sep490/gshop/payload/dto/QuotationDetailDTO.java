@@ -16,7 +16,7 @@ import java.util.UUID;
 @Builder
 public class QuotationDetailDTO {
     private UUID id;
-    private UUID requestItemId;
+    private String requestItemId;
     private double basePrice;
     private double serviceFee;
     private String currency;

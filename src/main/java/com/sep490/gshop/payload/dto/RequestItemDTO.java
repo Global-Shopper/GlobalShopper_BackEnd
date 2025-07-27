@@ -20,4 +20,5 @@ public class RequestItemDTO {
     private List<String> images;
     private String description;
     private int quantity;
+    private QuotationDetailDTO quotationDetail;
 }

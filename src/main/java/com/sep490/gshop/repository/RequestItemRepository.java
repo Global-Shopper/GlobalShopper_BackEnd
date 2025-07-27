@@ -10,4 +10,5 @@ import java.util.UUID;
 @Repository
 public interface RequestItemRepository extends JpaRepository<RequestItem, UUID> {
     List<RequestItem> findAllBySubRequestId(UUID id);
+
 }
