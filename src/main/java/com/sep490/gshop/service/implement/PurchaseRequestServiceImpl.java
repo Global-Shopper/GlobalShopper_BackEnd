@@ -7,13 +7,16 @@ import com.sep490.gshop.common.enums.UserRole;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.config.security.services.UserDetailsImpl;
 import com.sep490.gshop.entity.*;
+import com.sep490.gshop.payload.dto.QuotationDetailDTO;
 import com.sep490.gshop.payload.dto.RequestItemDTO;
 import com.sep490.gshop.payload.dto.SubRequestDTO;
 import com.sep490.gshop.payload.request.purchaserequest.*;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.PurchaseRequestModel;
 import com.sep490.gshop.payload.response.PurchaseRequestResponse;
+import com.sep490.gshop.payload.response.TaxCalculationResult;
 import com.sep490.gshop.service.PurchaseRequestService;
+import com.sep490.gshop.service.TaxRateService;
 import com.sep490.gshop.utils.AuthUtils;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
@@ -42,17 +45,18 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
     private final SubRequestBusiness subRequestBusiness;
     private final UserBusiness userBusiness;
     private final ModelMapper modelMapper;
-
+    private TaxRateService taxRateService;
     @Autowired
     public PurchaseRequestServiceImpl(PurchaseRequestBusiness purchaseRequestBusiness,
                                       ShippingAddressBusiness shippingAddressBusiness, RequestItemBusiness requestItemBusiness, SubRequestBusiness subRequestBusiness, UserBusiness userBusiness,
-                                      ModelMapper modelMapper) {
+                                      ModelMapper modelMapper, TaxRateService taxRateService) {
         this.purchaseRequestBusiness = purchaseRequestBusiness;
         this.shippingAddressBusiness = shippingAddressBusiness;
         this.requestItemBusiness = requestItemBusiness;
         this.subRequestBusiness = subRequestBusiness;
         this.userBusiness = userBusiness;
         this.modelMapper = modelMapper;
+        this.taxRateService = taxRateService;
     }
 
 
@@ -356,6 +360,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
 
             PurchaseRequestModel response = convertToPurchaseRequestModel(purchaseRequest);
 
+
             log.debug("getPurchaseRequestById() PurchaseRequestServiceImpl end | response: {}", response);
             return response;
         } catch (Exception e) {
@@ -364,13 +369,49 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
         }
     }
 
+    private QuotationDetailDTO enrichQuotationDetailDto(QuotationDetail detail) {
+        QuotationDetailDTO detailDTO = modelMapper.map(detail, QuotationDetailDTO.class);
+
+        UUID requestItemId = detail.getRequestItem() != null ? detail.getRequestItem().getId() : null;
+        detailDTO.setRequestItemId(requestItemId.toString());
+        List<TaxRate> taxRates = detail.getTaxRates() != null ?
+                detail.getTaxRates().stream()
+                        .map(snapshot -> {
+                            TaxRate rate = new TaxRate();
+                            rate.setTaxType(snapshot.getTaxType());
+                            rate.setRate(snapshot.getRate());
+                            rate.setRegion(snapshot.getRegion());
+                            return rate;
+                        }).toList() : List.of();
+        TaxCalculationResult taxResult = taxRateService.calculateTaxes(detail.getBasePrice(), taxRates);
+        detailDTO.setTaxAmounts(taxResult.getTaxAmounts());
+        detailDTO.setTotalTaxAmount(taxResult.getTotalTax());
+        double totalPriceBeforeExchange = detail.getBasePrice() + detail.getServiceFee();
+        if (taxResult.getTaxAmounts() != null) {
+            totalPriceBeforeExchange += taxResult.getTaxAmounts().values().stream().mapToDouble(Double::doubleValue).sum();
+        }
+        detailDTO.setTotalPriceBeforeExchange(totalPriceBeforeExchange);
+
+        detailDTO.setCurrency(detail.getCurrency());
+        detailDTO.setExchangeRate(detail.getExchangeRate());
+        detailDTO.setNote(detail.getNote());
+        return detailDTO;
+    }
+
     private PurchaseRequestModel convertToPurchaseRequestModel(PurchaseRequest purchaseRequest) {
         List<RequestItem> allItems = purchaseRequest.getRequestItems();
 
         // RequestItems without SubRequest
         List<RequestItemDTO> itemsWithoutSub = allItems.stream()
                 .filter(item -> item.getSubRequest() == null)
-                .map(requestItem -> modelMapper.map(requestItem, RequestItemDTO.class))
+                .map(item -> {
+                    RequestItemDTO dto = modelMapper.map(item, RequestItemDTO.class);
+                    // Lấy và set QuotationDetailDTO nếu có
+                    if (item.getQuotationDetail() != null) {
+                        dto.setQuotationDetail(enrichQuotationDetailDto(item.getQuotationDetail()));
+                    }
+                    return dto;
+                })
                 .toList();
 
         // Group by SubRequest
@@ -381,16 +422,25 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
         List<SubRequestDTO> subRequestModels = subRequestMap.entrySet().stream()
                 .map(entry -> {
                     SubRequestDTO subDTO = modelMapper.map(entry.getKey(), SubRequestDTO.class);
-                    subDTO.setRequestItems(entry.getValue().stream()
-                            .map(requestItem -> modelMapper.map(requestItem, RequestItemDTO.class))
-                            .toList());
+                    List<RequestItemDTO> requestItemDTOs = entry.getValue().stream()
+                            .map(item -> {
+                                RequestItemDTO dto = modelMapper.map(item, RequestItemDTO.class);
+                                if (item.getQuotationDetail() != null) {
+                                    dto.setQuotationDetail(enrichQuotationDetailDto(item.getQuotationDetail()));
+                                }
+                                return dto;
+                            })
+                            .toList();
+                    subDTO.setRequestItems(requestItemDTOs);
                     return subDTO;
-                }).toList();
+                })
+                .toList();
 
         PurchaseRequestModel response = modelMapper.map(purchaseRequest, PurchaseRequestModel.class);
         response.setRequestItems(itemsWithoutSub);
         response.setSubRequests(subRequestModels);
         return response;
     }
+
 
 }
