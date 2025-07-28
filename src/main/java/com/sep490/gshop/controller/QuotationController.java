@@ -1,8 +1,10 @@
 package com.sep490.gshop.controller;
 
 import com.sep490.gshop.common.constants.URLConstant;
+import com.sep490.gshop.payload.dto.QuotationCalculatedDTO;
 import com.sep490.gshop.payload.dto.QuotationDTO;
 import com.sep490.gshop.payload.request.QuotationRequest;
+import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.service.QuotationService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -20,6 +22,20 @@ import java.util.List;
 public class QuotationController {
     @Autowired
     private QuotationService quotationService;
+
+    @PostMapping("calculate")
+    public QuotationCalculatedDTO calculateQuotation(@RequestBody @Valid QuotationRequest input) {
+        log.debug("calculateQuotation() - Start | subRequestId: {}", input.getSubRequestId());
+        try {
+            QuotationCalculatedDTO dto = quotationService.calculateQuotationInternal(input);
+            log.debug("calculateQuotation() - End | subRequestId: {}", input.getSubRequestId());
+            return dto;
+        } catch (Exception e) {
+            log.error("calculateQuotation() - Exception: {}", e.getMessage(), e);
+            throw e;
+        }
+    }
+
 
     @PostMapping
     @Operation(summary = "Tạo báo giá cho sub request (Bao gồm nhiều request item")

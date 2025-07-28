@@ -400,7 +400,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
 
     private PurchaseRequestModel convertToPurchaseRequestModel(PurchaseRequest purchaseRequest) {
         List<RequestItem> allItems = purchaseRequest.getRequestItems();
-
+    int count = 0;
         // RequestItems without SubRequest
         List<RequestItemDTO> itemsWithoutSub = allItems.stream()
                 .filter(item -> item.getSubRequest() == null)
@@ -439,6 +439,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
         PurchaseRequestModel response = modelMapper.map(purchaseRequest, PurchaseRequestModel.class);
         response.setRequestItems(itemsWithoutSub);
         response.setSubRequests(subRequestModels);
+        response.setIsQuotationCount(subRequestMap.size());
         return response;
     }
 
