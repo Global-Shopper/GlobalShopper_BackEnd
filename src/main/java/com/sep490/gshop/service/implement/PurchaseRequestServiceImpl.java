@@ -369,7 +369,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
 
     private QuotationDetailDTO enrichQuotationDetailDto(QuotationDetail detail) {
         if (detail == null) {
-            throw AppException.builder().message("detail truyền vào null").code(404).build();
+            return null;
         }
 
         QuotationDetailDTO detailDTO = modelMapper.map(detail, QuotationDetailDTO.class);
