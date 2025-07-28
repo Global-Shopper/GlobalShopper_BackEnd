@@ -19,7 +19,9 @@ import java.util.List;
 public class PurchaseRequest extends BaseEntity {
 
     private long expiredAt;
-
+    
+    @Column(columnDefinition = "TEXT")
+    private String correctionNote;
     @ManyToOne
     @JoinColumn(name = "shipping_address_id", nullable = false)
     private ShippingAddress shippingAddress;

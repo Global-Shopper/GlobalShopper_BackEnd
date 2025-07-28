@@ -21,16 +21,18 @@ public class TaxServiceImpl implements TaxRateService {
 
         TaxRate importTaxRate = null;
 
+        // Tìm thuế nhập khẩu có mức thấp nhất trong các loại: MFN, UKVFTA, ACFTA, v.v.
         for (TaxRate tax : taxRates) {
             TaxType type = tax.getTaxType();
-            if (type == TaxType.NHAP_KHAU_TOI_UU) {
-                importTaxRate = tax;
-                break;
-            } else if (type == TaxType.NHAP_KHAU_UU_DAI && importTaxRate == null) {
-                importTaxRate = tax;
+            if (type == TaxType.MFN || type == TaxType.UKVFTA || type == TaxType.ACFTA || type == TaxType.VJEPA
+                    || type == TaxType.AJCEP || type == TaxType.VKFTA || type == TaxType.AKFTA || type == TaxType.RCEPT) {
+                if (importTaxRate == null || tax.getRate() < importTaxRate.getRate()) {
+                    importTaxRate = tax;
+                }
             }
         }
 
+        // Áp thuế nhập khẩu
         if (importTaxRate != null) {
             double rate = importTaxRate.getRate();
             importTax = basePrice * rate / 100;
@@ -39,37 +41,24 @@ public class TaxServiceImpl implements TaxRateService {
             vatBase += importTax;
         }
 
+        // Áp thuế tiêu thụ đặc biệt (TTDB)
         for (TaxRate tax : taxRates) {
-            TaxType type = tax.getTaxType();
-            if (type == TaxType.TIEU_THU_DAC_BIET) {
-                double exciseRate = tax.getRate();
-                exciseTax = basePrice * exciseRate / 100;
-                taxAmountsEnum.put(type, exciseTax);
-                taxAmounts.put(type.name(), exciseTax);
+            if (tax.getTaxType() == TaxType.TTDB) {
+                double rate = tax.getRate();
+                exciseTax = basePrice * rate / 100;
+                taxAmountsEnum.put(TaxType.TTDB, exciseTax);
+                taxAmounts.put("TTDB", exciseTax);
                 vatBase += exciseTax;
             }
         }
 
+        // Áp VAT
         for (TaxRate tax : taxRates) {
-            TaxType type = tax.getTaxType();
-            if (type != TaxType.NHAP_KHAU_TOI_UU
-                    && type != TaxType.NHAP_KHAU_UU_DAI
-                    && type != TaxType.VAT
-                    && type != TaxType.TIEU_THU_DAC_BIET) {
-                double otherTax = basePrice * tax.getRate() / 100;
-                taxAmountsEnum.put(type, otherTax);
-                taxAmounts.put(type.name(), otherTax);
-                vatBase += otherTax;
-            }
-        }
-
-        for (TaxRate tax : taxRates) {
-            TaxType type = tax.getTaxType();
-            if (type == TaxType.VAT) {
-                double vatRate = tax.getRate();
-                vatTax = vatBase * vatRate / 100;
-                taxAmountsEnum.put(type, vatTax);
-                taxAmounts.put(type.name(), vatTax);
+            if (tax.getTaxType() == TaxType.VAT) {
+                double rate = tax.getRate();
+                vatTax = vatBase * rate / 100;
+                taxAmountsEnum.put(TaxType.VAT, vatTax);
+                taxAmounts.put("VAT", vatTax);
             }
         }
 
@@ -80,4 +69,5 @@ public class TaxServiceImpl implements TaxRateService {
         result.setTotalTax(totalTax);
         return result;
     }
+
 }
