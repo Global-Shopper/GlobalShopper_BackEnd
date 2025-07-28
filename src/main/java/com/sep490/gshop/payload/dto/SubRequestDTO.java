@@ -18,4 +18,6 @@ public class SubRequestDTO {
     private String seller;
     private String ecommercePlatform;
     private List<RequestItemDTO> requestItems;
+    private QuotationForPurchaseRequestDTO quotationForPurchase;
+
 }

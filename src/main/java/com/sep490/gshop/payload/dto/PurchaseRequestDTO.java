@@ -16,6 +16,7 @@ public class PurchaseRequestDTO {
     private ShippingAddressDTO shippingAddress;
     private String status;
     private List<RequestItemDTO> requestItems;
+
     private AdminDTO admin;
     private CustomerDTO customer;
     private String requestType;

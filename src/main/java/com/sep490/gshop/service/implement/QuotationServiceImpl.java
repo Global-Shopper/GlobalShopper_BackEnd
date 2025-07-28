@@ -68,7 +68,7 @@ public class QuotationServiceImpl implements QuotationService {
         int totalRequestItems = sub.getRequestItems().size();
         if (input.getDetails().size() < totalRequestItems) {
             throw AppException.builder()
-                    .message("Bạn cần điền đủ thông tin của các request item mới được tạo báo giá")
+                    .message("Bạn cần điền đủ thông tin của các request item")
                     .code(400)
                     .build();
         } else if (input.getDetails().size() > totalRequestItems) {
@@ -283,7 +283,7 @@ public class QuotationServiceImpl implements QuotationService {
 
             quotation.setTotalPriceEstimate(total);
             quotationBusiness.update(quotation);
-            sub.setStatus(SubRequestStatus.PENDING);
+            sub.setStatus(SubRequestStatus.QUOTED);
             subRequestBusiness.update(sub);
             QuotationDTO dto = modelMapper.map(quotation, QuotationDTO.class);
             dto.setDetails(detailDTOs);
@@ -302,7 +302,6 @@ public class QuotationServiceImpl implements QuotationService {
                     .build();
         }
     }
-
 
     @Override
     public List<QuotationDTO> findAllQuotations() {
