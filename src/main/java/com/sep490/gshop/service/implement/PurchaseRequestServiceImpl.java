@@ -7,9 +7,7 @@ import com.sep490.gshop.common.enums.UserRole;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.config.security.services.UserDetailsImpl;
 import com.sep490.gshop.entity.*;
-import com.sep490.gshop.payload.dto.QuotationDetailDTO;
-import com.sep490.gshop.payload.dto.RequestItemDTO;
-import com.sep490.gshop.payload.dto.SubRequestDTO;
+import com.sep490.gshop.payload.dto.*;
 import com.sep490.gshop.payload.request.purchaserequest.*;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.PurchaseRequestModel;
@@ -400,7 +398,6 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
 
     private PurchaseRequestModel convertToPurchaseRequestModel(PurchaseRequest purchaseRequest) {
         List<RequestItem> allItems = purchaseRequest.getRequestItems();
-
         // RequestItems without SubRequest
         List<RequestItemDTO> itemsWithoutSub = allItems.stream()
                 .filter(item -> item.getSubRequest() == null)
@@ -418,10 +415,14 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
         Map<SubRequest, List<RequestItem>> subRequestMap = allItems.stream()
                 .filter(item -> item.getSubRequest() != null)
                 .collect(Collectors.groupingBy(RequestItem::getSubRequest));
+        long count = subRequestMap.entrySet().stream().filter(sub -> sub.getKey().getQuotation() != null).count();
 
         List<SubRequestDTO> subRequestModels = subRequestMap.entrySet().stream()
                 .map(entry -> {
                     SubRequestDTO subDTO = modelMapper.map(entry.getKey(), SubRequestDTO.class);
+
+                    var quotationDTO = modelMapper.map(entry.getKey().getQuotation(), QuotationForPurchaseRequestDTO.class);
+                    subDTO.setQuotationForPurchase(quotationDTO);
                     List<RequestItemDTO> requestItemDTOs = entry.getValue().stream()
                             .map(item -> {
                                 RequestItemDTO dto = modelMapper.map(item, RequestItemDTO.class);
@@ -439,8 +440,9 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
         PurchaseRequestModel response = modelMapper.map(purchaseRequest, PurchaseRequestModel.class);
         response.setRequestItems(itemsWithoutSub);
         response.setSubRequests(subRequestModels);
+        response.setQuotationCount((int)count);
+        response.setTotalSubRequests(subRequestModels.size());
         return response;
     }
-
 
 }
