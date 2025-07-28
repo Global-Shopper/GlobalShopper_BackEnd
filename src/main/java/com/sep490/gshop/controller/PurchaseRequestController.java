@@ -1,7 +1,6 @@
 package com.sep490.gshop.controller;
 
 import com.sep490.gshop.common.constants.URLConstant;
-import com.sep490.gshop.payload.dto.PurchaseRequestDTO;
 import com.sep490.gshop.payload.dto.RequestItemDTO;
 import com.sep490.gshop.payload.dto.SubRequestDTO;
 import com.sep490.gshop.payload.request.purchaserequest.OfflineRequest;
@@ -29,8 +28,8 @@ import java.util.List;
 @Log4j2
 @CrossOrigin("*")
 public class PurchaseRequestController {
-
-    private final PurchaseRequestService purchaseRequestService;
+    @Autowired
+    private PurchaseRequestService purchaseRequestService;
 
     @Autowired
     public PurchaseRequestController(PurchaseRequestService purchaseRequestService) {
@@ -100,8 +99,17 @@ public class PurchaseRequestController {
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
     public ResponseEntity<PurchaseRequestModel> getPurchaseRequestById(@PathVariable("id") String id) {
         log.info("getPurchaseRequestById() PurchaseRequestController start | id: {}", id);
+        if (id == null || id.trim().isEmpty()) {
+            log.warn("Invalid id received: {}", id);
+            return ResponseEntity.badRequest().build();
+        }
         PurchaseRequestModel purchaseRequest = purchaseRequestService.getPurchaseRequestById(id);
+        if (purchaseRequest == null) {
+            log.warn("Purchase request not found for id: {}", id);
+            return ResponseEntity.notFound().build();
+        }
         log.info("getPurchaseRequestById() PurchaseRequestController end | purchaseRequest: {}", purchaseRequest);
         return ResponseEntity.ok(purchaseRequest);
     }
+
 }

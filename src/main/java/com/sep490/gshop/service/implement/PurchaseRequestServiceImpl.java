@@ -368,11 +368,16 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
     }
 
     private QuotationDetailDTO enrichQuotationDetailDto(QuotationDetail detail) {
+        if (detail == null) {
+            throw AppException.builder().message("detail truyền vào null").code(404).build();
+        }
+
         QuotationDetailDTO detailDTO = modelMapper.map(detail, QuotationDetailDTO.class);
 
         UUID requestItemId = detail.getRequestItem() != null ? detail.getRequestItem().getId() : null;
-        detailDTO.setRequestItemId(requestItemId.toString());
-        List<TaxRate> taxRates = detail.getTaxRates() != null ?
+        detailDTO.setRequestItemId(requestItemId != null ? requestItemId.toString() : null);
+
+        List<TaxRate> taxRates = (detail.getTaxRates() != null && !detail.getTaxRates().isEmpty()) ?
                 detail.getTaxRates().stream()
                         .map(snapshot -> {
                             TaxRate rate = new TaxRate();
@@ -381,9 +386,11 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                             rate.setRegion(snapshot.getRegion());
                             return rate;
                         }).toList() : List.of();
+
         TaxCalculationResult taxResult = taxRateService.calculateTaxes(detail.getBasePrice(), taxRates);
         detailDTO.setTaxAmounts(taxResult.getTaxAmounts());
         detailDTO.setTotalTaxAmount(taxResult.getTotalTax());
+
         double totalPriceBeforeExchange = detail.getBasePrice() + detail.getServiceFee();
         if (taxResult.getTaxAmounts() != null) {
             totalPriceBeforeExchange += taxResult.getTaxAmounts().values().stream().mapToDouble(Double::doubleValue).sum();
@@ -393,8 +400,10 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
         detailDTO.setCurrency(detail.getCurrency());
         detailDTO.setExchangeRate(detail.getExchangeRate());
         detailDTO.setNote(detail.getNote());
+
         return detailDTO;
     }
+
 
     private PurchaseRequestModel convertToPurchaseRequestModel(PurchaseRequest purchaseRequest) {
         List<RequestItem> allItems = purchaseRequest.getRequestItems();
@@ -404,8 +413,9 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                 .map(item -> {
                     RequestItemDTO dto = modelMapper.map(item, RequestItemDTO.class);
                     // Lấy và set QuotationDetailDTO nếu có
-                    if (item.getQuotationDetail() != null) {
-                        dto.setQuotationDetail(enrichQuotationDetailDto(item.getQuotationDetail()));
+                    var quotationDetail = enrichQuotationDetailDto(item.getQuotationDetail());
+                    if(quotationDetail != null) {
+                        dto.setQuotationDetail(quotationDetail);
                     }
                     return dto;
                 })
@@ -421,13 +431,18 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                 .map(entry -> {
                     SubRequestDTO subDTO = modelMapper.map(entry.getKey(), SubRequestDTO.class);
 
-                    var quotationDTO = modelMapper.map(entry.getKey().getQuotation(), QuotationForPurchaseRequestDTO.class);
-                    subDTO.setQuotationForPurchase(quotationDTO);
+                    if(entry.getKey().getQuotation() != null){
+                        var quotationDTO = modelMapper.map(entry.getKey().getQuotation(), QuotationForPurchaseRequestDTO.class);
+                        subDTO.setQuotationForPurchase(quotationDTO);
+                    }
                     List<RequestItemDTO> requestItemDTOs = entry.getValue().stream()
                             .map(item -> {
                                 RequestItemDTO dto = modelMapper.map(item, RequestItemDTO.class);
-                                if (item.getQuotationDetail() != null) {
-                                    dto.setQuotationDetail(enrichQuotationDetailDto(item.getQuotationDetail()));
+                                if(item.getQuotationDetail() != null){
+                                    var quotationDetailDTO = enrichQuotationDetailDto(item.getQuotationDetail());
+                                    if (quotationDetailDTO != null) {
+                                        dto.setQuotationDetail(quotationDetailDTO);
+                                    }
                                 }
                                 return dto;
                             })
