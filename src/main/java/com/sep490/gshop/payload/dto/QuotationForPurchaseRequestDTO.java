@@ -15,9 +15,7 @@ import java.util.List;
 public class QuotationForPurchaseRequestDTO {
     private String id;
     private String note;
-    private String subRequestId;
     private long expiredDate;
     private double shippingEstimate;
     private double totalPriceEstimate;
-    private SubRequestStatus subRequestStatus;
 }

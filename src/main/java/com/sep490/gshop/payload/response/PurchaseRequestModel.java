@@ -24,7 +24,8 @@ public class PurchaseRequestModel {
     private String requestType;
     private List<RequestItemDTO> requestItems;
     private List<SubRequestDTO> subRequests;
-    private int isQuotationCount;
+    private int quotationCount;
+    private int totalSubRequests;
     private long createdAt;
     private long expiredAt;
 }
