@@ -23,7 +23,7 @@ public class SubRequest extends BaseEntity {
     private String seller;
     private String ecommercePlatform;
     @Enumerated(EnumType.STRING)
-    private SubRequestStatus status;
+    private SubRequestStatus status = SubRequestStatus.UNQUOTED;
     @OneToMany(mappedBy = "subRequest", fetch = FetchType.LAZY)
     private List<RequestItem> requestItems;
 }
