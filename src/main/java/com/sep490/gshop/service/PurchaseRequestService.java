@@ -13,6 +13,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 
 import java.util.List;
+import java.util.UUID;
+
 public interface PurchaseRequestService {
 
     PurchaseRequestResponse<List<RequestItemDTO>> createOnlinePurchaseRequest(OnlineRequest onlineRequest);
@@ -28,4 +30,9 @@ public interface PurchaseRequestService {
     MessageResponse updatePurchaseRequest(String id, UpdateRequestModel updateRequestModel);
 
     PurchaseRequestModel getPurchaseRequestById(String id);
+
+    MessageResponse requestCorrection(UUID purchaseRequestId, String correctionNote);
+    UpdateRequestModel getPurchaseRequestForEdit(UUID purchaseRequestId);
+
+    UpdateRequestModel openRequestCorrection(UUID purchaseRequestId);
 }

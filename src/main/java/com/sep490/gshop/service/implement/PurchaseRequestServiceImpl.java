@@ -13,12 +13,14 @@ import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.PurchaseRequestModel;
 import com.sep490.gshop.payload.response.PurchaseRequestResponse;
 import com.sep490.gshop.payload.response.TaxCalculationResult;
+import com.sep490.gshop.service.EmailService;
 import com.sep490.gshop.service.PurchaseRequestService;
 import com.sep490.gshop.service.TaxRateService;
 import com.sep490.gshop.utils.AuthUtils;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -26,11 +28,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.thymeleaf.context.Context;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,10 +44,13 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
     private final UserBusiness userBusiness;
     private final ModelMapper modelMapper;
     private TaxRateService taxRateService;
+    private EmailService emailService;
+    @Value("${fe.redirect-domain}")
+    private String redirectDomain;
     @Autowired
     public PurchaseRequestServiceImpl(PurchaseRequestBusiness purchaseRequestBusiness,
                                       ShippingAddressBusiness shippingAddressBusiness, RequestItemBusiness requestItemBusiness, SubRequestBusiness subRequestBusiness, UserBusiness userBusiness,
-                                      ModelMapper modelMapper, TaxRateService taxRateService) {
+                                      ModelMapper modelMapper, TaxRateService taxRateService, EmailService emailService) {
         this.purchaseRequestBusiness = purchaseRequestBusiness;
         this.shippingAddressBusiness = shippingAddressBusiness;
         this.requestItemBusiness = requestItemBusiness;
@@ -55,6 +58,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
         this.userBusiness = userBusiness;
         this.modelMapper = modelMapper;
         this.taxRateService = taxRateService;
+        this.emailService = emailService;
     }
 
 
@@ -459,5 +463,164 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
         response.setTotalSubRequests(subRequestModels.size());
         return response;
     }
+
+    public MessageResponse requestCorrection(UUID purchaseRequestId, String correctionNote) {
+        log.debug("requestCorrection() - Start | purchaseRequestId: {}, correctionNote: {}", purchaseRequestId, correctionNote);
+        try {
+            PurchaseRequest purchaseRequest = purchaseRequestBusiness.getById(purchaseRequestId)
+                    .orElseThrow(() -> AppException.builder().message("Không tìm thấy đơn hàng").code(404).build());
+
+            if (purchaseRequest.getStatus().equals(PurchaseRequestStatus.CHECKING)) {
+                //purchaseRequest.setStatus(PurchaseRequestStatus.INSUFFICIENT);
+                purchaseRequest.setCorrectionNote(correctionNote);
+                purchaseRequestBusiness.update(purchaseRequest);
+            } else {
+                throw AppException.builder()
+                        .message("Yêu cầu không thể chỉnh sửa vì đã được báo giá hoặc đang chỉnh sửa")
+                        .code(400)
+                        .build();
+            }
+
+            Customer customer = purchaseRequest.getCustomer();
+
+            String editUrl = redirectDomain + "/account-center/purchase-request-list/pathId=" + purchaseRequestId;
+
+            Context context = new Context();
+            context.setVariable("name", customer.getName());
+            context.setVariable("email", customer.getEmail());
+            context.setVariable("editUrl", editUrl);
+
+            emailService.sendEmailTemplate(
+                    customer.getEmail(),
+                    "Yêu cầu bổ sung thông tin đơn hàng",
+                    "Vui lòng nhấp vào link để bổ sung thông tin đơn hàng.",
+                    "urlChangePR",
+                    context
+            );
+
+            log.debug("requestCorrection() - End | purchaseRequestId: {}, success", purchaseRequestId);
+            return MessageResponse.builder()
+                    .message("Đã gửi yêu cầu bổ sung thông tin tới khách hàng.")
+                    .isSuccess(true)
+                    .build();
+        } catch (Exception e) {
+            log.debug("requestCorrection() - Exception | purchaseRequestId: {}, error: {}", purchaseRequestId, e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    @Transactional
+    public UpdateRequestModel openRequestCorrection(UUID purchaseRequestId) {
+        log.debug("openRequestCorrection() - Start | purchaseRequestId: {}", purchaseRequestId);
+
+        PurchaseRequest pr = purchaseRequestBusiness.getById(purchaseRequestId)
+                .orElseThrow(() -> AppException.builder()
+                        .message("Không tìm thấy request")
+                        .code(404)
+                        .build());
+
+        UUID currentCustomerId = AuthUtils.getCurrentUserId();
+        if (currentCustomerId == null) {
+            throw AppException.builder().message("Vui lòng đăng nhập để tiếp tục").code(403).build();
+        }
+        if (!pr.getCustomer().getId().equals(currentCustomerId)) {
+            throw AppException.builder().message("Bạn không có quyền truy cập đơn hàng này").code(403).build();
+        }
+
+        if (pr.getStatus() == PurchaseRequestStatus.CHECKING) {
+            pr.setStatus(PurchaseRequestStatus.INSUFFICIENT);
+            purchaseRequestBusiness.update(pr);
+        }
+
+        UpdateRequestModel updateRequestModel = convertPurchaseRequestToUpdateRequestModel(pr);
+
+        log.debug("openRequestCorrection() - End | purchaseRequestId: {}", purchaseRequestId);
+        return updateRequestModel;
+    }
+
+
+    public UpdateRequestModel getPurchaseRequestForEdit(UUID purchaseRequestId) {
+        log.debug("getPurchaseRequestForEdit() - Start | purchaseRequestId: {}", purchaseRequestId);
+        try {
+            PurchaseRequest pr = purchaseRequestBusiness.getById(purchaseRequestId)
+                    .orElseThrow(() -> AppException.builder()
+                            .message("Không tìm thấy đơn hàng")
+                            .code(404)
+                            .build());
+
+            UUID currentCustomerId = AuthUtils.getCurrentUserId();
+            if (currentCustomerId == null) {
+                throw AppException.builder()
+                        .message("Vui lòng đăng nhập để tiếp tục")
+                        .code(403)
+                        .build();
+            }
+            var currentCustomer = userBusiness.getById(currentCustomerId)
+                    .orElseThrow(() -> AppException.builder().message("Không tìm thấy user").code(404).build());
+            if (!currentCustomer.getRole().equals(UserRole.CUSTOMER)) {
+                throw AppException.builder()
+                        .message("Chỉ customer mới có quyền chỉnh sửa request này")
+                        .code(400)
+                        .build();
+            }
+            if (!pr.getCustomer().getId().equals(currentCustomerId)) {
+                throw AppException.builder()
+                        .message("Bạn không có quyền truy cập đơn hàng này")
+                        .code(403)
+                        .build();
+            }
+
+            if (pr.getStatus() != PurchaseRequestStatus.INSUFFICIENT) {
+                throw AppException.builder()
+                        .message("Không thể chỉnh sửa đơn hàng trong trạng thái hiện tại")
+                        .code(400)
+                        .build();
+            }
+
+            UpdateRequestModel updateRequestModel = convertPurchaseRequestToUpdateRequestModel(pr);
+
+            log.debug("getPurchaseRequestForEdit() - End | purchaseRequestId: {}", purchaseRequestId);
+            return updateRequestModel;
+        } catch (Exception e) {
+            log.debug("getPurchaseRequestForEdit() - Exception | purchaseRequestId: {}, error: {}", purchaseRequestId, e.getMessage(), e);
+            throw e;
+        }
+    }
+
+
+    /**
+     * Chuyển đổi PurchaseRequest entity -> UpdateRequestModel (input form sửa)
+     */
+    private UpdateRequestModel convertPurchaseRequestToUpdateRequestModel(PurchaseRequest pr) {
+        UpdateRequestModel updateModel = new UpdateRequestModel();
+        updateModel.setShippingAddressId(pr.getShippingAddress() != null ? pr.getShippingAddress().getId().toString() : null);
+
+        List<String> contactInfo = pr.getRequestItems().stream()
+                .filter(item -> item.getSubRequest() != null)
+                .map(item -> item.getSubRequest().getContactInfo())
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(Collections.emptyList());
+
+        updateModel.setContactInfo(contactInfo);
+
+        List<UpdateRequestItemModel> items = pr.getRequestItems().stream()
+                .map(item -> {
+                    UpdateRequestItemModel itemModel = new UpdateRequestItemModel();
+                    itemModel.setId(item.getId() != null ? item.getId().toString() : null);
+                    itemModel.setProductName(item.getProductName());
+                    itemModel.setProductURL(item.getProductURL());
+                    itemModel.setQuantity(item.getQuantity());
+                    itemModel.setDescription(item.getDescription());
+                    itemModel.setVariants(item.getVariants());
+                    itemModel.setImages(item.getImages());
+                    return itemModel;
+                })
+                .collect(Collectors.toList());
+        updateModel.setItems(items);
+
+        return updateModel;
+    }
+
 
 }
