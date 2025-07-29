@@ -128,18 +128,6 @@ public class PurchaseRequestController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/purchase-request-list")
-    @Operation(summary = "Tự động trả về khi người dùng bấm vào link")
-    @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<UpdateRequestModel> openRequestCorrection(@RequestParam("pathId") String purchaseRequestId) {
-        log.info("openRequestCorrection() - Start | purchaseRequestId: {}", purchaseRequestId);
-
-        UpdateRequestModel updateRequestModel = purchaseRequestService.openRequestCorrection(UUID.fromString(purchaseRequestId));
-
-        log.info("openRequestCorrection() - End | purchaseRequestId: {}", purchaseRequestId);
-        return ResponseEntity.ok(updateRequestModel);
-    }
-
     @GetMapping("/{id}/edit")
     public ResponseEntity<UpdateRequestModel> getPurchaseRequestForEdit(@PathVariable("id") UUID purchaseRequestId) {
         log.info("getPurchaseRequestForEdit() - Start | purchaseRequestId: {}", purchaseRequestId);

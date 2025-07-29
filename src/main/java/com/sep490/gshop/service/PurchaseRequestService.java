@@ -34,5 +34,4 @@ public interface PurchaseRequestService {
     MessageResponse requestCorrection(UUID purchaseRequestId, String correctionNote);
     UpdateRequestModel getPurchaseRequestForEdit(UUID purchaseRequestId);
 
-    UpdateRequestModel openRequestCorrection(UUID purchaseRequestId);
 }

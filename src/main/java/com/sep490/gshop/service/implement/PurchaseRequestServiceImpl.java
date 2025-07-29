@@ -452,6 +452,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                             })
                             .toList();
                     subDTO.setRequestItems(requestItemDTOs);
+                    subDTO.setStatus(entry.getKey().getStatus());
                     return subDTO;
                 })
                 .toList();
@@ -471,7 +472,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                     .orElseThrow(() -> AppException.builder().message("Không tìm thấy đơn hàng").code(404).build());
 
             if (purchaseRequest.getStatus().equals(PurchaseRequestStatus.CHECKING)) {
-                //purchaseRequest.setStatus(PurchaseRequestStatus.INSUFFICIENT);
+                purchaseRequest.setStatus(PurchaseRequestStatus.INSUFFICIENT);
                 purchaseRequest.setCorrectionNote(correctionNote);
                 purchaseRequestBusiness.update(purchaseRequest);
             } else {
@@ -508,36 +509,6 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
             throw e;
         }
     }
-
-    @Transactional
-    public UpdateRequestModel openRequestCorrection(UUID purchaseRequestId) {
-        log.debug("openRequestCorrection() - Start | purchaseRequestId: {}", purchaseRequestId);
-
-        PurchaseRequest pr = purchaseRequestBusiness.getById(purchaseRequestId)
-                .orElseThrow(() -> AppException.builder()
-                        .message("Không tìm thấy request")
-                        .code(404)
-                        .build());
-
-        UUID currentCustomerId = AuthUtils.getCurrentUserId();
-        if (currentCustomerId == null) {
-            throw AppException.builder().message("Vui lòng đăng nhập để tiếp tục").code(403).build();
-        }
-        if (!pr.getCustomer().getId().equals(currentCustomerId)) {
-            throw AppException.builder().message("Bạn không có quyền truy cập đơn hàng này").code(403).build();
-        }
-
-        if (pr.getStatus() == PurchaseRequestStatus.CHECKING) {
-            pr.setStatus(PurchaseRequestStatus.INSUFFICIENT);
-            purchaseRequestBusiness.update(pr);
-        }
-
-        UpdateRequestModel updateRequestModel = convertPurchaseRequestToUpdateRequestModel(pr);
-
-        log.debug("openRequestCorrection() - End | purchaseRequestId: {}", purchaseRequestId);
-        return updateRequestModel;
-    }
-
 
     public UpdateRequestModel getPurchaseRequestForEdit(UUID purchaseRequestId) {
         log.debug("getPurchaseRequestForEdit() - Start | purchaseRequestId: {}", purchaseRequestId);
