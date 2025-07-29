@@ -2,6 +2,8 @@ package com.sep490.gshop.controller;
 
 import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.common.enums.DeliveryCode;
+import com.sep490.gshop.payload.request.shipment.ShipmentStatusRequest;
+import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.service.ShippingService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,4 +34,11 @@ public class ShippingController {
         return ResponseEntity.ok(token);
     }
 
+    @PostMapping("webhook")
+    public ResponseEntity<MessageResponse> webhook(@RequestBody ShipmentStatusRequest payload) {
+        log.info("webhook() ShippingController Start | payload: {}", payload);
+        MessageResponse response = shippingService.handleWebhook(payload);
+        log.info("webhook() End | response: {}", response);
+        return ResponseEntity.ok(response);
+}
 }

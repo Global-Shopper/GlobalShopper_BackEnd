@@ -29,4 +29,9 @@ public class OrderBusinessImpl extends BaseBusinessImpl<Order, OrderRepository> 
     public Page<Order> getAssignedOrdersByAdminId(UUID id, Pageable pageable) {
         return repository.findByAdminId(id, pageable);
     }
+
+    @Override
+    public Order findByTrackingNumber(String trackingNumber, String deliveryCode) {
+        return repository.findByTrackingNumberAndShippingCarrier(trackingNumber, deliveryCode.toLowerCase());
+    }
 }
