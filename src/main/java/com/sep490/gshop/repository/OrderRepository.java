@@ -13,4 +13,5 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     Page<Order> findByCustomerId(UUID customerId, Pageable pageable);
     Page<Order> findByAdminIsNull(Pageable pageable);
     Page<Order> findByAdminId(UUID adminId, Pageable pageable);
+    Order findByTrackingNumberAndShippingCarrier(String trackingNumber, String shippingCarrier);
 }
