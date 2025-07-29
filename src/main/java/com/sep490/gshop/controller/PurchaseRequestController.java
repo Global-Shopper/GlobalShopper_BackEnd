@@ -11,6 +11,7 @@ import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.PurchaseRequestModel;
 import com.sep490.gshop.payload.response.PurchaseRequestResponse;
 import com.sep490.gshop.service.PurchaseRequestService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springdoc.core.converters.models.PageableAsQueryParam;
@@ -22,6 +23,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping(URLConstant.PURCHASE_REQUEST)
@@ -110,6 +112,30 @@ public class PurchaseRequestController {
         }
         log.info("getPurchaseRequestById() PurchaseRequestController end | purchaseRequest: {}", purchaseRequest);
         return ResponseEntity.ok(purchaseRequest);
+    }
+
+    @PostMapping("/{id}/request-correction")
+    @Operation(summary = "Yêu cầu cập nhật thông tin của request")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<MessageResponse> requestCorrection(
+            @PathVariable("id") UUID purchaseRequestId,
+            @RequestBody String correctionNote) {
+        log.info("requestCorrection() - Start | purchaseRequestId: {}, correctionNote: {}", purchaseRequestId, correctionNote);
+
+        MessageResponse response = purchaseRequestService.requestCorrection(purchaseRequestId, correctionNote);
+
+        log.info("requestCorrection() - End | purchaseRequestId: {}, success: {}", purchaseRequestId, response.isSuccess());
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/edit")
+    public ResponseEntity<UpdateRequestModel> getPurchaseRequestForEdit(@PathVariable("id") UUID purchaseRequestId) {
+        log.info("getPurchaseRequestForEdit() - Start | purchaseRequestId: {}", purchaseRequestId);
+
+        UpdateRequestModel updateRequest = purchaseRequestService.getPurchaseRequestForEdit(purchaseRequestId);
+
+        log.info("getPurchaseRequestForEdit() - End | purchaseRequestId: {}", purchaseRequestId);
+        return ResponseEntity.ok(updateRequest);
     }
 
 }
