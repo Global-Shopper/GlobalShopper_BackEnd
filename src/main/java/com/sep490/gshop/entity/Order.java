@@ -20,6 +20,7 @@ public class Order extends BaseEntity {
     // Order tracking information
     private String trackingNumber;
     private String orderCode;
+    private String shippingCarrier;
 
     //Store information
     @Convert(converter = StringListConverter.class)

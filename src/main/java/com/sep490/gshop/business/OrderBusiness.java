@@ -12,4 +12,6 @@ public interface OrderBusiness extends BaseBusiness<Order>{
     Page<Order> getUnassignedOrders(Pageable pageable);
 
     Page<Order> getAssignedOrdersByAdminId(UUID id, Pageable pageable);
+
+    Order findByTrackingNumber(String trackingNumber, String deliveryCode);
 }
