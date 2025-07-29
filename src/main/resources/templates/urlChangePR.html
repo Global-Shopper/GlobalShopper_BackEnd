@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8" />
-  <title>Chỉnh sửa thông tin request - Global Shopper</title>
+  <title>Yêu cầu bổ sung thông tin đơn hàng - Global Shopper</title>
   <style>
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
@@ -47,12 +47,13 @@
     .content {
       font-size: 1.13rem;
       margin-bottom: 24px;
+      line-height: 1.5;
     }
     .button-container {
       text-align: center;
       margin-bottom: 32px;
     }
-    .verify-button {
+    .action-button {
       background-color: #1976d2;
       color: white !important;
       font-size: 1.2rem;
@@ -64,7 +65,7 @@
       box-shadow: 0 4px 12px rgba(25, 118, 210, 0.4);
       transition: background-color 0.3s ease;
     }
-    .verify-button:hover {
+    .action-button:hover {
       background-color: #145ea8;
     }
     .footer {
@@ -88,7 +89,7 @@
       .header { flex-direction: column; }
       .logo { margin-right: 0; margin-bottom: 10px; }
       .title { font-size: 1.6rem;}
-      .verify-button { font-size: 1rem; padding: 12px 28px; }
+      .action-button { font-size: 1rem; padding: 12px 28px; }
     }
   </style>
 </head>
@@ -98,18 +99,22 @@
     <div class="logo">
       <img src="https://res.cloudinary.com/gshop/image/upload/v1752470184/IMG_2490_ydnotw.jpg" alt="Global Shopper Logo" />
     </div>
-    <div class="title">Yêu cầu sửa đổi thông tin đơn hàng</div>
+    <div class="title">Yêu cầu bổ sung thông tin đơn hàng</div>
   </div>
-  <div class="greeting">Xin chào <span th:text="${name}">Người dùng</span>,</div>
+  <div class="greeting">
+    Xin chào <span th:text="${name}">Khách hàng</span>,
+  </div>
   <div class="content">
-    Admin tại <b>Global Shopper</b> đã xem xét đơn hàng của bạn và phát hiện cần cập nhật thêm một số thông tin.<br/>
-    Vui lòng xem lại và cập nhật thông tin đơn hàng của bạn theo hướng dẫn dưới đây:
+    Chúng tôi vừa gửi một yêu cầu bổ sung thông tin liên quan đến đơn hàng của bạn tại <b>Global Shopper</b>.<br/>
+    Vui lòng nhấn nút bên dưới để xem chi tiết và cập nhật thông tin cần thiết.
   </div>
   <div class="button-container">
-    <a th:href="${verificationLink}" class="verify-button" target="_blank" rel="noopener noreferrer">Xác thực Email</a>
+    <a th:href="${editUrl}" class="action-button" target="_blank" rel="noopener noreferrer">
+      Bấm để bổ sung thông tin đơn hàng
+    </a>
   </div>
   <div class="content">
-    Nếu bạn không yêu cầu thay đổi email, vui lòng bỏ qua email này hoặc liên hệ bộ phận hỗ trợ của chúng tôi.
+    Nếu bạn không nhận được yêu cầu này, hoặc không có thay đổi gì, vui lòng bỏ qua email này hoặc liên hệ bộ phận hỗ trợ của chúng tôi.
   </div>
   <div class="footer">
     <div class="warning">Đây là email tự động, vui lòng không trả lời.</div>
