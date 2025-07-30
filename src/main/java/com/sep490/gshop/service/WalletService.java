@@ -10,6 +10,8 @@ import com.sep490.gshop.payload.response.MessageWithBankInformationResponse;
 import com.sep490.gshop.payload.response.MoneyChargeResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -24,4 +26,6 @@ public interface WalletService {
     MessageResponse uploadTransferBill(UUID withdrawTicketId, MultipartFile multipartFile);
 
     IPNResponse ipnCallback(HttpServletRequest request);
+
+    Page<WithdrawTicketDTO> getWithdrawTicketsByCurrentUser(Pageable pageable);
 }

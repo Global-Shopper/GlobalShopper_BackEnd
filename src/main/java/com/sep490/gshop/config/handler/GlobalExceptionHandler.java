@@ -25,7 +25,7 @@ public class GlobalExceptionHandler {
                 element.getMethodName(),
                 element.getFileName(),
                 element.getLineNumber(),
-                ex.getMessage(), ex);
+                ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorMessage(HttpStatus.BAD_REQUEST.value(),new Date(), ex.getMessage()));
     }
