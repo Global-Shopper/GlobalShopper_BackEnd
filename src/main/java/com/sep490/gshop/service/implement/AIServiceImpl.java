@@ -5,6 +5,7 @@ import com.sep490.gshop.payload.response.RawDataResponse;
 import com.sep490.gshop.service.AIService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -41,7 +42,11 @@ public class AIServiceImpl implements AIService {
         try {
             log.info("getRawData() AIServiceImpl start");
             String prompt = PromptConstant.PROMPT_RAW_DATA.formatted(link);
-            String output = chatClient.prompt().user(prompt).call().content();
+            ChatOptions chatOptions = ChatOptions.builder()
+                    .temperature(0D)
+                    .build();
+            String output = chatClient.prompt().options(chatOptions).user(prompt).call().content();
+
             if (output == null || output.isEmpty()) {
                 log.warn("getRawData() AIServiceImpl | No data returned from chat client");
                 return RawDataResponse.builder().build();
