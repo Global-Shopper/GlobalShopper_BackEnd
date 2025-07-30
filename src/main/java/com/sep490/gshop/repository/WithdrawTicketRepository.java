@@ -2,6 +2,8 @@ package com.sep490.gshop.repository;
 
 import com.sep490.gshop.common.enums.WithdrawStatus;
 import com.sep490.gshop.entity.WithdrawTicket;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,4 +13,6 @@ import java.util.UUID;
 public interface WithdrawTicketRepository extends JpaRepository<WithdrawTicket, UUID> {
     List<WithdrawTicket> getWithdrawTicketsByStatus(WithdrawStatus status);
     List<WithdrawTicket> getWithdrawTicketsByWalletId(UUID walletId);
+
+    Page<WithdrawTicket> findByWallet_Id(UUID walletId, Pageable pageable);
 }

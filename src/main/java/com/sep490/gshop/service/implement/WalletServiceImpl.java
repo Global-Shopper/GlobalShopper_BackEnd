@@ -22,6 +22,8 @@ import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -486,6 +488,26 @@ public class WalletServiceImpl implements WalletService {
                     .rspCode("99")
                     .message("Error processing IPN callback: " + e.getMessage())
                     .build();
+        }
+    }
+
+    @Override
+    public Page<WithdrawTicketDTO> getWithdrawTicketsByCurrentUser(Pageable pageable) {
+        log.debug("getWithdrawTicketsByCurrentUser() WalletServiceImpl Start");
+        try {
+            UUID currentUserId = AuthUtils.getCurrentUserId();
+            Customer currentUser = customerBusiness.getById(currentUserId)
+                    .orElseThrow(() -> AppException.builder()
+                            .message("Bạn cần đăng nhập để sử dụng dịch vụ")
+                            .code(401)
+                            .build());
+            Page<WithdrawTicketDTO> tickets = withdrawTicketBusiness.getAllByWalletId(currentUser.getWallet().getId(), pageable)
+                    .map(ticket -> modelMapper.map(ticket, WithdrawTicketDTO.class));
+            log.debug("getWithdrawTicketsByCurrentUser() WalletServiceImpl End | found {} tickets", tickets.getSize());
+            return tickets;
+        } catch (Exception e) {
+            log.error("getWithdrawTicketsByCurrentUser() WalletServiceImpl Exception | message: {}", e.getMessage());
+            throw e;
         }
     }
 

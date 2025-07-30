@@ -14,8 +14,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springdoc.core.converters.models.PageableAsQueryParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -117,6 +121,17 @@ public class WalletController {
             log.error("GET /api/refund-tickets/withdraw Exception | message: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
         }
+    }
+
+    @GetMapping("/withdraw-customer")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @PageableAsQueryParam
+    @Operation(summary = "Lấy tất cả các request rút tiền của người dùng hiện")
+    public ResponseEntity<Page<WithdrawTicketDTO>> getWithdrawTicketsByCurrentUser(@ParameterObject Pageable pageable) {
+        log.info("GET /api/withdraw-requests/withdraw-customer Start");
+        Page<WithdrawTicketDTO> tickets = walletService.getWithdrawTicketsByCurrentUser(pageable);
+        log.info("GET /api/withdraw-requests/withdraw-customer End | found {}", tickets.getSize());
+        return ResponseEntity.ok(tickets);
     }
 
     @PostMapping("/{withdrawTicketId}/process")
