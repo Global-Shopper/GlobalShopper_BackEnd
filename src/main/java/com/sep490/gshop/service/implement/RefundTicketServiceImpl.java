@@ -1,12 +1,16 @@
 package com.sep490.gshop.service.implement;
 
+import com.sep490.gshop.business.BankAccountBusiness;
 import com.sep490.gshop.business.OrderBusiness;
 import com.sep490.gshop.business.RefundTicketBusiness;
 import com.sep490.gshop.common.enums.RefundStatus;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.config.security.services.UserDetailsImpl;
+import com.sep490.gshop.entity.BankAccount;
 import com.sep490.gshop.entity.Order;
 import com.sep490.gshop.entity.RefundTicket;
+import com.sep490.gshop.entity.subclass.BankAccountSnapshot;
+import com.sep490.gshop.payload.dto.BankAccountDTO;
 import com.sep490.gshop.payload.dto.RefundTicketDTO;
 import com.sep490.gshop.payload.request.RefundTicketRequest;
 import com.sep490.gshop.service.RefundTicketService;
@@ -29,12 +33,14 @@ public class RefundTicketServiceImpl implements RefundTicketService {
     private final RefundTicketBusiness refundTicketBusiness;
     private final ModelMapper modelMapper;
     private final OrderBusiness orderBusiness;
+    private final BankAccountBusiness bankAccountBusiness;
 
     @Autowired
-    public RefundTicketServiceImpl(RefundTicketBusiness refundTicketBusiness, ModelMapper modelMapper, OrderBusiness orderBusiness) {
+    public RefundTicketServiceImpl(RefundTicketBusiness refundTicketBusiness, ModelMapper modelMapper, OrderBusiness orderBusiness, BankAccountBusiness bankAccountBusiness) {
         this.refundTicketBusiness = refundTicketBusiness;
         this.modelMapper = modelMapper;
         this.orderBusiness = orderBusiness;
+        this.bankAccountBusiness = bankAccountBusiness;
     }
 
     @Override
@@ -63,14 +69,23 @@ public class RefundTicketServiceImpl implements RefundTicketService {
     public RefundTicketDTO createNewRefundTicket(RefundTicketRequest refundTicket) {
         try {
             log.debug("createNewRefundTicket() Start | entity: {}", refundTicket);
-            var newRefundTicket = modelMapper.map(refundTicket, RefundTicket.class);
-            newRefundTicket.setId(UUID.randomUUID());
-            newRefundTicket.setStatus(RefundStatus.PENDING);
-            newRefundTicket.setOrder(orderBusiness.getById(UUID.fromString(refundTicket.getOrderId())).orElseThrow(() -> new AppException(404, "Order not found")));
-            log.debug("createNewRefundTicket() End | entity: {}", refundTicket);
-            return modelMapper.map(refundTicketBusiness.create(newRefundTicket), RefundTicketDTO.class);
+            Order order = orderBusiness.getById(UUID.fromString(refundTicket.getOrderId()))
+                    .orElseThrow(() -> new AppException(404, "Không tim thấy đơn hàng"));
+            BankAccount bankAccount = bankAccountBusiness.getById(UUID.fromString(refundTicket.getBankAccountId()))
+                    .orElseThrow(() -> new AppException(404, "Không tìm thấy tài khoản ngân hàng"));
+            BankAccountSnapshot bankAccountSnapshot = new BankAccountSnapshot(bankAccount);
+            RefundTicket newRefundTicket = RefundTicket.builder()
+                    .reason(refundTicket.getReason())
+                    .evidence(refundTicket.getEvidence())
+                    .status(RefundStatus.PENDING)
+                    .order(order)
+                    .bankAccount(bankAccountSnapshot)
+                    .build();
+            RefundTicketDTO refundTicketDTO = modelMapper.map(refundTicketBusiness.create(newRefundTicket), RefundTicketDTO.class);
+            log.debug("createNewRefundTicket() End | entity: {}", refundTicketDTO);
+            return refundTicketDTO;
         }catch (Exception e) {
-            log.error("createNewRefundTicket() Exception | entity: {}, message: {}", refundTicket, e.getMessage());
+            log.error("createNewRefundTicket() RefundTicketServiceImpl Exception | message: {}", e.getMessage());
             throw e;
         }
     }

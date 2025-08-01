@@ -8,6 +8,7 @@ import com.sep490.gshop.payload.request.RefundTicketRequest;
 import com.sep490.gshop.service.RefundTicketService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.log4j.Log4j2;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springdoc.core.converters.models.PageableAsQueryParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -52,11 +53,11 @@ public class RefundTicketController {
     @PageableAsQueryParam
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
     public ResponseEntity<Page<RefundTicketDTO>> getAllRefundTickets(
-            @PageableDefault Pageable pageable,
+            @ParameterObject Pageable pageable,
             @RequestParam(required = false) RefundStatus status) {
         log.info("getAllRefundTickets() RefundTicketController Start");
         Page<RefundTicketDTO> list = refundTicketService.getAllRefundTickets(pageable, status);
-        log.info("getAllRefundTickets() RefundTicketController End | size: {}", list.getSize());
+        log.info("getAllRefundTickets() RefundTicketController End | total element : {}", list.getTotalElements());
         return ResponseEntity.ok(list);
     }
 

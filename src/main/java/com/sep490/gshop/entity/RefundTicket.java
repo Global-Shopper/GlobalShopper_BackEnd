@@ -4,6 +4,7 @@ import com.sep490.gshop.common.enums.RefundStatus;
 import com.sep490.gshop.entity.subclass.BankAccountSnapshot;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -14,8 +15,11 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class RefundTicket extends BaseEntity {
     @ElementCollection
+    @CollectionTable(name = "refund_ticket_evidence", joinColumns = @JoinColumn(name = "refund_ticket_id"))
+    @Column(name = "evidence", columnDefinition = "TEXT")
     private List<String> evidence;
     private String reason;
     private double amount;
