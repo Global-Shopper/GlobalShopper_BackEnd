@@ -1,5 +1,6 @@
 package com.sep490.gshop.payload.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -16,5 +17,6 @@ public class BankAccountUpdateRequest {
     private String accountHolderName;
     @Pattern(regexp = "^(0[1-9]|1[0-2])/\\d{2}$", message = "Ngày hết hạn phải đúng định dạng MM/YY, ví dụ 07/25")
     private String expirationDate;
+    @JsonProperty(value = "default")
     private Boolean isDefault;
 }
