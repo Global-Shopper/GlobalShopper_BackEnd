@@ -23,7 +23,7 @@ public class RefundTicket extends BaseEntity {
     private RefundStatus status;
     private BankAccountSnapshot bankAccount;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
