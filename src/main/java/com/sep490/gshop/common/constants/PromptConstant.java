@@ -10,11 +10,11 @@ public class PromptConstant {
     Description: [Mô tả sản phẩm ngắn gọn, súc tích]
     Variant: [Danh sách các thuộc tính phân loại sản phẩm nếu có]
     Lưu ý:
-    - Tên sản phẩm và mô tả phải được viết bằng tiếng Việt.
+    - Tên sản phẩm, mô tả và phân loại của sản phẩm phải được viết bằng tiếng Việt.
     - Nếu không có hình ảnh, hãy để phần Images trống.
     - Không sử dụng bất kỳ ký tự đặc biệt nào khác ngoài dấu hai chấm (:) để phân tách các trường.
     - Không sử dụng bất kỳ ký tự đặc biệt nào khác để bao quanh kết quả.
-    - Mỗi Variant phải được phân tách bằng dấu phẩy (;) và chỉ cần tên của thuộc tính phân loại.
+    - Mỗi Variant phải được phân tách bằng dấu chấm phẩy (;) và chỉ cần tên của thuộc tính phân loại.
     - Nếu không có thuộc tính phân loại, hãy để phần Variant trống.
     - Không sử dụng bất kỳ ký tự đặc biệt nào
     Chỉ trả về kết quả đúng theo định dạng trên, không thêm giải thích.
