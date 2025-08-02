@@ -1,7 +1,6 @@
 package com.sep490.gshop.entity;
 
 import com.sep490.gshop.common.enums.RefundStatus;
-import com.sep490.gshop.entity.subclass.BankAccountSnapshot;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -28,20 +27,11 @@ public class RefundTicket extends BaseEntity {
     @DecimalMin(value = "0.0", inclusive = true)
     @DecimalMax(value = "1.0", inclusive = true)
     private Double refundRate;
+    private String rejectionReason;
     @Enumerated(EnumType.STRING)
     private RefundStatus status;
-    private BankAccountSnapshot bankAccount;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
-
-
-    public RefundTicket(List<String> evidence, String reason, double amount, RefundStatus status, BankAccountSnapshot bankAccount){
-        this.evidence = evidence;
-        this.reason = reason;
-        this.amount = amount;
-        this.status = status;
-        this.bankAccount = bankAccount;
-    }
 }

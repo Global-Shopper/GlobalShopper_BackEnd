@@ -7,10 +7,10 @@ import com.sep490.gshop.common.enums.TransactionType;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.config.security.services.UserDetailsImpl;
 import com.sep490.gshop.entity.*;
-import com.sep490.gshop.entity.subclass.BankAccountSnapshot;
 import com.sep490.gshop.payload.dto.RefundTicketDTO;
 import com.sep490.gshop.payload.request.refund.ProcessRefundModel;
 import com.sep490.gshop.payload.request.refund.RefundTicketRequest;
+import com.sep490.gshop.payload.request.refund.RejectRefundModel;
 import com.sep490.gshop.service.RefundTicketService;
 import com.sep490.gshop.utils.AuthUtils;
 import com.sep490.gshop.utils.CalculationUtil;
@@ -33,60 +33,32 @@ public class RefundTicketServiceImpl implements RefundTicketService {
     private final RefundTicketBusiness refundTicketBusiness;
     private final ModelMapper modelMapper;
     private final OrderBusiness orderBusiness;
-    private final BankAccountBusiness bankAccountBusiness;
     private final WalletBusiness walletBusiness;
     private final TransactionBusiness transactionBusiness;
 
     @Autowired
-    public RefundTicketServiceImpl(RefundTicketBusiness refundTicketBusiness, ModelMapper modelMapper, OrderBusiness orderBusiness, BankAccountBusiness bankAccountBusiness, WalletBusiness walletBusiness, TransactionBusiness transactionBusiness) {
+    public RefundTicketServiceImpl(RefundTicketBusiness refundTicketBusiness, ModelMapper modelMapper, OrderBusiness orderBusiness, WalletBusiness walletBusiness, TransactionBusiness transactionBusiness) {
         this.refundTicketBusiness = refundTicketBusiness;
         this.modelMapper = modelMapper;
         this.orderBusiness = orderBusiness;
-        this.bankAccountBusiness = bankAccountBusiness;
         this.walletBusiness = walletBusiness;
         this.transactionBusiness = transactionBusiness;
     }
 
     @Override
-    public RefundTicketDTO createNewRefundTicketAssignToOrder(RefundTicketRequest refundTicket, UUID orderId) {
-        try {
-           Optional<Order> orderExist = orderBusiness.getById(orderId);
-           if (orderExist.isEmpty()) {
-               new EntityNotFoundException("Order not found");
-           }
-           if(refundTicketBusiness.getRefundTicketByOrderId(orderId) != null) {
-               throw new EntityNotFoundException("Refund ticket already exist");
-           }
-           RefundTicket newRefundTicket = modelMapper.map(refundTicket, RefundTicket.class);
-           newRefundTicket.setId(UUID.randomUUID());
-           newRefundTicket.setOrder(orderExist.orElseThrow(() -> new AppException(404, "Order not found")));
-           newRefundTicket.setStatus(RefundStatus.PENDING);
-           RefundTicketDTO createdTicket = modelMapper.map(refundTicketBusiness.create(newRefundTicket), RefundTicketDTO.class);
-           return createdTicket;
-        } catch (Exception e) {
-            log.error("createNewRefundTicket() Exception | entity: {}, message: {}", refundTicket, e.getMessage());
-            throw e;
-        }
-    }
-
-    @Override
     public RefundTicketDTO createNewRefundTicket(RefundTicketRequest refundTicket) {
         try {
-            log.debug("createNewRefundTicket() Start | entity: {}", refundTicket);
+            log.debug("createNewRefundTicket() RefundTicketServiceImpl Start | entity: {}", refundTicket);
             Order order = orderBusiness.getById(UUID.fromString(refundTicket.getOrderId()))
                     .orElseThrow(() -> new AppException(404, "Không tim thấy đơn hàng"));
-            BankAccount bankAccount = bankAccountBusiness.getById(UUID.fromString(refundTicket.getBankAccountId()))
-                    .orElseThrow(() -> new AppException(404, "Không tìm thấy tài khoản ngân hàng"));
-            BankAccountSnapshot bankAccountSnapshot = new BankAccountSnapshot(bankAccount);
             RefundTicket newRefundTicket = RefundTicket.builder()
                     .reason(refundTicket.getReason())
                     .evidence(refundTicket.getEvidence())
                     .status(RefundStatus.PENDING)
                     .order(order)
-                    .bankAccount(bankAccountSnapshot)
                     .build();
             RefundTicketDTO refundTicketDTO = modelMapper.map(refundTicketBusiness.create(newRefundTicket), RefundTicketDTO.class);
-            log.debug("createNewRefundTicket() End | entity: {}", refundTicketDTO);
+            log.debug("createNewRefundTicket() RefundTicketServiceImpl End | entity: {}", refundTicketDTO);
             return refundTicketDTO;
         }catch (Exception e) {
             log.error("createNewRefundTicket() RefundTicketServiceImpl Exception | message: {}", e.getMessage());
@@ -98,14 +70,14 @@ public class RefundTicketServiceImpl implements RefundTicketService {
     @Override
     public RefundTicketDTO getRefundTicketById(UUID id) {
         try {
-            log.debug("getRefundTicketById() Start | id: {}", id);
+            log.debug("getRefundTicketById() RefundTicketServiceImpl Start | id: {}", id);
             var entityFound = refundTicketBusiness.getById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("Refund ticket not found"));
+                    .orElseThrow(() -> new AppException(404, "Không tìm thấy yêu cầu hoàn tiền với id: " + id));
             RefundTicketDTO refundDTO = modelMapper.map(entityFound, RefundTicketDTO.class);
             log.debug("getRefundTicketById() End | RefundTicketDTO: {}", refundDTO);
             return refundDTO;
         } catch (Exception e) {
-            log.error("createNewRefundTicket() Exception | id: {}, message: {}", id, e.getMessage());
+            log.error("createNewRefundTicket() RefundTicketServiceImpl Exception | id: {}, message: {}", id, e.getMessage());
             throw e;
         }
     }
@@ -164,7 +136,7 @@ public class RefundTicketServiceImpl implements RefundTicketService {
     @Transactional
     public RefundTicketDTO processRefundTicket(ProcessRefundModel processRefundModel, String ticketId) {
         try {
-            log.debug("processRefundTicket() Start | ticketId: {}, processRefundModel: {}", ticketId, processRefundModel);
+            log.debug("processRefundTicket() RefundTicketServiceImpl Start | ticketId: {}, processRefundModel: {}", ticketId, processRefundModel);
             RefundTicket refundTicket = refundTicketBusiness.getById(UUID.fromString(ticketId))
                     .orElseThrow(() -> new EntityNotFoundException("Refund ticket not found"));
             Order order = refundTicket.getOrder();
@@ -188,10 +160,27 @@ public class RefundTicketServiceImpl implements RefundTicketService {
             wallet.setBalance(wallet.getBalance() + amount);
             walletBusiness.update(wallet);
             RefundTicketDTO dto = modelMapper.map(refundTicketBusiness.update(refundTicket), RefundTicketDTO.class);
-            log.debug("processRefundTicket() End | Updated RefundTicketDTO: {}", dto);
+            log.debug("processRefundTicket() RefundTicketServiceImpl End | Updated RefundTicketDTO: {}", dto);
             return dto;
         } catch (Exception e) {
-            log.error("processRefundTicket() Exception | message: {}", e.getMessage());
+            log.error("processRefundTicket() RefundTicketServiceImpl Exception | message: {}", e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
+    public RefundTicketDTO rejectRefundTicket(String ticketId, RejectRefundModel rejectRefundModel) {
+        try {
+            log.debug("rejectRefundTicket() RefundTicketServiceImpl Start | ticketId: {}, rejectRefundModel: {}", ticketId, rejectRefundModel);
+            RefundTicket refundTicket = refundTicketBusiness.getById(UUID.fromString(ticketId))
+                    .orElseThrow(() -> new AppException(404,"Không tìm thấy yêu cầu hoàn tiền với id: " + ticketId));
+            refundTicket.setStatus(RefundStatus.REJECTED);
+            refundTicket.setRejectionReason(rejectRefundModel.getRejectionReason());
+            RefundTicketDTO dto = modelMapper.map(refundTicketBusiness.update(refundTicket), RefundTicketDTO.class);
+            log.debug("rejectRefundTicket() RefundTicketServiceImpl End | Updated RefundTicketDTO: {}", dto);
+            return dto;
+        } catch (Exception e) {
+            log.error("rejectRefundTicket() RefundTicketServiceImpl Exception | message: {}", e.getMessage());
             throw e;
         }
     }
