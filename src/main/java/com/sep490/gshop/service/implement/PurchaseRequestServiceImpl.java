@@ -411,6 +411,9 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
 
     private PurchaseRequestModel convertToPurchaseRequestModel(PurchaseRequest purchaseRequest) {
         List<RequestItem> allItems = purchaseRequest.getRequestItems();
+        long totalItemsWithQuotation = allItems.stream()
+                .filter(item -> item.getQuotationDetail() != null)
+                .count();
         // RequestItems without SubRequest
         List<RequestItemDTO> itemsWithoutSub = allItems.stream()
                 .filter(item -> item.getSubRequest() == null)
@@ -420,6 +423,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                     var quotationDetail = enrichQuotationDetailDto(item.getQuotationDetail());
                     if(quotationDetail != null) {
                         dto.setQuotationDetail(quotationDetail);
+
                     }
                     return dto;
                 })
@@ -429,7 +433,6 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
         Map<SubRequest, List<RequestItem>> subRequestMap = allItems.stream()
                 .filter(item -> item.getSubRequest() != null)
                 .collect(Collectors.groupingBy(RequestItem::getSubRequest));
-        long count = subRequestMap.entrySet().stream().filter(sub -> sub.getKey().getQuotation() != null).count();
 
         List<SubRequestDTO> subRequestModels = subRequestMap.entrySet().stream()
                 .map(entry -> {
@@ -460,8 +463,8 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
         PurchaseRequestModel response = modelMapper.map(purchaseRequest, PurchaseRequestModel.class);
         response.setRequestItems(itemsWithoutSub);
         response.setSubRequests(subRequestModels);
-        response.setQuotationCount((int)count);
-        response.setTotalSubRequests(subRequestModels.size());
+        response.setItemsHasQuotation((int)totalItemsWithQuotation);
+        response.setTotalItems(allItems.size());
         return response;
     }
 
