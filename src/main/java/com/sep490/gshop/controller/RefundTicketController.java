@@ -1,16 +1,22 @@
 package com.sep490.gshop.controller;
 
 import com.sep490.gshop.common.constants.URLConstant;
+import com.sep490.gshop.common.enums.RefundStatus;
 import com.sep490.gshop.payload.dto.RefundTicketDTO;
-import com.sep490.gshop.payload.request.RefundTicketRequest;
+import com.sep490.gshop.payload.request.refund.ProcessRefundModel;
+import com.sep490.gshop.payload.request.refund.RefundTicketRequest;
 import com.sep490.gshop.service.RefundTicketService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.log4j.Log4j2;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springdoc.core.converters.models.PageableAsQueryParam;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -34,18 +40,22 @@ public class RefundTicketController {
     @PostMapping
     @Operation(summary = "create new refund ticket")
     public ResponseEntity<RefundTicketDTO> createRefundTicket(@RequestBody RefundTicketRequest refundTicketRequest) {
-        log.info("createRefundTicket() Start | request: {}", refundTicketRequest);
+        log.info("createRefundTicket() RefundTicketController Start | request: {}", refundTicketRequest);
         RefundTicketDTO dto = refundTicketService.createNewRefundTicket(refundTicketRequest);
-        log.info("createRefundTicket() End | dto: {}", dto);
+        log.info("createRefundTicket() RefundTicketController End | dto: {}", dto);
         return ResponseEntity.ok(dto);
     }
 
     @GetMapping
     @Operation(summary = "get all refund tickets")
-    public ResponseEntity<List<RefundTicketDTO>> getAllRefundTickets() {
-        log.info("getAllRefundTickets() Start");
-        List<RefundTicketDTO> list = refundTicketService.getAllRefundTickets();
-        log.info("getAllRefundTickets() End | size: {}", list.size());
+    @PageableAsQueryParam
+    @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
+    public ResponseEntity<Page<RefundTicketDTO>> getAllRefundTickets(
+            @ParameterObject Pageable pageable,
+            @RequestParam(required = false) RefundStatus status) {
+        log.info("getAllRefundTickets() RefundTicketController Start");
+        Page<RefundTicketDTO> list = refundTicketService.getAllRefundTickets(pageable, status);
+        log.info("getAllRefundTickets() RefundTicketController End | total element : {}", list.getTotalElements());
         return ResponseEntity.ok(list);
     }
 
@@ -54,19 +64,29 @@ public class RefundTicketController {
     public ResponseEntity<RefundTicketDTO> updateRefundTicket(
             @PathVariable UUID id,
             @RequestBody RefundTicketRequest request) {
-        log.info("updateRefundTicket() Start | id: {}, request: {}", id, request);
+        log.info("updateRefundTicket() RefundTicketController Start | id: {}, request: {}", id, request);
         RefundTicketDTO dto = refundTicketService.updateRefundTicket(id, request);
-        log.info("updateRefundTicket() End | dto: {}", dto);
+        log.info("updateRefundTicket() RefundTicketController End | dto: {}", dto);
         return ResponseEntity.ok(dto);
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Remove specific refund ticket")
     public ResponseEntity<Void> deleteRefundTicket(@PathVariable UUID id) {
-        log.info("deleteRefundTicket() Start | id: {}", id);
+        log.info("deleteRefundTicket() RefundTicketController Start | id: {}", id);
         refundTicketService.deleteRefundTicket(id);
-        log.info("deleteRefundTicket() End | id: {}", id);
+        log.info("deleteRefundTicket() RefundTicketController End | id: {}", id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/process/{ticketId}")
+    @Operation(summary = "Process refund ticket")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<RefundTicketDTO> processRefundTicket(@RequestBody ProcessRefundModel payload, @PathVariable String ticketId) {
+        log.info("processRefundTicket() RefundTicketController Start | request: {}", payload);
+        RefundTicketDTO dto = refundTicketService.processRefundTicket(payload, ticketId);
+        log.info("processRefundTicket() RefundTicketController End | dto: {}", dto);
+        return ResponseEntity.ok(dto);
     }
 
 
