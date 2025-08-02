@@ -2,9 +2,9 @@ package com.sep490.gshop.controller;
 
 import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.common.enums.RefundStatus;
-import com.sep490.gshop.entity.RefundTicket;
 import com.sep490.gshop.payload.dto.RefundTicketDTO;
-import com.sep490.gshop.payload.request.RefundTicketRequest;
+import com.sep490.gshop.payload.request.refund.ProcessRefundModel;
+import com.sep490.gshop.payload.request.refund.RefundTicketRequest;
 import com.sep490.gshop.service.RefundTicketService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.log4j.Log4j2;
@@ -13,12 +13,10 @@ import org.springdoc.core.converters.models.PageableAsQueryParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -79,6 +77,16 @@ public class RefundTicketController {
         refundTicketService.deleteRefundTicket(id);
         log.info("deleteRefundTicket() RefundTicketController End | id: {}", id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/process/{ticketId}")
+    @Operation(summary = "Process refund ticket")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<RefundTicketDTO> processRefundTicket(@RequestBody ProcessRefundModel payload, @PathVariable String ticketId) {
+        log.info("processRefundTicket() RefundTicketController Start | request: {}", payload);
+        RefundTicketDTO dto = refundTicketService.processRefundTicket(payload, ticketId);
+        log.info("processRefundTicket() RefundTicketController End | dto: {}", dto);
+        return ResponseEntity.ok(dto);
     }
 
 

@@ -3,6 +3,8 @@ package com.sep490.gshop.entity;
 import com.sep490.gshop.common.enums.RefundStatus;
 import com.sep490.gshop.entity.subclass.BankAccountSnapshot;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,6 +25,9 @@ public class RefundTicket extends BaseEntity {
     private List<String> evidence;
     private String reason;
     private double amount;
+    @DecimalMin(value = "0.0", inclusive = true)
+    @DecimalMax(value = "1.0", inclusive = true)
+    private Double refundRate;
     @Enumerated(EnumType.STRING)
     private RefundStatus status;
     private BankAccountSnapshot bankAccount;
