@@ -3,12 +3,11 @@ package com.sep490.gshop.controller;
 import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.payload.response.RawDataResponse;
 import com.sep490.gshop.service.AIService;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import javax.validation.constraints.NotNull;
 
 @RestController
 @RequestMapping(URLConstant.AI)

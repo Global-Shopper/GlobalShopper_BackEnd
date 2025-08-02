@@ -168,4 +168,8 @@ public class CalculationUtil {
                 })
                 .sum();
     }
+
+    public static double roundToNearestThousand(double amount) {
+        return Math.round(amount / 1000.0) * 1000.0;
+    }
 }
