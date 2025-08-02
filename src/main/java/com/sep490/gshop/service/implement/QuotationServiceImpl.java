@@ -157,6 +157,7 @@ public class QuotationServiceImpl implements QuotationService {
         QuotationCalculatedDTO dto = new QuotationCalculatedDTO();
         dto.setDetails(detailDTOs);
         dto.setSubRequestId(input.getSubRequestId());
+        total += input.getShippingEstimate();
         dto.setTotalPriceEstimate(total);
         dto.setShippingEstimate(input.getShippingEstimate());
         dto.setNote(input.getNote());
@@ -288,6 +289,7 @@ public class QuotationServiceImpl implements QuotationService {
             QuotationDTO dto = modelMapper.map(quotation, QuotationDTO.class);
             dto.setDetails(detailDTOs);
             dto.setSubRequestId(input.getSubRequestId());
+            total += input.getShippingEstimate();
             dto.setTotalPriceEstimate(total);
             dto.setShippingEstimate(input.getShippingEstimate());
 
