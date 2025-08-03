@@ -1,6 +1,7 @@
 package com.sep490.gshop.controller;
 
 import com.sep490.gshop.common.constants.URLConstant;
+import com.sep490.gshop.common.enums.OrderStatus;
 import com.sep490.gshop.payload.dto.OrderDTO;
 import com.sep490.gshop.payload.request.OrderRequest;
 import com.sep490.gshop.payload.request.order.CheckOutModel;
@@ -64,9 +65,11 @@ public class OrderController {
     @Operation(summary = "Lấy tất cả đơn hàng")
     @PageableAsQueryParam
     @GetMapping
-    public ResponseEntity<Page<OrderDTO>> getAllOrders(@ParameterObject Pageable pageable, @RequestParam(name = "type", defaultValue = "unassigned") String type) {
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
+    public ResponseEntity<Page<OrderDTO>> getAllOrders(@ParameterObject Pageable pageable,
+                                                       @RequestParam(required = false) OrderStatus status) {
         log.info("getAllOrders() Start");
-        Page<OrderDTO> list = orderService.getAllOrders(pageable, type);
+        Page<OrderDTO> list = orderService.getAllOrders(pageable, status);
         log.info("getAllOrders() End | size: {}", list.getSize());
         return ResponseEntity.ok(list);
     }
