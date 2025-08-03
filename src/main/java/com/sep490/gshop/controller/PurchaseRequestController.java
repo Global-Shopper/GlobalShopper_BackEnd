@@ -1,6 +1,7 @@
 package com.sep490.gshop.controller;
 
 import com.sep490.gshop.common.constants.URLConstant;
+import com.sep490.gshop.common.enums.PurchaseRequestStatus;
 import com.sep490.gshop.payload.dto.RequestItemDTO;
 import com.sep490.gshop.payload.dto.SubRequestDTO;
 import com.sep490.gshop.payload.request.purchaserequest.OfflineRequest;
@@ -14,9 +15,11 @@ import com.sep490.gshop.service.PurchaseRequestService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springdoc.core.converters.models.PageableAsQueryParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -69,12 +72,11 @@ public class PurchaseRequestController {
     @PageableAsQueryParam
     @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
     public ResponseEntity<Page<PurchaseRequestModel>> getPurchaseRequests(
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size,
-            @RequestParam(value = "direction", defaultValue = "DESC") Sort.Direction direction,
-            @RequestParam(value = "type", defaultValue = "unassigned") String type) {
-        log.info("getAllPurchaseRequests() PurchaseRequestController start | page: {}, size: {}", page, size);
-        Page<PurchaseRequestModel> purchaseRequestDTO = purchaseRequestService.getPurchaseRequests(page, size, direction, type);
+            @ParameterObject Pageable pageable,
+            @RequestParam(required = false) PurchaseRequestStatus status,
+            @RequestParam(value = "type", defaultValue = "unassigned", required = false) String type) {
+        log.info("getAllPurchaseRequests() PurchaseRequestController start | status: {}, type: {}", status, type);
+        Page<PurchaseRequestModel> purchaseRequestDTO = purchaseRequestService.getPurchaseRequests(status,type, pageable);
         log.info("getAllPurchaseRequests() PurchaseRequestController end | purchaseRequestDTO: {}", purchaseRequestDTO);
         return ResponseEntity.ok(purchaseRequestDTO);
     }

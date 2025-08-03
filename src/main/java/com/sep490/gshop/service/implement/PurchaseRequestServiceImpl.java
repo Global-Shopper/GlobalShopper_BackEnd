@@ -196,21 +196,20 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
         }
     }
 
+
     @Override
-    public Page<PurchaseRequestModel> getPurchaseRequests(int page, int size, Sort.Direction direction, String type) {
+    public Page<PurchaseRequestModel> getPurchaseRequests(PurchaseRequestStatus status, String type, Pageable pageable) {
         try {
-            log.debug("getPurchaseRequests() start | page: {}, size: {}, type: {}", page, size, type);
-            Sort sort = Sort.by(direction, "createdAt");
-            Pageable pageable = PageRequest.of(page, size,sort);
+            log.debug("getPurchaseRequests() start | status: {}, type: {}", status, type);
             UserRole role = AuthUtils.getCurrentUser().getRole();
             UUID userId = AuthUtils.getCurrentUserId();
             Page<PurchaseRequest> purchaseRequests = null;
             if (UserRole.CUSTOMER.equals(role)) {
-                purchaseRequests = purchaseRequestBusiness.findByCustomerId(userId, pageable);
+                purchaseRequests = purchaseRequestBusiness.findByCustomerId(userId, status, pageable);
             } else if (UserRole.ADMIN.equals(role)) {
                 purchaseRequests = switch (type != null ? type.toLowerCase() : "") {
-                    case "unassigned" -> purchaseRequestBusiness.findUnassignedRequests(pageable);
-                    case "assigned" -> purchaseRequestBusiness.findAssignedRequestsByAdminId(userId, pageable);
+                    case "unassigned" -> purchaseRequestBusiness.findUnassignedRequests(pageable, status);
+                    case "assigned" -> purchaseRequestBusiness.findAssignedRequestsByAdminId(userId, status, pageable);
                     default ->
                             throw new AppException(HttpStatus.BAD_REQUEST.value(), "Sai loại Yêu cầu. Sử dụng 'Chưa được nhận' or 'Đã được nhận'.");
                 };
