@@ -52,4 +52,8 @@ public class Order extends BaseEntity {
     @Embedded
     private AddressSnapshot shippingAddress;
 
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OrderBy("createdAt DESC")
+    private List<OrderHistory> history;
+
 }
