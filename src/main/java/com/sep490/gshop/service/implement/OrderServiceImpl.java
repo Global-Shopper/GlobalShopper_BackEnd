@@ -134,26 +134,18 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Page<OrderDTO> getAllOrders(Pageable pageable, String type) {
+    public Page<OrderDTO> getAllOrders(Pageable pageable, OrderStatus status) {
         log.debug("getAllOrders() OrderServiceImpl Start");
         try {
             UserDetailsImpl userDetails = AuthUtils.getCurrentUser();
             if (UserRole.CUSTOMER.equals(userDetails.getRole())) {
-                Page<Order> orders = orderBusiness.getOrdersByCustomerId(userDetails.getId(), pageable);
+                Page<Order> orders = orderBusiness.getOrdersByCustomerId(userDetails.getId(), status, pageable);
                 log.debug("getAllOrders() OrderServiceImpl Customer End | size: {}", orders.getSize());
                 return orders.map(order -> modelMapper.map(order, OrderDTO.class));
             } else if (UserRole.ADMIN.equals(userDetails.getRole())) {
-                if ("unassigned".equalsIgnoreCase(type)) {
-                    Page<Order> orders = orderBusiness.getUnassignedOrders(pageable);
-                    log.debug("getAllOrders() OrderServiceImpl unassigned End | size: {}", orders.getSize());
-                    return orders.map(order -> modelMapper.map(order, OrderDTO.class));
-                } else if ("assigned".equalsIgnoreCase(type)) {
-                    Page<Order> orders = orderBusiness.getAssignedOrdersByAdminId(userDetails.getId(), pageable);
-                    log.debug("getAllOrders() OrderServiceImpl assigned End | size: {}", orders.getSize());
-                    return orders.map(order -> modelMapper.map(order, OrderDTO.class));
-                } else {
-                    throw new AppException(400, "Loại order không hợp lệ");
-                }
+                Page<Order> orders = orderBusiness.getAssignedOrdersByAdminId(userDetails.getId(), status, pageable);
+                log.debug("getAllOrders() OrderServiceImpl Admin End | size: {}", orders.getSize());
+                return orders.map(order -> modelMapper.map(order, OrderDTO.class));
             } else {
                 log.error("getAllOrders() OrderServiceImpl Unauthorized access | userId: {}, role: {}", userDetails.getId(), userDetails.getRole());
                 throw new AppException(403, "Bạn không có quyền truy cập vào danh sách đơn hàng");

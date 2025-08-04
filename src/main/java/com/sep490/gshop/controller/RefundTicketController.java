@@ -5,6 +5,7 @@ import com.sep490.gshop.common.enums.RefundStatus;
 import com.sep490.gshop.payload.dto.RefundTicketDTO;
 import com.sep490.gshop.payload.request.refund.ProcessRefundModel;
 import com.sep490.gshop.payload.request.refund.RefundTicketRequest;
+import com.sep490.gshop.payload.request.refund.RejectRefundModel;
 import com.sep490.gshop.service.RefundTicketService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.log4j.Log4j2;
@@ -86,6 +87,16 @@ public class RefundTicketController {
         log.info("processRefundTicket() RefundTicketController Start | request: {}", payload);
         RefundTicketDTO dto = refundTicketService.processRefundTicket(payload, ticketId);
         log.info("processRefundTicket() RefundTicketController End | dto: {}", dto);
+        return ResponseEntity.ok(dto);
+    }
+
+    @PostMapping("/reject/{ticketId}")
+    @Operation(summary = "Reject refund ticket")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<RefundTicketDTO> rejectRefundTicket(@PathVariable String ticketId, @RequestBody RejectRefundModel payload) {
+        log.info("rejectRefundTicket() RefundTicketController Start | ticketId: {}, payload: {}", ticketId, payload);
+        RefundTicketDTO dto = refundTicketService.rejectRefundTicket(ticketId, payload);
+        log.info("rejectRefundTicket() RefundTicketController End | ticketId: {}", ticketId);
         return ResponseEntity.ok(dto);
     }
 
