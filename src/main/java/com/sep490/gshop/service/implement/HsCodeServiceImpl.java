@@ -6,6 +6,7 @@ import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.HsCode;
 import com.sep490.gshop.entity.TaxRate;
 import com.sep490.gshop.payload.dto.HsCodeDTO;
+import com.sep490.gshop.payload.dto.HsCodeSearchDTO;
 import com.sep490.gshop.payload.dto.TaxRateSnapshotDTO;
 import com.sep490.gshop.payload.request.HsCodeRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
@@ -34,26 +35,32 @@ public class HsCodeServiceImpl implements HsCodeService {
         this.taxRateBusiness = taxRateBusiness;
     }
 
-    @Override
-    public Page<HsCodeDTO> findAll(String description, int page, int size, Sort.Direction direction) {
-        log.debug("findAll() Start | description: {}", description);
+    public Page<HsCodeSearchDTO> findAll(String hsCode, String description, int page, int size, Sort.Direction direction) {
+        log.debug("findAll() Start | hsCode: {}, description", hsCode, description);
         try {
             Sort sort = Sort.by(direction, "hsCode");
-            Pageable pageable = PageRequest.of(page, size, sort);
+            Pageable pageable = PageRequest.of(page, size, Sort.by(direction, "hs_code"));
+
+
+            String hsCodeSearch = (hsCode != null && !hsCode.trim().isEmpty()) ? hsCode.trim() : null;
+            String descriptionSearch = (description != null && !description.trim().isEmpty()) ? description.trim() : null;
 
             Page<HsCode> pageData = hsCodeBusiness.searchByKeyword(
-                    description != null ? description.trim() : null,
+                    hsCodeSearch,
+                    descriptionSearch,
                     pageable
             );
 
             log.debug("findAll() End | found: {}", pageData.getTotalElements());
 
-            return pageData.map(hs -> modelMapper.map(hs, HsCodeDTO.class));
+            return pageData.map(hs -> modelMapper.map(hs, HsCodeSearchDTO.class));
         } catch (Exception e) {
             log.error("findAll() Exception: {}", e.getMessage());
             throw e;
         }
     }
+
+
 
     @Transactional
     public HsCodeDTO createHsCodeIncludeTaxes(@Valid HsCodeRequest hsCodeRequest) {

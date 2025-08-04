@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,7 +24,8 @@ public class TaxRateController  {
     private final TaxRateService taxRateService;
 
     @GetMapping("/by-hscode/{hsCode}")
-    @Operation(summary = "Tìm tất cả  thuế bằng hs code")
+    @Operation(summary = "Tìm tất cả thuế bằng hs code")
+    @PreAuthorize("hasRole('BUSINESS_MANAGER')")
     public ResponseEntity<List<TaxRateSnapshotDTO>> getTaxRatesByHsCode(@PathVariable String hsCode) {
         log.info("getTaxRatesByHsCode() - Start | hsCode: {}", hsCode);
         List<TaxRateSnapshotDTO> result = taxRateService.getTaxRatesByHsCode(hsCode);
@@ -33,6 +35,7 @@ public class TaxRateController  {
 
     @GetMapping("/{id}")
     @Operation(summary = "Tìm tax rate bằng id")
+    @PreAuthorize("hasRole('BUSINESS_MANAGER')")
     public ResponseEntity<TaxRateSnapshotDTO> getTaxRateById(@PathVariable String id) {
         log.info("getTaxRateById() - Start | id: {}", id);
         TaxRateSnapshotDTO dto = taxRateService.getTaxRateById(id);
@@ -42,6 +45,7 @@ public class TaxRateController  {
 
     @PostMapping("/by-hscode/{hsCode}")
     @Operation(summary = "Tạo mới tax rate (yêu cầu phải có hsCode)")
+    @PreAuthorize("hasRole('BUSINESS_MANAGER')")
     public ResponseEntity<TaxRateSnapshotDTO> createTaxRate(
             @Valid @RequestBody TaxRateCreateAndUpdateRequest req
     ) {
@@ -53,6 +57,7 @@ public class TaxRateController  {
 
     @PutMapping("/{id}")
     @Operation(summary = "cập nhật thuế bằng id")
+    @PreAuthorize("hasRole('BUSINESS_MANAGER')")
     public ResponseEntity<TaxRateSnapshotDTO> updateTaxRate(
             @PathVariable String id,
             @Valid @RequestBody TaxRateCreateAndUpdateRequest req
@@ -65,6 +70,7 @@ public class TaxRateController  {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Xoá thuế")
+    @PreAuthorize("hasRole('BUSINESS_MANAGER')")
     public ResponseEntity<MessageResponse> deleteTaxRate(@PathVariable String id) {
         log.info("deleteTaxRate() - Start | id: {}", id);
         MessageResponse result = taxRateService.deleteTaxRate(id);

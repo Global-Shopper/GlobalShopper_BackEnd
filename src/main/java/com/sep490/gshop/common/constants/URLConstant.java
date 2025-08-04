@@ -25,5 +25,5 @@ public class URLConstant {
     public static final String REQUEST_ITEM = "request-item";
     public static final String SHIPPING = "shipping";
     public static final String TAX_RATES = "tax-rates";
-
+    public static final String VARIANT = "variant";
 }
