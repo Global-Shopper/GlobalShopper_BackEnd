@@ -20,9 +20,11 @@ public class TaxRateSnapshot {
     @Enumerated(EnumType.STRING)
     private TaxType taxType;
     private Double rate;
+    private String taxName;
     public TaxRateSnapshot(TaxRate taxRate){
         this.region = taxRate.getRegion();
         this.taxType = taxRate.getTaxType();
         this.rate = taxRate.getRate();
+        this.taxName = taxRate.getTaxName();
     }
 }

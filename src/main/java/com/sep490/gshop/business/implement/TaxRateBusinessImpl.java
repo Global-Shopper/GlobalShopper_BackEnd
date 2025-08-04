@@ -2,6 +2,7 @@ package com.sep490.gshop.business.implement;
 
 import com.sep490.gshop.business.TaxRateBusiness;
 import com.sep490.gshop.common.enums.TaxRegion;
+import com.sep490.gshop.common.enums.TaxType;
 import com.sep490.gshop.entity.HsCode;
 import com.sep490.gshop.entity.TaxRate;
 import com.sep490.gshop.repository.TaxRateRepository;
@@ -18,4 +19,16 @@ public class TaxRateBusinessImpl extends BaseBusinessImpl<TaxRate, TaxRateReposi
     public List<TaxRate> findTaxRateHsCodeAndRegion(HsCode hsCode, TaxRegion region) {
         return repository.findAllByHsCodeAndRegion(hsCode, region);
     }
+
+    @Override
+    public List<TaxRate> findAllByHsCode(HsCode hsCode) {
+        return repository.findAllByHsCode(hsCode);
+    }
+
+    @Override
+    public boolean existsByHsCodeAndRegionAndTaxType(HsCode hsCode, TaxRegion region, TaxType taxType) {
+        return repository.existsByHsCodeAndTaxTypeAndRegion(hsCode, taxType, region);
+    }
+
+
 }
