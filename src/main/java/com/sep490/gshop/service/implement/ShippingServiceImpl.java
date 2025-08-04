@@ -4,6 +4,7 @@ import com.sep490.gshop.business.OrderBusiness;
 import com.sep490.gshop.common.enums.DeliveryCode;
 import com.sep490.gshop.common.enums.OrderStatus;
 import com.sep490.gshop.entity.Order;
+import com.sep490.gshop.entity.OrderHistory;
 import com.sep490.gshop.external.shipping.ShippingTPS;
 import com.sep490.gshop.external.shipping.ShippingTPSFactory;
 import com.sep490.gshop.payload.request.shipment.ShipmentStatusRequest;
@@ -51,6 +52,8 @@ public class ShippingServiceImpl implements ShippingService {
 
             }
             order.setStatus(payload.getStatus());
+            OrderHistory orderHistory = new OrderHistory(order, payload.getNote());
+            order.getHistory().add(orderHistory);
             orderBusiness.update(order);
             log.debug("Order status updated successfully for tracking number: {}", payload.getTrackingNumber());
             return new MessageResponse("Order status updated successfully for tracking number: " + payload.getTrackingNumber(), true);

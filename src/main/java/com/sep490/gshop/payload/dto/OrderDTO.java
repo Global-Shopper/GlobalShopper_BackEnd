@@ -26,5 +26,6 @@ public class OrderDTO {
     private AdminDTO admin;
     private List<OrderItemDTO> orderItems;
     private AddressSnapshotDTO shippingAddress;
+    private List<OrderHistoryDTO> history;
 
 }
