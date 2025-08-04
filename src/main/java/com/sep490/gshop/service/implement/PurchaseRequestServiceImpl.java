@@ -92,6 +92,10 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                         .toList();
                 purchaseRequest.setRequestItems(requestItems);
                 purchaseRequest.setRequestType(RequestType.ONLINE);
+
+                PurchaseRequestHistory history = new PurchaseRequestHistory(purchaseRequest,"Yêu cầu đã được tạo");
+                purchaseRequest.setHistory(List.of(history));
+
                 purchaseRequest = purchaseRequestBusiness.create(purchaseRequest);
 
                 PurchaseRequestResponse<List<RequestItemDTO>> response = modelMapper.map(purchaseRequest, PurchaseRequestResponse.class);
@@ -144,9 +148,11 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                         .toList();
                 purchaseRequest.setRequestItems(requestItems);
                 purchaseRequest.setRequestType(RequestType.OFFLINE);
+
+
+                PurchaseRequestHistory history = new PurchaseRequestHistory(purchaseRequest,"Yêu cầu đã được tạo");
+                purchaseRequest.setHistory(List.of(history));
                 purchaseRequest = purchaseRequestBusiness.create(purchaseRequest);
-
-
                 PurchaseRequestResponse<SubRequestDTO> response = modelMapper.map(purchaseRequest, PurchaseRequestResponse.class);
                 SubRequestDTO subRequestDTO = purchaseRequest.getRequestItems().stream()
                         .filter(item -> item.getSubRequest() != null)
@@ -156,6 +162,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                 List<RequestItemDTO> listItem = purchaseRequest.getRequestItems().stream()
                         .map(item -> modelMapper.map(item, RequestItemDTO.class))
                         .toList();
+
                 subRequestDTO.setRequestItems(listItem);
                 response.setData(subRequestDTO);
                 log.debug("createOfflinePurchaseRequest() PurchaseRequestServiceImpl end | response : {}", requestItems);
@@ -183,6 +190,8 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
             Admin admin = (Admin) userBusiness.getById(AuthUtils.getCurrentUserId())
                     .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND.value(), "Không tìm thấy người dùng hiện tại"));
             purchaseRequest.setAdmin(admin);
+            PurchaseRequestHistory history = new PurchaseRequestHistory(purchaseRequest,"Yêu cầu đã được tiếp nhận");
+            purchaseRequest.getHistory().add(history);
             purchaseRequest = purchaseRequestBusiness.update(purchaseRequest);
             if (purchaseRequest.getAdmin().getId() == AuthUtils.getCurrentUserId() && purchaseRequest.getStatus() == PurchaseRequestStatus.CHECKING) {
                 log.debug("checkPurchaseRequest() PurchaseRequestServiceImpl end | isSuccess : true");
@@ -340,6 +349,8 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
             }
             purchaseRequest.setShippingAddress(shippingAddress);
             purchaseRequest.setRequestItems(finalItemList);
+            PurchaseRequestHistory history = new PurchaseRequestHistory(purchaseRequest,"Đơn hàng đã được cập nhật");
+            purchaseRequest.getHistory().add(history);
             purchaseRequest = purchaseRequestBusiness.update(purchaseRequest);
             log.debug("updatePurchaseRequest() PurchaseRequestServiceImpl end | isSuccess : true, purchaseRequest: {}", purchaseRequest.getId());
             return new MessageResponse("Cập nhật yêu cầu mua hàng thành công", true);

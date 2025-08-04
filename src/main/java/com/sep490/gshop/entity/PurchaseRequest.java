@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -42,5 +43,9 @@ public class PurchaseRequest extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private RequestType requestType;
+
+    @OneToMany(mappedBy = "purchaseRequest", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("createdAt DESC")
+    private List<PurchaseRequestHistory> history = new ArrayList<>();
 
 }
