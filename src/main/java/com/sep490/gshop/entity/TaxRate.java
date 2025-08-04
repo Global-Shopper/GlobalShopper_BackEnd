@@ -31,4 +31,5 @@ public class TaxRate {
 
     @Column(name = "rate")
     private Double rate;
+    private String taxName;
 }

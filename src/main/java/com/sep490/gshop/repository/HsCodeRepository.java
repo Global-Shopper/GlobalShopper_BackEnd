@@ -11,22 +11,38 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface HsCodeRepository extends JpaRepository<HsCode, String> {
     @Query(value = """
-    SELECT * FROM hs_code
-    WHERE 
-        COALESCE(:desc, '') = '' 
-        OR to_tsvector(unaccent(description::text)) @@ to_tsquery('simple', unaccent(regexp_replace(:desc, '\\s+', ' | ', 'g')))
-    """,
+SELECT * FROM hs_code
+WHERE
+    (
+        COALESCE(:hsCode, '') = ''
+        OR hs_code ILIKE CONCAT('%', :hsCode, '%')
+    )
+    AND
+    (
+        COALESCE(:desc, '') = ''
+        OR to_tsvector('simple', unaccent(description::text)) @@ to_tsquery('simple', unaccent(regexp_replace(:desc, '\\s+', ' | ', 'g')))
+    )
+""",
             countQuery = """
-    SELECT COUNT(*) FROM hs_code
-    WHERE 
-        COALESCE(:desc, '') = '' 
-        OR to_tsvector(unaccent(description::text)) @@ to_tsquery('simple', unaccent(regexp_replace(:desc, '\\s+', ' | ', 'g')))
-    """,
+SELECT COUNT(*) FROM hs_code
+WHERE
+    (
+        COALESCE(:hsCode, '') = ''
+        OR hs_code ILIKE CONCAT('%', :hsCode, '%')
+    )
+    AND
+    (
+        COALESCE(:desc, '') = ''
+        OR to_tsvector('simple', unaccent(description::text)) @@ to_tsquery('simple', unaccent(regexp_replace(:desc, '\\s+', ' | ', 'g')))
+    )
+""",
             nativeQuery = true)
-    Page<HsCode> searchByDescription(
+    Page<HsCode> searchByHsCodeAndDescription(
+            @Param("hsCode") String hsCode,
             @Param("desc") String desc,
             Pageable pageable
     );
+
 
 
 }
