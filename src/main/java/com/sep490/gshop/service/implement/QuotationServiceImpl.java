@@ -129,7 +129,7 @@ public class QuotationServiceImpl implements QuotationService {
             List<TaxRateSnapshotDTO> taxRatesDTO = taxRates.stream()
                     .map(rate -> {
                         TaxRateSnapshotDTO dto = new TaxRateSnapshotDTO();
-                        dto.setTaxType(rate.getTaxType().toString());
+                        dto.setTaxType(rate.getTaxType());
                         dto.setRate(rate.getRate());
                         dto.setRegion(rate.getRegion());
                         return dto;

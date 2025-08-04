@@ -29,5 +29,4 @@ public class HsCode {
 
     @OneToMany(mappedBy = "hsCode", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TaxRate> taxRates = new ArrayList<>();
-
 }

@@ -24,4 +24,6 @@ public class URLConstant {
     public static final String HS_CODE = "hs-code";
     public static final String REQUEST_ITEM = "request-item";
     public static final String SHIPPING = "shipping";
+    public static final String TAX_RATES = "tax-rates";
+
 }

@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 
 @Data
 @AllArgsConstructor
@@ -15,4 +17,5 @@ public class HsCodeDTO {
     private String description;
     private String unit;
     private String parentCode;
+    private List<TaxRateSnapshotDTO> taxRates;
 }
