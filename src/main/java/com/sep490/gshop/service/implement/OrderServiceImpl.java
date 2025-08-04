@@ -230,6 +230,8 @@ public class OrderServiceImpl implements OrderService {
                 log.error("checkoutOrder() OrderServiceImpl Wallet checkout failed | userId: {}", userId);
                 throw new AppException(500, "Thanh toán không thành công");
             }
+            OrderHistory history = new OrderHistory(order,"Đơn hàng đã được tạo");
+            order.setHistory(List.of(history));
             OrderDTO res = modelMapper.map(orderBusiness.create(order), OrderDTO.class);
             log.debug("checkoutOrder() OrderServiceImpl End | orderId: {}", order.getId());
             return res;
@@ -253,6 +255,8 @@ public class OrderServiceImpl implements OrderService {
             order.setOrderCode(shippingInformationModel.getOrderCode());
             order.setTrackingNumber(shippingInformationModel.getTrackingNumber());
             order.setStatus(OrderStatus.PURCHASED);
+            OrderHistory history = new OrderHistory(order,"Đơn hàng đã được mua");
+            order.getHistory().add(history);
             Order updatedOrder = orderBusiness.update(order);
             log.debug("updateShippingInfo() End | updatedOrder: {}", updatedOrder);
             return modelMapper.map(updatedOrder, OrderDTO.class);
