@@ -18,6 +18,4 @@ public class RefundTicketRequest {
     private String reason;
     @NotBlank(message = "Vui lòng chọn đơn hàng để hoàn tiền")
     private String orderId;
-    @NotBlank(message = "Vui lòng chọn tài khoản ngân hàng để hoàn tiền")
-    private String bankAccountId;
 }

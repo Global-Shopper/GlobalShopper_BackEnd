@@ -1,6 +1,7 @@
 package com.sep490.gshop.business.implement;
 
 import com.sep490.gshop.business.PurchaseRequestBusiness;
+import com.sep490.gshop.common.enums.PurchaseRequestStatus;
 import com.sep490.gshop.entity.PurchaseRequest;
 import com.sep490.gshop.repository.PurchaseRequestRepository;
 import org.springframework.data.domain.Page;
@@ -16,17 +17,26 @@ public class PurchaseRequestBusinessImpl extends BaseBusinessImpl<PurchaseReques
     }
 
     @Override
-    public Page<PurchaseRequest> findByCustomerId(UUID userId, Pageable pageable) {
+    public Page<PurchaseRequest> findByCustomerId(UUID userId, PurchaseRequestStatus status, Pageable pageable) {
+        if (status != null) {
+            return repository.findByCustomerIdAndStatus(userId, status, pageable);
+        }
         return repository.findByCustomerId(userId, pageable);
     }
 
     @Override
-    public Page<PurchaseRequest> findUnassignedRequests(Pageable pageable) {
+    public Page<PurchaseRequest> findUnassignedRequests(Pageable pageable, PurchaseRequestStatus status) {
+        if (status != null) {
+            return repository.findByAdminIsNullAndStatus(status, pageable);
+        }
         return repository.findByAdminIsNull(pageable);
     }
 
     @Override
-    public Page<PurchaseRequest> findAssignedRequestsByAdminId(UUID userId, Pageable pageable) {
+    public Page<PurchaseRequest> findAssignedRequestsByAdminId(UUID userId, PurchaseRequestStatus status, Pageable pageable) {
+        if (status!= null) {
+            return repository.findByAdminIdAndStatus(userId, status, pageable);
+        }
         return repository.findByAdminId(userId, pageable);
     }
 

@@ -1,5 +1,6 @@
 package com.sep490.gshop.repository;
 
+import com.sep490.gshop.common.enums.PurchaseRequestStatus;
 import com.sep490.gshop.entity.PurchaseRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,4 +17,7 @@ public interface PurchaseRequestRepository extends JpaRepository<PurchaseRequest
     Page<PurchaseRequest> findByAdminId(UUID userId, Pageable pageable);
     @Query("SELECT ri.purchaseRequest FROM RequestItem ri WHERE ri.subRequest.id = :subRequestId")
     PurchaseRequest findPurchaseRequestBySubRequestId(UUID subRequestId);
+    Page<PurchaseRequest> findByAdminIdAndStatus(UUID userId, PurchaseRequestStatus status, Pageable pageable);
+    Page<PurchaseRequest> findByCustomerIdAndStatus(UUID userId, PurchaseRequestStatus status, Pageable pageable);
+    Page<PurchaseRequest> findByAdminIsNullAndStatus(PurchaseRequestStatus status, Pageable pageable);
 }

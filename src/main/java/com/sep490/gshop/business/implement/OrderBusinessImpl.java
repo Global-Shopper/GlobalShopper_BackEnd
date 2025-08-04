@@ -1,6 +1,7 @@
 package com.sep490.gshop.business.implement;
 
 import com.sep490.gshop.business.OrderBusiness;
+import com.sep490.gshop.common.enums.OrderStatus;
 import com.sep490.gshop.entity.Order;
 import com.sep490.gshop.repository.OrderRepository;
 import org.springframework.data.domain.Page;
@@ -16,17 +17,18 @@ public class OrderBusinessImpl extends BaseBusinessImpl<Order, OrderRepository> 
     }
 
     @Override
-    public Page<Order> getOrdersByCustomerId(UUID id, Pageable pageable) {
+    public Page<Order> getOrdersByCustomerId(UUID id, OrderStatus status, Pageable pageable) {
+        if (status != null) {
+            return repository.findByCustomerIdAndStatus(id, status, pageable);
+        }
         return repository.findByCustomerId(id, pageable);
     }
 
     @Override
-    public Page<Order> getUnassignedOrders(Pageable pageable) {
-        return repository.findByAdminIsNull(pageable);
-    }
-
-    @Override
-    public Page<Order> getAssignedOrdersByAdminId(UUID id, Pageable pageable) {
+    public Page<Order> getAssignedOrdersByAdminId(UUID id, OrderStatus status, Pageable pageable) {
+        if (status != null) {
+            return repository.findByAdminIdAndStatus(id, status, pageable);
+        }
         return repository.findByAdminId(id, pageable);
     }
 
