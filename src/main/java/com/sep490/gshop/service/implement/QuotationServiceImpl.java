@@ -1,6 +1,7 @@
 package com.sep490.gshop.service.implement;
 
 import com.sep490.gshop.business.*;
+import com.sep490.gshop.common.enums.PurchaseRequestStatus;
 import com.sep490.gshop.common.enums.SubRequestStatus;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.*;
@@ -28,6 +29,7 @@ import java.util.*;
 @Log4j2
 @Service
 public class QuotationServiceImpl implements QuotationService {
+    private final PurchaseRequestBusiness purchaseRequestBusiness;
     private QuotationBusiness quotationBusiness;
     private SubRequestBusiness subRequestBusiness;
     private RequestItemBusiness requestItemBusiness;
@@ -41,7 +43,7 @@ public class QuotationServiceImpl implements QuotationService {
     @Autowired
     public QuotationServiceImpl(QuotationBusiness quotationBusiness, SubRequestBusiness subRequestBusiness, RequestItemBusiness requestItemBusiness,
                                 TaxRateBusiness taxRateBusiness, HsCodeBusiness hsCodeBusiness, ModelMapper modelMapper
-    , TaxRateService taxRateService, ExchangeRateService exchangeRateService, UserBusiness userBusiness) {
+    , TaxRateService taxRateService, ExchangeRateService exchangeRateService, UserBusiness userBusiness, PurchaseRequestBusiness purchaseRequestBusiness) {
         this.quotationBusiness = quotationBusiness;
         this.subRequestBusiness = subRequestBusiness;
         this.requestItemBusiness = requestItemBusiness;
@@ -51,6 +53,7 @@ public class QuotationServiceImpl implements QuotationService {
         this.taxRateService = taxRateService;
         this.exchangeRateService = exchangeRateService;
         this.userBusiness = userBusiness;
+        this.purchaseRequestBusiness = purchaseRequestBusiness;
     }
     @PostConstruct
     public void init() {
@@ -291,6 +294,11 @@ public class QuotationServiceImpl implements QuotationService {
             dto.setTotalPriceEstimate(total);
             dto.setShippingEstimate(input.getShippingEstimate());
 
+            PurchaseRequest purchaseRequest = purchaseRequestBusiness.findPurchaseRequestBySubRequestId(subRequestId);
+            purchaseRequest.setStatus(PurchaseRequestStatus.QUOTED);
+            PurchaseRequestHistory purchaseRequestHistory = new PurchaseRequestHistory(purchaseRequest,"Yêu cầu đã được báo giá");
+            purchaseRequest.getHistory().add(purchaseRequestHistory);
+            purchaseRequestBusiness.update(purchaseRequest);
             log.debug("createQuotation() - End | subRequestId: {}", input.getSubRequestId());
             return dto;
 

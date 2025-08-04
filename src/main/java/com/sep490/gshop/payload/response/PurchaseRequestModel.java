@@ -26,6 +26,7 @@ public class PurchaseRequestModel {
     private List<SubRequestDTO> subRequests;
     private int quotationCount;
     private int totalSubRequests;
+    private List<PurchaseRequestHistoryDTO> history;
     private long createdAt;
     private long expiredAt;
 }
