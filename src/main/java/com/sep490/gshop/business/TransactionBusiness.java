@@ -12,4 +12,5 @@ public interface TransactionBusiness extends BaseBusiness<Transaction>{
     Page<Transaction> findTransactionsBetweenDate(long startDate, long endDate, Pageable pageable);
     Page<Transaction> findAll(Pageable pageable);
     Transaction getTransactionByReferenceCode(String referenceCode);
+    Transaction findByCustomerId(UUID customerId);
 }

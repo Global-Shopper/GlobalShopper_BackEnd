@@ -238,7 +238,13 @@ public class WalletServiceImpl implements WalletService {
             withdrawTicket.setBankAccount(bankAccountSnapshot);
             withdrawTicket.setWallet(wallet);
             withdrawTicketBusiness.create(withdrawTicket);
-
+            Transaction transaction = new Transaction();
+            transaction.setAmount(request.getAmount());
+            transaction.setCustomer(currentUser);
+            transaction.setType(TransactionType.WITHDRAW);
+            transaction.setStatus(TransactionStatus.PENDING);
+            transaction.setDescription("Rút tiền về tài khoản");
+            transactionBusiness.create(transaction);
             log.debug("withdrawMoneyRequest() End | rút tiền thành công, số tiền: {}", request.getAmount());
 
             return MessageResponse.builder()
@@ -389,14 +395,15 @@ public class WalletServiceImpl implements WalletService {
             wallet.setBalance(balanceBefore - withdrawTicket.getAmount());
             walletBusiness.update(wallet);
 
-            transaction.setCustomer(customer);
+            var currentTransaction = transactionBusiness.findByCustomerId(customer.getId());
+            if (currentTransaction == null) {
+                throw AppException.builder().message("Không tìm thấy transaction request từ customer").code(404).build();
+            }
             transaction.setBalanceBefore(balanceBefore);
-            transaction.setAmount(withdrawTicket.getAmount());
             transaction.setBalanceAfter(wallet.getBalance());
-            transaction.setDescription("Rút tiền về tài khoản");
             transaction.setType(TransactionType.WITHDRAW);
             transaction.setStatus(TransactionStatus.SUCCESS);
-            transactionBusiness.create(transaction);
+            transactionBusiness.update(transaction);
 
             log.debug("uploadTransferBill() End | transferBillUrl: {}", cloudinaryResponse.getResponseURL());
 
