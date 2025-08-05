@@ -14,4 +14,5 @@ public class AdminDTO {
     private String nation;
     private String phone;
     private String address;
+    private String avatar;
 }
