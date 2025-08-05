@@ -237,7 +237,7 @@ public class OrderServiceImpl implements OrderService {
             return res;
         } catch (Exception e) {
             log.error("checkoutOrder() OrderServiceImpl Exception | subRequestId: {}, message: {}", checkOutModel.getSubRequestId(), e.getMessage());
-            throw new AppException(500, "Failed to checkout order");
+            throw new AppException(500, e.getMessage());
         }
     }
 
