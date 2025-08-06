@@ -16,6 +16,8 @@ public class OrderDTO {
     private String orderCode;
 
     private List<String> contactInfo;
+    private String seller;
+    private String ecommercePlatform;
 
     private String note;
     private OrderStatus status;
@@ -27,5 +29,8 @@ public class OrderDTO {
     private List<OrderItemDTO> orderItems;
     private AddressSnapshotDTO shippingAddress;
     private List<OrderHistoryDTO> history;
+
+    private long createdAt;
+    private long updatedAt;
 
 }
