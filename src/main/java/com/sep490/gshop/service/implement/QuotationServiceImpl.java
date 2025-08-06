@@ -286,6 +286,7 @@ public class QuotationServiceImpl implements QuotationService {
                     .sum();
             total += input.getShippingEstimate();
             quotation.setTotalPriceEstimate(total);
+
             quotationBusiness.update(quotation);
             sub.setStatus(SubRequestStatus.QUOTED);
             subRequestBusiness.update(sub);
