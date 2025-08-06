@@ -90,7 +90,7 @@ public class AuthController {
         return ResponseEntity.ok(newMessage);
     }
     @PutMapping("/forgot-password/reset")
-    @Operation(summary = "Đổi mật khẩu")
+    @Operation(summary = "Đổi mật khẩu (reset)")
     public AuthUserResponse resetForgotPassword(@RequestBody ResetPasswordRequest resetPasswordRequest) {
         log.info("resetForgotPassword() start");
         AuthUserResponse response = authService.resetPassword(resetPasswordRequest.getPassword(), resetPasswordRequest.getToken());

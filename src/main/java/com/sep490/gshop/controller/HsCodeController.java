@@ -32,7 +32,7 @@ public class HsCodeController {
 
     @Operation(summary = "Tìm kiếm mã HS Code theo mô tả, hỗ trợ phân trang và sắp xếp")
     @GetMapping("/search")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('BUSINESS_MANAGER')")
     public ResponseEntity<Page<HsCodeSearchDTO>> search(
             @RequestParam(required = false) String hsCode,
             @RequestParam(required = false) String description,
