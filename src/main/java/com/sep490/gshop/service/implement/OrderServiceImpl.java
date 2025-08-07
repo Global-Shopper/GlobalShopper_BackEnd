@@ -229,7 +229,7 @@ public class OrderServiceImpl implements OrderService {
             }
 
             // Update purchase request status and history
-            purchaseRequest.setStatus(PurchaseRequestStatus.CONFIRMED);
+            purchaseRequest.setStatus(PurchaseRequestStatus.PAID);
             PurchaseRequestHistory purchaseRequestHistory = new PurchaseRequestHistory(purchaseRequest, "Yêu cầu mua hàng đã được xác nhận");
             purchaseRequest.getHistory().add(purchaseRequestHistory);
             purchaseRequestBusiness.update(purchaseRequest);

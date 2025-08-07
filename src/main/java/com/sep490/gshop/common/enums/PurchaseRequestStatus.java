@@ -5,6 +5,6 @@ public enum PurchaseRequestStatus {
     CHECKING,
     INSUFFICIENT,
     QUOTED,
-    CONFIRMED,
+    PAID,
     CANCELLED,
 }

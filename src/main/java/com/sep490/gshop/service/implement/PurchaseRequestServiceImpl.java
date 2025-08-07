@@ -3,6 +3,7 @@ package com.sep490.gshop.service.implement;
 import com.sep490.gshop.business.*;
 import com.sep490.gshop.common.enums.PurchaseRequestStatus;
 import com.sep490.gshop.common.enums.RequestType;
+import com.sep490.gshop.common.enums.SubRequestStatus;
 import com.sep490.gshop.common.enums.UserRole;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.config.security.services.UserDetailsImpl;
@@ -522,6 +523,10 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                 .filter(item -> item.getSubRequest() != null)
                 .collect(Collectors.groupingBy(RequestItem::getSubRequest));
 
+        int paidSubRequestCount = (int) subRequestMap.keySet().stream()
+                .filter(sub -> SubRequestStatus.PAID.equals(sub.getStatus()))
+                .count();
+
         List<SubRequestDTO> subRequestModels = subRequestMap.entrySet().stream()
                 .map(entry -> {
                     SubRequestDTO subDTO = modelMapper.map(entry.getKey(), SubRequestDTO.class);
@@ -563,6 +568,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
         response.setRequestItems(allItemDTOs);
         response.setItemsHasQuotation((int) totalItemsWithQuotation);
         response.setTotalItems(allItems.size());
+        response.setPaidCount(paidSubRequestCount);
         return response;
     }
 
@@ -690,7 +696,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                     itemModel.setImages(item.getImages());
                     return itemModel;
                 })
-                .collect(Collectors.toList());
+                .toList();
         updateModel.setItems(items);
 
         return updateModel;
