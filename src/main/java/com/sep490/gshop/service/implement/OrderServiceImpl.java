@@ -1,10 +1,7 @@
 package com.sep490.gshop.service.implement;
 
 import com.sep490.gshop.business.*;
-import com.sep490.gshop.common.enums.OrderStatus;
-import com.sep490.gshop.common.enums.PurchaseRequestStatus;
-import com.sep490.gshop.common.enums.TransactionStatus;
-import com.sep490.gshop.common.enums.UserRole;
+import com.sep490.gshop.common.enums.*;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.config.security.services.UserDetailsImpl;
 import com.sep490.gshop.entity.*;
@@ -230,6 +227,18 @@ public class OrderServiceImpl implements OrderService {
                 log.error("checkoutOrder() OrderServiceImpl Wallet checkout failed | userId: {}", userId);
                 throw new AppException(500, "Thanh toán không thành công");
             }
+
+            // Update purchase request status and history
+            purchaseRequest.setStatus(PurchaseRequestStatus.CONFIRMED);
+            PurchaseRequestHistory purchaseRequestHistory = new PurchaseRequestHistory(purchaseRequest, "Yêu cầu mua hàng đã được xác nhận");
+            purchaseRequest.getHistory().add(purchaseRequestHistory);
+            purchaseRequestBusiness.update(purchaseRequest);
+
+            // Update sub request status
+            subRequest.setStatus(SubRequestStatus.PAID);
+            subRequestBusiness.update(subRequest);
+
+            // Create order
             OrderHistory history = new OrderHistory(order,"Đơn hàng đã được tạo");
             order.setHistory(List.of(history));
             OrderDTO res = modelMapper.map(orderBusiness.create(order), OrderDTO.class);
