@@ -1,5 +1,6 @@
 package com.sep490.gshop.payload.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.sep490.gshop.common.enums.SubRequestStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,6 +21,7 @@ public class SubRequestDTO {
     private String ecommercePlatform;
     private List<RequestItemDTO> requestItems;
     private QuotationForPurchaseRequestDTO quotationForPurchase;
+    private String rejectionReason;
     private SubRequestStatus status;
 
 }

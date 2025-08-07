@@ -22,6 +22,7 @@ public class SubRequest extends BaseEntity {
     private String ecommercePlatform;
     @Enumerated(EnumType.STRING)
     private SubRequestStatus status = SubRequestStatus.UNQUOTED;
+    private String rejectionReason;
     @OneToMany(mappedBy = "subRequest", fetch = FetchType.LAZY)
     private List<RequestItem> requestItems;
 
