@@ -260,6 +260,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                     .contactInfo(subRequestModel.getContactInfo())
                     .seller(subRequestModel.getSeller())
                     .ecommercePlatform(subRequestModel.getEcommercePlatform())
+                    .status(SubRequestStatus.PENDING)
                     .build());
             items.forEach(item -> item.setSubRequest(subRequest));
             List<RequestItem> savedItem = requestItemBusiness.saveAll(items);
