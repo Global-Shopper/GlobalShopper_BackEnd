@@ -3,7 +3,8 @@ package com.sep490.gshop.controller;
 import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.payload.dto.QuotationCalculatedDTO;
 import com.sep490.gshop.payload.dto.QuotationDTO;
-import com.sep490.gshop.payload.request.QuotationRequest;
+import com.sep490.gshop.payload.request.quotation.QuotationRequest;
+import com.sep490.gshop.payload.request.quotation.RejectQuotationRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.service.QuotationService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -43,6 +44,15 @@ public class QuotationController {
         log.info("createQuotation() - Start | subRequestId: {}", request.getSubRequestId());
         QuotationDTO dto = quotationService.createQuotation(request);
         log.info("createQuotation() - End | subRequestId: {}", request.getSubRequestId());
+        return ResponseEntity.ok(dto);
+    }
+
+    @PostMapping("/reject")
+    @Operation(summary = "Từ chối báo giá cho sub request")
+    public ResponseEntity<MessageResponse> rejectQuotation(@RequestBody @Valid RejectQuotationRequest request) {
+        log.info("rejectQuotation() - Start | subRequestId: {}", request.getSubRequestId());
+        MessageResponse dto = quotationService.rejectQuotation(request);
+        log.info("rejectQuotation() - End | subRequestId: {}", request.getSubRequestId());
         return ResponseEntity.ok(dto);
     }
 

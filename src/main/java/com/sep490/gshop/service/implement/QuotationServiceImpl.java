@@ -7,14 +7,14 @@ import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.*;
 import com.sep490.gshop.entity.subclass.TaxRateSnapshot;
 import com.sep490.gshop.payload.dto.*;
-import com.sep490.gshop.payload.request.QuotationDetailRequest;
-import com.sep490.gshop.payload.request.QuotationRequest;
+import com.sep490.gshop.payload.request.quotation.QuotationDetailRequest;
+import com.sep490.gshop.payload.request.quotation.QuotationRequest;
+import com.sep490.gshop.payload.request.quotation.RejectQuotationRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.TaxCalculationResult;
 import com.sep490.gshop.service.ExchangeRateService;
 import com.sep490.gshop.service.QuotationService;
 import com.sep490.gshop.service.TaxRateService;
-import com.sep490.gshop.utils.AuthUtils;
 import com.sep490.gshop.utils.CalculationUtil;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
@@ -168,6 +168,39 @@ public class QuotationServiceImpl implements QuotationService {
         dto.setExpiredDate(input.getExpiredDate());
 
         return dto;
+    }
+
+    @Override
+    public MessageResponse rejectQuotation(RejectQuotationRequest rejectQuotationRequest) {
+        try {
+            log.debug("rejectQuotation() QuotationServiceImpl Start | subRequestId: {}", rejectQuotationRequest.getSubRequestId());
+            SubRequest subRequest = subRequestBusiness.getById(UUID.fromString(rejectQuotationRequest.getSubRequestId()))
+                    .orElseThrow(() -> AppException.builder()
+                            .message("Không tìm thấy yêu cầu để từ chối")
+                            .code(404)
+                            .build());
+            int check = SubRequestStatus.PENDING.compareTo(subRequest.getStatus());
+            if (SubRequestStatus.PENDING.compareTo(subRequest.getStatus()) < 0 ) {
+                log.error("rejectQuotation() QuotationServiceImpl Error | subRequestId: {}, status: {}",
+                        subRequest.getId(), subRequest.getStatus());
+                throw new AppException(400, "Yêu cầu đã được xử lý, không thể từ chối");
+            }
+            subRequest.setStatus(SubRequestStatus.REJECTED);
+            subRequest.setRejectionReason(rejectQuotationRequest.getRejectionReason());
+            SubRequest updatedSubRequest = subRequestBusiness.update(subRequest);
+            log.debug("rejectQuotation() QuotationServiceImpl End | subRequestId: {}",
+                    updatedSubRequest.getId());
+            return MessageResponse.builder()
+                    .message("Đã từ chối yêu cầu báo giá")
+                    .isSuccess(true)
+                    .build();
+        } catch (Exception e) {
+            log.error("rejectQuotation() QuotationServiceImpl Exception | message: {}", e.getMessage());
+            throw AppException.builder()
+                    .message("Lỗi khi từ chối báo giá: " + e.getMessage())
+                    .code(500)
+                    .build();
+        }
     }
 
 

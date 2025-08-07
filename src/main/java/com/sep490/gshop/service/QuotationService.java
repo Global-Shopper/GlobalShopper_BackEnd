@@ -2,7 +2,8 @@ package com.sep490.gshop.service;
 
 import com.sep490.gshop.payload.dto.QuotationCalculatedDTO;
 import com.sep490.gshop.payload.dto.QuotationDTO;
-import com.sep490.gshop.payload.request.QuotationRequest;
+import com.sep490.gshop.payload.request.quotation.QuotationRequest;
+import com.sep490.gshop.payload.request.quotation.RejectQuotationRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
 import jakarta.validation.Valid;
 
@@ -16,4 +17,6 @@ public interface QuotationService {
     QuotationDTO getQuotationById(String quotationId);
 
     QuotationCalculatedDTO calculateQuotationInternal(QuotationRequest input);
+
+    MessageResponse rejectQuotation(@Valid RejectQuotationRequest rejectQuotationRequest);
 }

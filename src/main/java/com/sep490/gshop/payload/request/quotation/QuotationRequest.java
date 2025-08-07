@@ -1,4 +1,4 @@
-package com.sep490.gshop.payload.request;
+package com.sep490.gshop.payload.request.quotation;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
