@@ -64,6 +64,7 @@ public class AIServiceImpl implements AIService {
         String[] lines = rawData.split("\\r?\\n");
         String name = null;
         String description = null;
+        String platform = null;
         List<String> variants = new ArrayList<>();
 
         for (String line : lines) {
@@ -71,6 +72,8 @@ public class AIServiceImpl implements AIService {
                 name = line.substring(5).trim();
             } else if (line.startsWith("Description:")) {
                 description = line.substring(12).trim();
+            } else if (line.startsWith("Platform:")) {
+                platform = line.replace("Platform:", "").trim();
             } else if (line.startsWith("Variant:")) {
                 String variantStr = line.substring(8).trim();
                 if (!variantStr.isEmpty()) {
@@ -86,6 +89,7 @@ public class AIServiceImpl implements AIService {
                 .name(name)
                 .description(description)
                 .variants(variants.isEmpty() ? null : variants)
+                .ecommercePlatform(platform)
                 .build();
     }
 }
