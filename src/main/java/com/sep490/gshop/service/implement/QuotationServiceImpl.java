@@ -106,6 +106,7 @@ public class QuotationServiceImpl implements QuotationService {
             List<TaxRate> taxRates = taxRateBusiness.findTaxRateHsCodeAndRegion(hsCode, detailReq.getRegion());
             double basePriceWithQuantity = detailReq.getBasePrice() * item.getQuantity();
 
+
             TaxCalculationResult taxResult = calculationUtil.calculateTaxes(basePriceWithQuantity, taxRates);
 
             double totalDetail = calculationUtil.calculateTotalPrice(
@@ -128,13 +129,13 @@ public class QuotationServiceImpl implements QuotationService {
                         .build();
             }
 
-            // MAP taxRates snapshot sang DTO (giả định có TaxRateSnapshotDTO)
             List<TaxRateSnapshotDTO> taxRatesDTO = taxRates.stream()
                     .map(rate -> {
                         TaxRateSnapshotDTO dto = new TaxRateSnapshotDTO();
                         dto.setTaxType(rate.getTaxType());
                         dto.setRate(rate.getRate());
                         dto.setRegion(rate.getRegion());
+                        dto.setTaxName(rate.getTaxName());
                         return dto;
                     }).toList();
 
@@ -150,6 +151,7 @@ public class QuotationServiceImpl implements QuotationService {
             detailDTO.setTotalVNDPrice(totalVNPrice);
             detailDTO.setNote(detailReq.getNote());
             detailDTO.setTaxRates(taxRatesDTO);
+            detailDTO.setProductName(item.getProductName());
             detailDTOs.add(detailDTO);
         }
 
