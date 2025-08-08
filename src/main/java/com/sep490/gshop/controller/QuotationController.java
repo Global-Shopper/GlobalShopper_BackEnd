@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -49,6 +50,7 @@ public class QuotationController {
 
     @PostMapping("/reject")
     @Operation(summary = "Từ chối báo giá cho sub request")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MessageResponse> rejectQuotation(@RequestBody @Valid RejectQuotationRequest request) {
         log.info("rejectQuotation() - Start | subRequestId: {}", request.getSubRequestId());
         MessageResponse dto = quotationService.rejectQuotation(request);
