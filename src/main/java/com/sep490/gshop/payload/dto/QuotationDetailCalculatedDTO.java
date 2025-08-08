@@ -13,6 +13,7 @@ import java.util.Map;
 @Builder
 public class QuotationDetailCalculatedDTO {
     private String requestItemId;
+    private String productName;
     private double basePrice;
     private double serviceFee;
     private String currency;
