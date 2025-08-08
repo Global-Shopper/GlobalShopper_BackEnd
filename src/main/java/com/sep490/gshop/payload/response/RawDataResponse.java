@@ -17,4 +17,5 @@ public class RawDataResponse {
     private String name;
     private String description;
     private List<String> variants;
+    private String ecommercePlatform;
 }
