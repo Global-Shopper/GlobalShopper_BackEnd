@@ -411,27 +411,71 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                 throw new AppException(HttpStatus.FORBIDDEN.value(),
                         "Bạn không có quyền xem yêu cầu mua hàng này");
             }
+
             PurchaseRequestModel response = modelMapper.map(purchaseRequest, PurchaseRequestModel.class);
-            List<ItemGroupByPlatformDTO> grouped = purchaseRequest.getRequestItems().stream()
-                    .collect(Collectors.groupingBy(
-                            item -> {
-                                String platform = item.getEcommercePlatform();
-                                return (platform == null || platform.isBlank()) ? "Unknown" : platform;
-                            },
-                            LinkedHashMap::new,
-                            Collectors.mapping(
-                                    item -> modelMapper.map(item, RequestItemDTO.class),
-                                    Collectors.toList()
-                            )
-                    ))
-                    .entrySet().stream()
-                    .map(entry -> {
-                        ItemGroupByPlatformDTO dto = new ItemGroupByPlatformDTO();
-                        dto.setEcommercePlatform(entry.getKey());
-                        dto.setItems(entry.getValue());
+            List<RequestItem> allItems = purchaseRequest.getRequestItems();
+
+            Map<String, List<RequestItemDTO>> itemsWithoutSubGrouped = allItems.stream()
+                    .filter(item -> item.getSubRequest() == null)
+                    .map(item -> {
+                        RequestItemDTO dto = modelMapper.map(item, RequestItemDTO.class);
+                        if (item.getQuotationDetail() != null) {
+                            dto.setQuotationDetail(enrichQuotationDetailDto(item.getQuotationDetail()));
+                        }
+                        if (dto.getEcommercePlatform() == null || dto.getEcommercePlatform().isBlank()) {
+                            dto.setEcommercePlatform("Unknown");
+                        }
                         return dto;
                     })
+                    .collect(Collectors.groupingBy(
+                            RequestItemDTO::getEcommercePlatform,
+                            LinkedHashMap::new,
+                            Collectors.toList()
+                    ));
+
+            List<ItemGroupByPlatformDTO> requestItemsGroupByPlatform =
+                    itemsWithoutSubGrouped.entrySet().stream()
+                            .map(entry -> {
+                                ItemGroupByPlatformDTO groupDTO = new ItemGroupByPlatformDTO();
+                                groupDTO.setEcommercePlatform(entry.getKey());
+                                groupDTO.setItems(entry.getValue());
+                                return groupDTO;
+                            })
+                            .toList();
+
+            Map<SubRequest, List<RequestItem>> subRequestMap = allItems.stream()
+                    .filter(item -> item.getSubRequest() != null)
+                    .collect(Collectors.groupingBy(RequestItem::getSubRequest));
+
+            List<SubRequestDTO> subRequestModels = subRequestMap.entrySet().stream()
+                    .map(entry -> {
+                        SubRequest sub = entry.getKey();
+                        SubRequestDTO subDTO = modelMapper.map(sub, SubRequestDTO.class);
+
+                        if (sub.getQuotation() != null) {
+                            subDTO.setQuotationForPurchase(
+                                    modelMapper.map(sub.getQuotation(), QuotationForPurchaseRequestDTO.class)
+                            );
+                        }
+
+                        List<RequestItemDTO> subItems = entry.getValue().stream()
+                                .map(item -> {
+                                    RequestItemDTO dto = modelMapper.map(item, RequestItemDTO.class);
+                                    if (item.getQuotationDetail() != null) {
+                                        dto.setQuotationDetail(enrichQuotationDetailDto(item.getQuotationDetail()));
+                                    }
+                                    return dto;
+                                })
+                                .toList();
+
+                        subDTO.setRequestItems(subItems);
+                        subDTO.setStatus(sub.getStatus());
+                        return subDTO;
+                    })
                     .toList();
+            response.setRequestItemsGroupByPlatform(requestItemsGroupByPlatform);
+            response.setSubRequests(subRequestModels);
+            response.setTotalItems(allItems.size());
 
             PurchaseRequestModel response = modelMapper.map(purchaseRequest, PurchaseRequestModel.class);
             List<RequestItem> allItems = purchaseRequest.getRequestItems();
