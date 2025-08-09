@@ -92,7 +92,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                     if (platform != null && items.size() == 1) {
                         SubRequest subRequest = SubRequest.builder()
                                 .ecommercePlatform(platform)
-                                .seller(items.get(0).getSeller())
+                                .seller(items.get(0).getSeller()).status(SubRequestStatus.UNQUOTED)
                                 .build();
                         //Có 1 sản phẩm 1 platform -> lên cho ae con subRequest ngay
                         RequestItem requestItem = RequestItem.builder()
