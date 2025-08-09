@@ -81,7 +81,7 @@ public class BankAccountServiceImpl implements BankAccountService {
         try {
             BankAccount existing = bankAccountBusiness.getById(id)
                     .orElseThrow(() -> new AppException(404, "Không tìm thấy tài khoản ngân hàng với ID: " + id));
-            Customer currentCustomer = customerBusiness.getById(AuthUtils.getCurrentUserId()).orElseThrow(() -> new AppException(40, "Bạn cần đăng nhập để sử dụng dịch vụ"));
+            Customer currentCustomer = customerBusiness.getById(AuthUtils.getCurrentUserId()).orElseThrow(() -> new AppException(401, "Bạn cần đăng nhập để sử dụng dịch vụ"));
             if(existing.getCustomer().getId() != currentCustomer.getId()){
                 throw AppException.builder().code(400).message("Bạn không có quyền xem hoặc chỉnh sửa tài khoản ngân hàng này").build();
             }

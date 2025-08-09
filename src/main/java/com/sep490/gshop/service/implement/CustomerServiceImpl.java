@@ -108,7 +108,7 @@ public class CustomerServiceImpl implements CustomerService {
             Customer customer = customerBusiness.getById(id)
                     .orElseThrow(() -> new AppException(404, "Không tìm thấy khách hàng với ID: " + id));
             if(customer.getRole() != UserRole.CUSTOMER) {
-                throw AppException.builder().code(400).message("Admin xem cái gì ở đây !!").build();
+                throw AppException.builder().code(400).message("Bạn không có quyền truy cập vào tài nguyên này !!").build();
             }
             CustomerDTO customerDTO = modelMapper.map(customer, CustomerDTO.class);
             log.debug("getCustomerById() CustomerServiceImpl End | Customer found: {}", customerDTO);
