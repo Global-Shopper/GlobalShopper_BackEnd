@@ -78,19 +78,57 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                         .build();
                 purchaseRequest.setAdmin(null);
                 purchaseRequest.setExpiredAt(System.currentTimeMillis() + 24 * 60 * 60 * 1000);
-                PurchaseRequest finalPurchaseRequest = purchaseRequest;
-                List<RequestItem> requestItems = onlineRequest.getRequestItems().stream()
-                        .map(item -> RequestItem.builder()
-                                .productName(item.getProductName())
-                                .purchaseRequest(finalPurchaseRequest)
-                                .productURL(item.getProductURL())
-                                .quantity(item.getQuantity())
-                                .description(item.getDescription())
-                                .variants(item.getVariants())
-                                .images(item.getImages())
-                                .build())
-                        .toList();
-                purchaseRequest.setRequestItems(requestItems);
+
+                List<RequestItem> allItems = new ArrayList<>();
+                Map<String, List<ItemRequestModel>> groupedByPlatform = onlineRequest.getRequestItems().stream()
+                        .collect(Collectors.groupingBy(item -> {
+                            String p = item.getEcommercePlatform();
+                            return (p == null || p.isBlank()) ? "Unknown" : p;
+                        }));
+                for (Map.Entry<String, List<ItemRequestModel>> entry : groupedByPlatform.entrySet()) {
+                    String platform = entry.getKey();
+                    List<ItemRequestModel> items = entry.getValue();
+                    if (platform != null && items.size() == 1) {
+                        SubRequest subRequest = SubRequest.builder()
+                                .ecommercePlatform(platform)
+                                .seller(items.get(0).getSeller())
+                                .build();
+                        //Có 1 sản phẩm 1 platform -> lên cho ae con subRequest ngay
+                        RequestItem requestItem = RequestItem.builder()
+                                .productName(items.get(0).getProductName())
+                                .purchaseRequest(purchaseRequest)
+                                .productURL(items.get(0).getProductURL())
+                                .quantity(items.get(0).getQuantity())
+                                .description(items.get(0).getDescription())
+                                .variants(items.get(0).getVariants())
+                                .images(items.get(0).getImages())
+                                .ecommercePlatform(platform)
+                                .subRequest(subRequest)
+                                .build();
+                        allItems.add(requestItem);
+                    } else {
+                        //Platform null hoặc nhiều sản phẩm -> chỉ group, không tạo subRequest
+                        for (ItemRequestModel model : items) {
+                            RequestItem requestItem = RequestItem.builder()
+                                    .productName(model.getProductName())
+                                    .purchaseRequest(purchaseRequest)
+                                    .productURL(model.getProductURL())
+                                    .quantity(model.getQuantity())
+                                    .description(model.getDescription())
+                                    .variants(model.getVariants())
+                                    .images(model.getImages())
+                                    .ecommercePlatform(platform)
+                                    .build();
+                            allItems.add(requestItem);
+                        }
+                    }
+                }
+                for(RequestItem item : allItems) {
+                    if(item.getEcommercePlatform().equals("Unknown")) {
+                        item.setEcommercePlatform(null);
+                    }
+                }
+                purchaseRequest.setRequestItems(allItems);
                 purchaseRequest.setRequestType(RequestType.ONLINE);
 
                 PurchaseRequestHistory history = new PurchaseRequestHistory(purchaseRequest,"Yêu cầu đã được tạo");
@@ -293,7 +331,6 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
             ShippingAddress shippingAddress = shippingAddressBusiness.getById(UUID.fromString(updateRequestModel.getShippingAddressId()))
                     .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND.value(), "Không tìm thấy địa chỉ nhận hàng để cập nhật"));
 
-            //Update subRequest contact info if request type is OFFLINE
             SubRequest subRequest = purchaseRequest.getRequestItems().stream()
                     .filter(item -> item.getSubRequest() != null)
                     .findFirst()
@@ -304,7 +341,6 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                 subRequestBusiness.update(subRequest);
             }
 
-            // Validate request items
             List<RequestItem> requestItems = purchaseRequest.getRequestItems();
 
             Map<UUID, RequestItem> itemMap = requestItems.stream()
@@ -362,24 +398,52 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
     @Override
     public PurchaseRequestModel getPurchaseRequestById(String id) {
         try {
-            log.debug("getPurchaseRequestById() PurchaseRequestServiceImpl start | id: {}", id);
+            log.debug("getPurchaseRequestById() start | id: {}", id);
             PurchaseRequest purchaseRequest = purchaseRequestBusiness.getById(UUID.fromString(id))
-                    .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND.value(), "Không tìm thấy yêu cầu mua hàng với ID: " + id));
+                    .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND.value(),
+                            "Không tìm thấy yêu cầu mua hàng với ID: " + id));
             if (!AuthUtils.getCurrentUserId().equals(purchaseRequest.getCustomer().getId())
                     && AuthUtils.getCurrentUser().getRole() != UserRole.ADMIN) {
-                throw new AppException(HttpStatus.FORBIDDEN.value(), "Bạn không có quyền xem yêu cầu mua hàng này");
+                throw new AppException(HttpStatus.FORBIDDEN.value(),
+                        "Bạn không có quyền xem yêu cầu mua hàng này");
             }
+            PurchaseRequestModel response = modelMapper.map(purchaseRequest, PurchaseRequestModel.class);
+            List<ItemGroupByPlatformDTO> grouped = purchaseRequest.getRequestItems().stream()
+                    .collect(Collectors.groupingBy(
+                            item -> {
+                                String platform = item.getEcommercePlatform();
+                                return (platform == null || platform.isBlank()) ? "Unknown" : platform;
+                            },
+                            LinkedHashMap::new,
+                            Collectors.mapping(
+                                    item -> modelMapper.map(item, RequestItemDTO.class),
+                                    Collectors.toList()
+                            )
+                    ))
+                    .entrySet().stream()
+                    .map(entry -> {
+                        ItemGroupByPlatformDTO dto = new ItemGroupByPlatformDTO();
+                        dto.setEcommercePlatform(entry.getKey());
+                        dto.setItems(entry.getValue());
+                        return dto;
+                    })
+                    .toList();
 
-            PurchaseRequestModel response = convertToPurchaseRequestModel(purchaseRequest);
-
-
-            log.debug("getPurchaseRequestById() PurchaseRequestServiceImpl end | response: {}", response);
+            response.setTotalItems(purchaseRequest.getRequestItems().size());
+            long totalItemsWithQuotation = purchaseRequest.getRequestItems().stream()
+                    .filter(item -> item.getQuotationDetail() != null)
+                    .count();
+            response.setItemsHasQuotation((int) totalItemsWithQuotation);
+            response.setRequestItemsGroupByPlatform(grouped);
+            log.debug("getPurchaseRequestById() end | grouped size: {}", grouped.size());
             return response;
         } catch (Exception e) {
-            log.error("getPurchaseRequestById() PurchaseRequestServiceImpl error | message : {}", e.getMessage());
+            log.error("getPurchaseRequestById() error | {}", e.getMessage(), e);
             throw e;
         }
     }
+
+
 
     private QuotationDetailDTO enrichQuotationDetailDto(QuotationDetail detail) {
         if (detail == null) {
@@ -421,25 +485,39 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
 
     private PurchaseRequestModel convertToPurchaseRequestModel(PurchaseRequest purchaseRequest) {
         List<RequestItem> allItems = purchaseRequest.getRequestItems();
+
         long totalItemsWithQuotation = allItems.stream()
                 .filter(item -> item.getQuotationDetail() != null)
                 .count();
-        // RequestItems without SubRequest
-        List<RequestItemDTO> itemsWithoutSub = allItems.stream()
+
+        Map<String, List<RequestItemDTO>> itemsWithoutSubGrouped = allItems.stream()
                 .filter(item -> item.getSubRequest() == null)
                 .map(item -> {
                     RequestItemDTO dto = modelMapper.map(item, RequestItemDTO.class);
-                    // Lấy và set QuotationDetailDTO nếu có
                     var quotationDetail = enrichQuotationDetailDto(item.getQuotationDetail());
-                    if(quotationDetail != null) {
+                    if (quotationDetail != null) {
                         dto.setQuotationDetail(quotationDetail);
-
                     }
                     return dto;
                 })
+                .collect(Collectors.groupingBy(
+                        item -> {
+                            String platform = item.getEcommercePlatform();
+                            return (platform == null || platform.isBlank()) ? "Unknown" : platform;
+                        },
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+
+        List<ItemGroupByPlatformDTO> requestItemsGroupByPlatform = itemsWithoutSubGrouped.entrySet().stream()
+                .map(e -> {
+                    ItemGroupByPlatformDTO groupDTO = new ItemGroupByPlatformDTO();
+                    groupDTO.setEcommercePlatform(e.getKey());
+                    groupDTO.setItems(e.getValue());
+                    return groupDTO;
+                })
                 .toList();
 
-        // Group by SubRequest
         Map<SubRequest, List<RequestItem>> subRequestMap = allItems.stream()
                 .filter(item -> item.getSubRequest() != null)
                 .collect(Collectors.groupingBy(RequestItem::getSubRequest));
@@ -447,19 +525,17 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
         List<SubRequestDTO> subRequestModels = subRequestMap.entrySet().stream()
                 .map(entry -> {
                     SubRequestDTO subDTO = modelMapper.map(entry.getKey(), SubRequestDTO.class);
-
-                    if(entry.getKey().getQuotation() != null){
+                    if (entry.getKey().getQuotation() != null) {
                         var quotationDTO = modelMapper.map(entry.getKey().getQuotation(), QuotationForPurchaseRequestDTO.class);
                         subDTO.setQuotationForPurchase(quotationDTO);
                     }
+
                     List<RequestItemDTO> requestItemDTOs = entry.getValue().stream()
                             .map(item -> {
                                 RequestItemDTO dto = modelMapper.map(item, RequestItemDTO.class);
-                                if(item.getQuotationDetail() != null){
+                                if (item.getQuotationDetail() != null) {
                                     var quotationDetailDTO = enrichQuotationDetailDto(item.getQuotationDetail());
-                                    if (quotationDetailDTO != null) {
-                                        dto.setQuotationDetail(quotationDetailDTO);
-                                    }
+                                    dto.setQuotationDetail(quotationDetailDTO);
                                 }
                                 return dto;
                             })
@@ -471,12 +547,26 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                 .toList();
 
         PurchaseRequestModel response = modelMapper.map(purchaseRequest, PurchaseRequestModel.class);
-        response.setRequestItems(itemsWithoutSub);
+
+        response.setRequestItemsGroupByPlatform(requestItemsGroupByPlatform);
         response.setSubRequests(subRequestModels);
-        response.setItemsHasQuotation((int)totalItemsWithQuotation);
+        List<RequestItemDTO> allItemDTOs = allItems.stream()
+                .map(item -> {
+                    RequestItemDTO dto = modelMapper.map(item, RequestItemDTO.class);
+                    if (item.getQuotationDetail() != null) {
+                        var quotationDetailDTO = enrichQuotationDetailDto(item.getQuotationDetail());
+                        dto.setQuotationDetail(quotationDetailDTO);
+                    }
+                    return dto;
+                }).toList();
+        response.setRequestItems(allItemDTOs);
+        response.setRequestItems(allItemDTOs);
+        response.setItemsHasQuotation((int) totalItemsWithQuotation);
         response.setTotalItems(allItems.size());
         return response;
     }
+
+
 
     public MessageResponse requestCorrection(UUID purchaseRequestId, String correctionNote) {
         log.debug("requestCorrection() - Start | purchaseRequestId: {}, correctionNote: {}", purchaseRequestId, correctionNote);

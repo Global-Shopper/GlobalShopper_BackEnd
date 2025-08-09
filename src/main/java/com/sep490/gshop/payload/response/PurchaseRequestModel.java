@@ -23,6 +23,7 @@ public class PurchaseRequestModel {
     private CustomerDTO customer;
     private String requestType;
     private List<RequestItemDTO> requestItems;
+    private List<ItemGroupByPlatformDTO> requestItemsGroupByPlatform;
     private List<SubRequestDTO> subRequests;
     private int itemsHasQuotation;
     private int totalItems;

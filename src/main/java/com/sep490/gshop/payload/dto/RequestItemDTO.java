@@ -20,5 +20,7 @@ public class RequestItemDTO {
     private List<String> images;
     private String description;
     private int quantity;
+    private String seller;
+    private String ecommercePlatform;
     private QuotationDetailDTO quotationDetail;
 }
