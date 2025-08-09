@@ -21,5 +21,4 @@ public class SubRequestDTO {
     private List<RequestItemDTO> requestItems;
     private QuotationForPurchaseRequestDTO quotationForPurchase;
     private SubRequestStatus status;
-
 }

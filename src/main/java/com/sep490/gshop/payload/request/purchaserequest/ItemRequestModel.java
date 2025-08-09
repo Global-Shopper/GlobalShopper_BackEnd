@@ -18,4 +18,6 @@ public class ItemRequestModel {
     private List<String> images;
     private int quantity;
     private String description;
+    private String seller;
+    private String ecommercePlatform;
 }
