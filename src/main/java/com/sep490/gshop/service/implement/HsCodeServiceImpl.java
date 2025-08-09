@@ -74,10 +74,8 @@ public class HsCodeServiceImpl implements HsCodeService {
                     .build();
         }
 
-        // Map từ DTO sang Entity
         HsCode newHsCode = modelMapper.map(hsCodeRequest, HsCode.class);
 
-        // Nếu có taxRates thì map và set quan hệ 2 chiều
         if (hsCodeRequest.getTaxRates() != null && !hsCodeRequest.getTaxRates().isEmpty()) {
             List<TaxRate> taxRateEntities = hsCodeRequest.getTaxRates().stream()
                     .map(trRequest -> {
@@ -89,18 +87,8 @@ public class HsCodeServiceImpl implements HsCodeService {
             newHsCode.setTaxRates(taxRateEntities);
         }
 
-        // Lưu HsCode cùng cascade lưu TaxRate nếu có
         hsCodeBusiness.create(newHsCode);
-
-        // Map lại HsCode entity sang DTO để trả về, trong đó taxRates cũng được map
         HsCodeDTO hsCodeDTO = modelMapper.map(newHsCode, HsCodeDTO.class);
-
-        // Nếu không dùng cascade hoặc muốn chắc chắn, có thể map taxRate riêng lẻ như sau:
-        // List<TaxRateSnapshotDTO> taxRateDTOs = newHsCode.getTaxRates().stream()
-        //       .map(trEntity -> modelMapper.map(trEntity, TaxRateSnapshotDTO.class))
-        //       .collect(Collectors.toList());
-        // hsCodeDTO.setTaxRates(taxRateDTOs);
-
         log.debug("createHsCodeIncludeTaxes() - End | hsCode: {}", hsCodeDTO.getHsCode());
         return hsCodeDTO;
     }
