@@ -411,6 +411,27 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                 throw new AppException(HttpStatus.FORBIDDEN.value(),
                         "Bạn không có quyền xem yêu cầu mua hàng này");
             }
+            PurchaseRequestModel response = modelMapper.map(purchaseRequest, PurchaseRequestModel.class);
+            List<ItemGroupByPlatformDTO> grouped = purchaseRequest.getRequestItems().stream()
+                    .collect(Collectors.groupingBy(
+                            item -> {
+                                String platform = item.getEcommercePlatform();
+                                return (platform == null || platform.isBlank()) ? "Unknown" : platform;
+                            },
+                            LinkedHashMap::new,
+                            Collectors.mapping(
+                                    item -> modelMapper.map(item, RequestItemDTO.class),
+                                    Collectors.toList()
+                            )
+                    ))
+                    .entrySet().stream()
+                    .map(entry -> {
+                        ItemGroupByPlatformDTO dto = new ItemGroupByPlatformDTO();
+                        dto.setEcommercePlatform(entry.getKey());
+                        dto.setItems(entry.getValue());
+                        return dto;
+                    })
+                    .toList();
 
             PurchaseRequestModel response = modelMapper.map(purchaseRequest, PurchaseRequestModel.class);
             List<RequestItem> allItems = purchaseRequest.getRequestItems();
