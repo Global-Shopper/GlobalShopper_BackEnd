@@ -11,11 +11,13 @@ import com.sep490.gshop.payload.request.quotation.QuotationDetailRequest;
 import com.sep490.gshop.payload.request.quotation.QuotationRequest;
 import com.sep490.gshop.payload.request.quotation.RejectQuotationRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
+import com.sep490.gshop.payload.response.PurchaseRequestModel;
 import com.sep490.gshop.payload.response.TaxCalculationResult;
 import com.sep490.gshop.service.ExchangeRateService;
 import com.sep490.gshop.service.QuotationService;
 import com.sep490.gshop.service.TaxRateService;
 import com.sep490.gshop.utils.CalculationUtil;
+import com.sep490.gshop.utils.MapperUtil;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -26,6 +28,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.*;
+
 @Log4j2
 @Service
 public class QuotationServiceImpl implements QuotationService {
@@ -179,7 +182,6 @@ public class QuotationServiceImpl implements QuotationService {
                             .message("Không tìm thấy yêu cầu để từ chối")
                             .code(404)
                             .build());
-            int check = SubRequestStatus.PENDING.compareTo(subRequest.getStatus());
             if (SubRequestStatus.PENDING.compareTo(subRequest.getStatus()) < 0 ) {
                 log.error("rejectQuotation() QuotationServiceImpl Error | subRequestId: {}, status: {}",
                         subRequest.getId(), subRequest.getStatus());
@@ -188,6 +190,7 @@ public class QuotationServiceImpl implements QuotationService {
             subRequest.setStatus(SubRequestStatus.REJECTED);
             subRequest.setRejectionReason(rejectQuotationRequest.getRejectionReason());
             SubRequest updatedSubRequest = subRequestBusiness.update(subRequest);
+            updatePurchaseRequestStatus(subRequest.getId());
             log.debug("rejectQuotation() QuotationServiceImpl End | subRequestId: {}",
                     updatedSubRequest.getId());
             return MessageResponse.builder()
@@ -456,7 +459,20 @@ public class QuotationServiceImpl implements QuotationService {
         return detailDTO;
     }
 
-
+    private void updatePurchaseRequestStatus(UUID subrequestId) {
+        PurchaseRequest purchaseRequest = purchaseRequestBusiness.findPurchaseRequestBySubRequestId(subrequestId);
+        PurchaseRequestModel purchaseRequestModel = MapperUtil.convertToPurchaseRequestModel(purchaseRequest);
+        if (!purchaseRequestModel.getRequestItems().isEmpty()) {
+            return;
+        }
+        long count = purchaseRequestModel.getSubRequests().stream().filter(sub -> !SubRequestStatus.REJECTED.equals(sub.getStatus())).count();
+        if (count == 0) {
+            purchaseRequest.setStatus(PurchaseRequestStatus.CANCELLED);
+            PurchaseRequestHistory purchaseRequestHistory = new PurchaseRequestHistory(purchaseRequest,"Yêu cầu đã bị đóng do không thể báo giá");
+            purchaseRequest.getHistory().add(purchaseRequestHistory);
+            purchaseRequestBusiness.update(purchaseRequest);
+        }
+    }
 
 
 }
