@@ -26,6 +26,7 @@ public class QuotationController {
     private QuotationService quotationService;
 
     @PostMapping("calculate")
+    @PreAuthorize("(hasRole('ADMIN'))")
     public QuotationCalculatedDTO calculateQuotation(@RequestBody @Valid QuotationRequest input) {
         log.debug("calculateQuotation() - Start | subRequestId: {}", input.getSubRequestId());
         try {
@@ -41,6 +42,7 @@ public class QuotationController {
 
     @PostMapping
     @Operation(summary = "Tạo báo giá cho sub request (Bao gồm nhiều request item")
+    @PreAuthorize("(hasRole('ADMIN'))")
     public ResponseEntity<QuotationDTO> createQuotation(@RequestBody @Valid QuotationRequest request) {
         log.info("createQuotation() - Start | subRequestId: {}", request.getSubRequestId());
         QuotationDTO dto = quotationService.createQuotation(request);
@@ -60,6 +62,7 @@ public class QuotationController {
 
     @GetMapping
     @Operation(summary = "Lấy danh sách tất cả các báo giá")
+    @PreAuthorize("(hasRole('ADMIN'))")
     public ResponseEntity<List<QuotationDTO>> findAllQuotations() {
         log.info("findAllQuotations() - Start");
         List<QuotationDTO> dtos = quotationService.findAllQuotations();
@@ -69,6 +72,7 @@ public class QuotationController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Tìm báo giá theo id")
+    @PreAuthorize("(hasRole('ADMIN'))")
     public ResponseEntity<QuotationDTO> getQuotationById(@PathVariable("id") String id) {
         log.info("getQuotationById() - Start | quotationId: {}", id);
         QuotationDTO dto = quotationService.getQuotationById(id);
