@@ -28,7 +28,8 @@ public class RequestItem extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
     private int quantity;
-
+    private String seller;
+    private String ecommercePlatform;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "purchase_request_id", nullable = false)
     private PurchaseRequest purchaseRequest;
