@@ -641,7 +641,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
             PurchaseRequest purchaseRequest = purchaseRequestBusiness.getById(purchaseRequestId)
                     .orElseThrow(() -> AppException.builder().message("Không tìm thấy đơn hàng").code(404).build());
 
-            if (purchaseRequest.getStatus().equals(PurchaseRequestStatus.SENT)) {
+            if (purchaseRequest.getStatus().equals(PurchaseRequestStatus.CHECKING)) {
                 purchaseRequest.setStatus(PurchaseRequestStatus.INSUFFICIENT);
                 purchaseRequest.setCorrectionNote(correctionNote);
                 purchaseRequestBusiness.update(purchaseRequest);
