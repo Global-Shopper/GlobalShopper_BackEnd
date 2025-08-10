@@ -11,8 +11,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AddressSnapshot {
+    private String shippingAddressId;
     private String name;
     private String phoneNumber;
+    private String tag;
     private String location;
     private String provinceCode;
     private String districtCode;
@@ -20,6 +22,7 @@ public class AddressSnapshot {
     private String addressLine;
 
     public AddressSnapshot(ShippingAddress shippingAddress) {
+        this.shippingAddressId = shippingAddress.getId().toString();
         this.name = shippingAddress.getName();
         this.phoneNumber = shippingAddress.getPhoneNumber();
         this.location = shippingAddress.getLocation();
