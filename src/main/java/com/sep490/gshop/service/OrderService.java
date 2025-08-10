@@ -2,6 +2,7 @@ package com.sep490.gshop.service;
 
 import com.sep490.gshop.common.enums.OrderStatus;
 import com.sep490.gshop.payload.dto.OrderDTO;
+import com.sep490.gshop.payload.request.CancelModel;
 import com.sep490.gshop.payload.request.OrderRequest;
 import com.sep490.gshop.payload.request.order.CheckOutModel;
 import com.sep490.gshop.payload.request.order.ShippingInformationModel;
@@ -20,5 +21,7 @@ public interface OrderService {
         OrderDTO checkoutOrder(CheckOutModel checkOutModel);
 
         OrderDTO updateShippingInfo(String orderId, ShippingInformationModel shippingInformationModel);
+
+        OrderDTO cancelOrder(UUID orderId, CancelModel cancelModel);
 }
 
