@@ -30,7 +30,8 @@ public class Order extends BaseEntity {
 
     @Column(columnDefinition = "TEXT")
     private String note;
-    private OrderStatus status;
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status = OrderStatus.ORDER_REQUESTED;
 
 
     // Order financial information

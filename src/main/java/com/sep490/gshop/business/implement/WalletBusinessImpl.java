@@ -43,4 +43,21 @@ public class WalletBusinessImpl extends BaseBusinessImpl<Wallet, WalletRepositor
         }
         return null;
     }
+
+    @Override
+    public Wallet addBalance(double amount, Wallet wallet, String referenceCode, String description) {
+        Transaction transaction = Transaction.builder()
+                .amount(amount)
+                .referenceCode(referenceCode)
+                .customer(wallet.getCustomer())
+                .balanceBefore(wallet.getBalance())
+                .balanceAfter(wallet.getBalance() + amount)
+                .description(description)
+                .type(TransactionType.REFUND)
+                .status(TransactionStatus.SUCCESS)
+                .build();
+        wallet.setBalance(wallet.getBalance() + amount);
+        transactionRepository.save(transaction);
+        return repository.save(wallet);
+    }
 }

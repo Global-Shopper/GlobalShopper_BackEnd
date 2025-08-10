@@ -3,6 +3,7 @@ package com.sep490.gshop.controller;
 import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.common.enums.OrderStatus;
 import com.sep490.gshop.payload.dto.OrderDTO;
+import com.sep490.gshop.payload.request.CancelModel;
 import com.sep490.gshop.payload.request.OrderRequest;
 import com.sep490.gshop.payload.request.order.CheckOutModel;
 import com.sep490.gshop.payload.request.order.ShippingInformationModel;
@@ -47,18 +48,18 @@ public class OrderController {
     public ResponseEntity<OrderDTO> updateOrder(
             @PathVariable UUID orderId,
             @RequestBody OrderRequest request) {
-        log.info("updateOrder() Start | orderId: {}, request: {}", orderId, request);
+        log.info("updateOrder() OrderController Start | orderId: {}, request: {}", orderId, request);
         OrderDTO dto = orderService.updateOrder(request, orderId);
-        log.info("updateOrder() End | dto: {}", dto);
+        log.info("updateOrder() OrderController End | dto: {}", dto);
         return ResponseEntity.ok(dto);
     }
 
     @Operation(summary = "Lấy thông tin đơn hàng theo ID")
     @GetMapping("/{orderId}")
     public ResponseEntity<OrderDTO> getOrderById(@PathVariable UUID orderId) {
-        log.info("getOrderById() Start | orderId: {}", orderId);
+        log.info("getOrderById() OrderController Start | orderId: {}", orderId);
         OrderDTO dto = orderService.getOrderById(orderId);
-        log.info("getOrderById() End | id: {}", dto.getId());
+        log.info("getOrderById() OrderController End | id: {}", dto.getId());
         return ResponseEntity.ok(dto);
     }
 
@@ -68,18 +69,18 @@ public class OrderController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
     public ResponseEntity<Page<OrderDTO>> getAllOrders(@ParameterObject Pageable pageable,
                                                        @RequestParam(required = false) OrderStatus status) {
-        log.info("getAllOrders() Start");
+        log.info("getAllOrders() OrderController Start");
         Page<OrderDTO> list = orderService.getAllOrders(pageable, status);
-        log.info("getAllOrders() End | size: {}", list.getSize());
+        log.info("getAllOrders() OrderController End | size: {}", list.getSize());
         return ResponseEntity.ok(list);
     }
 
     @Operation(summary = "Xóa đơn hàng")
     @DeleteMapping("/{orderId}")
     public ResponseEntity<Void> deleteOrder(@PathVariable UUID orderId) {
-        log.info("deleteOrder() Start | orderId: {}", orderId);
+        log.info("deleteOrder() OrderController Start | orderId: {}", orderId);
         orderService.deleteOrder(orderId);
-        log.info("deleteOrder() End");
+        log.info("deleteOrder() OrderController End");
         return ResponseEntity.noContent().build();
     }
     
@@ -87,9 +88,9 @@ public class OrderController {
     @Operation(summary = "Thanh toán đơn hàng")
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<OrderDTO> checkoutOrder(@RequestBody CheckOutModel checkOutModel) {
-        log.info("checkoutOrder() Start | subRequestId: {}", checkOutModel.getSubRequestId());
+        log.info("checkoutOrder() OrderController Start | subRequestId: {}", checkOutModel.getSubRequestId());
         OrderDTO orderDTO = orderService.checkoutOrder(checkOutModel);
-        log.info("checkoutOrder() End | orderDTO: {}", orderDTO);
+        log.info("checkoutOrder() OrderController End | orderDTO: {}", orderDTO);
         return ResponseEntity.ok(orderDTO);
     }
 
@@ -97,9 +98,19 @@ public class OrderController {
     @Operation(summary = "Cập nhật thông tin vận chuyển của đơn hàng")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<OrderDTO> updateShippingInfo(@PathVariable String orderId, @RequestBody ShippingInformationModel shippingInformationModel) {
-        log.info("updateShippingInfo() Start | orderId: {}, shippingInformationModel: {}", orderId, shippingInformationModel);
+        log.info("updateShippingInfo() OrderController Start | orderId: {}, shippingInformationModel: {}", orderId, shippingInformationModel);
         OrderDTO updatedOrder = orderService.updateShippingInfo(orderId, shippingInformationModel);
-        log.info("updateShippingInfo() End | updatedOrder: {}", updatedOrder);
+        log.info("updateShippingInfo() OrderController End | updatedOrder: {}", updatedOrder);
         return ResponseEntity.ok(updatedOrder);
+    }
+
+    @PutMapping("/cancel/{orderId}")
+    @Operation(summary = "Hủy đơn hàng do không mua được sản phẩm")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<OrderDTO> cancelOrder(@PathVariable UUID orderId, @RequestBody CancelModel cancelModel) {
+        log.info("cancelOrder() OrderController Start | orderId: {}", orderId);
+        OrderDTO cancelledOrder = orderService.cancelOrder(orderId, cancelModel);
+        log.info("cancelOrder() OrderController End | cancelledOrder: {}", cancelledOrder);
+        return ResponseEntity.ok(cancelledOrder);
     }
 }
