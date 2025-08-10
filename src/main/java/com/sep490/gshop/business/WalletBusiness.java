@@ -6,4 +6,5 @@ import java.util.UUID;
 
 public interface WalletBusiness extends BaseBusiness<Wallet>{
     Wallet checkoutOrder(double amount, Wallet wallet, UUID orderId);
+    Wallet addBalance(double amount, Wallet wallet, String referenceCode, String description);
 }

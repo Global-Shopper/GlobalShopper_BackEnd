@@ -7,18 +7,19 @@ import com.sep490.gshop.config.security.services.UserDetailsImpl;
 import com.sep490.gshop.entity.*;
 import com.sep490.gshop.entity.subclass.AddressSnapshot;
 import com.sep490.gshop.payload.dto.OrderDTO;
+import com.sep490.gshop.payload.request.CancelModel;
 import com.sep490.gshop.payload.request.OrderRequest;
 import com.sep490.gshop.payload.request.order.CheckOutModel;
 import com.sep490.gshop.payload.request.order.ShippingInformationModel;
 import com.sep490.gshop.service.OrderService;
 import com.sep490.gshop.utils.AuthUtils;
-import jakarta.transaction.Transactional;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -90,7 +91,7 @@ public class OrderServiceImpl implements OrderService {
             return modelMapper.map(orderBusiness.create(order), OrderDTO.class);
         } catch (Exception e) {
             log.error("createOrder() Exception | message: {}", e.getMessage());
-            throw new AppException(500, "Failed to create order: " + e.getMessage());
+            throw e;
         }
     }
 
@@ -108,7 +109,7 @@ public class OrderServiceImpl implements OrderService {
             return modelMapper.map(updatedOrder, OrderDTO.class);
         } catch (Exception e) {
             log.error("updateOrder() Exception | orderId: {}, message: {}", orderId, e.getMessage());
-            throw new AppException(500, "Failed to update order");
+            throw e;
         }
     }
 
@@ -126,7 +127,7 @@ public class OrderServiceImpl implements OrderService {
             return modelMapper.map(order, OrderDTO.class);
         } catch (Exception e) {
             log.error("getOrderById() Exception | orderId: {}, message: {}", orderId, e.getMessage());
-            throw new AppException(500, "Failed to get order");
+            throw e;
         }
     }
 
@@ -149,7 +150,7 @@ public class OrderServiceImpl implements OrderService {
             }
         } catch (Exception e) {
             log.error("getAllOrders() Exception | message: {}", e.getMessage());
-            throw new AppException(500, "Failed to get orders");
+            throw e;
         }
     }
 
@@ -161,7 +162,7 @@ public class OrderServiceImpl implements OrderService {
             return true;
         } catch (Exception e) {
             log.error("deleteOrder() Exception | orderId: {}, message: {}", orderId, e.getMessage());
-            throw new AppException(500, "Failed to delete order");
+            throw e;
         }
     }
 
@@ -246,7 +247,7 @@ public class OrderServiceImpl implements OrderService {
             return res;
         } catch (Exception e) {
             log.error("checkoutOrder() OrderServiceImpl Exception | subRequestId: {}, message: {}", checkOutModel.getSubRequestId(), e.getMessage());
-            throw new AppException(500, e.getMessage());
+            throw e;
         }
     }
 
@@ -271,7 +272,33 @@ public class OrderServiceImpl implements OrderService {
             return modelMapper.map(updatedOrder, OrderDTO.class);
         } catch (Exception e) {
             log.error("updateShippingInfo() Exception | orderId: {}, message: {}", orderId, e.getMessage());
-            throw new AppException(500, "Failed to update shipping information");
+            throw e;
+        }
+    }
+
+    @Override
+    @Transactional
+    public OrderDTO cancelOrder(UUID orderId, CancelModel cancelModel) {
+        try {
+            log.debug("cancelOrder() Start | orderId: {}, cancelModel: {}", orderId, cancelModel);
+            Order order = orderBusiness.getById(orderId)
+                    .orElseThrow(() -> new AppException(404, "Không tìm thấy đơn hàng"));
+
+            if (!OrderStatus.ORDER_REQUESTED.equals(order.getStatus())) {
+                log.error("cancelOrder() Invalid order status | orderId: {}, status: {}", orderId, order.getStatus());
+                throw new AppException(400, "Không thể hủy đơn hàng này, chỉ có thể hủy đơn hàng đang chờ xử lý");
+            }
+            order.setStatus(OrderStatus.CANCELLED);
+            OrderHistory history = new OrderHistory(order, cancelModel.getRejectionReason());
+            order.getHistory().add(history);
+            Order updatedOrder = orderBusiness.update(order);
+            Wallet wallet = order.getCustomer().getWallet();
+            walletBusiness.addBalance(order.getTotalPrice()+ order.getShippingFee(), wallet, order.getId().toString(), "Hoàn tiền do hủy đơn hàng");
+            log.debug("cancelOrder() End | updatedOrder: {}", updatedOrder);
+            return modelMapper.map(updatedOrder, OrderDTO.class);
+        } catch (Exception e) {
+            log.error("cancelOrder() Exception | orderId: {}, message: {}", orderId, e.getMessage());
+            throw e;
         }
     }
 }
