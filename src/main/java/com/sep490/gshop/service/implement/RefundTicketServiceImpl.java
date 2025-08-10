@@ -107,7 +107,7 @@ public class RefundTicketServiceImpl implements RefundTicketService {
         try {
             log.debug("updateRefundTicket() RefundTicketServiceImpl Start | id: {}, request: {}", id, request);
             var entityFound = refundTicketBusiness.getById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("Refund ticket not found"));
+                    .orElseThrow(() -> AppException.builder().message("Không tìm thấy refund ticket").code(404).build());
             entityFound.setEvidence(request.getEvidence());
             entityFound.setReason(request.getReason());
             RefundTicketDTO dto = modelMapper.map(refundTicketBusiness.update(entityFound), RefundTicketDTO.class);

@@ -414,7 +414,6 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
 
             PurchaseRequestModel response = modelMapper.map(purchaseRequest, PurchaseRequestModel.class);
             List<RequestItem> allItems = purchaseRequest.getRequestItems();
-
             Map<String, List<RequestItemDTO>> itemsWithoutSubGrouped = allItems.stream()
                     .filter(item -> item.getSubRequest() == null)
                     .map(item -> {
@@ -473,10 +472,22 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                         return subDTO;
                     })
                     .toList();
+
             response.setRequestItemsGroupByPlatform(requestItemsGroupByPlatform);
             response.setSubRequests(subRequestModels);
-            response.setTotalItems(allItems.size());
+            List<RequestItemDTO> itemsWithoutSub = allItems.stream()
+                    .filter(item -> item.getSubRequest() == null)
+                    .map(item -> {
+                        RequestItemDTO dto = modelMapper.map(item, RequestItemDTO.class);
+                        if (item.getQuotationDetail() != null) {
+                            dto.setQuotationDetail(enrichQuotationDetailDto(item.getQuotationDetail()));
+                        }
+                        return dto;
+                    })
+                    .toList();
+            response.setRequestItems(itemsWithoutSub);
 
+            response.setTotalItems(allItems.size());
             long totalItemsWithQuotation = allItems.stream()
                     .filter(item -> item.getQuotationDetail() != null)
                     .count();
@@ -490,6 +501,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
             throw e;
         }
     }
+
 
 
 

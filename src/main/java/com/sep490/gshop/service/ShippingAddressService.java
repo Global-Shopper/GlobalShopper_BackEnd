@@ -12,7 +12,6 @@ public interface ShippingAddressService {
     ShippingAddressDTO updateDefaultShippingAddress(ShippingAddressRequest shippingAddressRequest, UUID shippingAddressId);
     ShippingAddressDTO getShippingAddress(UUID shippingAddressId);
     List<ShippingAddressDTO> getShippingAddressesByCurrentUser();
-    List<ShippingAddressDTO> getShippingAddresses();
     boolean deleteShippingAddress(UUID shippingAddressId);
     boolean updateDefaultShippingAddress(UUID shippingAddressId);
 }
