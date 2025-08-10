@@ -655,7 +655,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
 
             Customer customer = purchaseRequest.getCustomer();
 
-            String editUrl = redirectDomain + "/account-center/purchase-request-list/" + purchaseRequestId;
+            String editUrl = redirectDomain + "/account-center/purchase-request/" + purchaseRequestId + "/edit";
 
             Context context = new Context();
             context.setVariable("name", customer.getName());
