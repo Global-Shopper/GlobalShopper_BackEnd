@@ -126,6 +126,10 @@ public class SubRequestServiceImpl implements SubRequestService
                         .build();
             }
 
+            if(subRequest.getRequestItems().stream().anyMatch(i -> i.getId().equals(requestItem.getId()))) {
+                throw AppException.builder().message("Request item đã thuộc về sub request này").code(400).build();
+            }
+
             if(subRequest.getStatus().equals(SubRequestStatus.QUOTED)){
                 throw AppException.builder().message("Sub request này đã được báo giá, không thể chỉnh sửa").code(400).build();
             }
