@@ -118,7 +118,8 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
             throw e;
         }
     }
-    @Override
+
+
     public List<ShippingAddressDTO> getShippingAddresses() {
         log.debug("getShippingAddresses() Start - Admin only");
         try {
@@ -158,7 +159,7 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
         try {
             UUID id = AuthUtils.getCurrentUser().getId();
             log.debug("updateShippingAddress() Start | id: {}", id);
-            if (shippingAddressId == null) {
+            if (id == null) {
                 throw AppException.builder().code(401).message("Vui lòng đăng nhập để sử dụng dịch vụ").build();
             }
             ShippingAddress address = shippingAddressBusiness.getById(shippingAddressId)
