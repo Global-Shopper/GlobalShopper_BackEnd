@@ -65,13 +65,6 @@ public class TransactionServiceImpl implements TransactionService {
                         .build();
             }
 
-            var currentCustomer = customerBusiness.getById(customerId);
-            if (currentCustomer == null) {
-                throw AppException.builder()
-                        .message("Không tìm thấy customer")
-                        .code(404)
-                        .build();
-            }
             Sort sort = Sort.by(direction, "createdAt");
             Pageable pageable = PageRequest.of(page, size, sort);
             var transactions = transactionBusiness.findTransactionsByCustomerId(customerId, pageable);

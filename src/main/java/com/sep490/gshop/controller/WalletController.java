@@ -126,7 +126,7 @@ public class WalletController {
     @GetMapping("/withdraw-customer")
     @PreAuthorize("hasRole('CUSTOMER')")
     @PageableAsQueryParam
-    @Operation(summary = "Lấy tất cả các request rút tiền của người dùng hiện")
+    @Operation(summary = "Lấy tất cả các request rút tiền của người dùng hiện tại")
     public ResponseEntity<Page<WithdrawTicketDTO>> getWithdrawTicketsByCurrentUser(@ParameterObject Pageable pageable) {
         log.info("GET /api/withdraw-requests/withdraw-customer Start");
         Page<WithdrawTicketDTO> tickets = walletService.getWithdrawTicketsByCurrentUser(pageable);
