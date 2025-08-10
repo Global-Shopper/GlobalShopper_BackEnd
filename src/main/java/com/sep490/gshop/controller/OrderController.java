@@ -106,7 +106,7 @@ public class OrderController {
 
     @PutMapping("/cancel/{orderId}")
     @Operation(summary = "Hủy đơn hàng do không mua được sản phẩm")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
     public ResponseEntity<OrderDTO> cancelOrder(@PathVariable UUID orderId, @RequestBody CancelModel cancelModel) {
         log.info("cancelOrder() OrderController Start | orderId: {}", orderId);
         OrderDTO cancelledOrder = orderService.cancelOrder(orderId, cancelModel);
