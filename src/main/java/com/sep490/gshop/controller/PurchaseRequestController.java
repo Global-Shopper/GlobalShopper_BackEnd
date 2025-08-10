@@ -120,7 +120,7 @@ public class PurchaseRequestController {
     @Operation(summary = "Yêu cầu cập nhật thông tin của request")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MessageResponse> requestCorrection(
-            @RequestParam UUID purchaseRequestId,
+            @PathVariable("id") UUID purchaseRequestId,
             @RequestBody String correctionNote) {
         log.info("requestCorrection() - Start | purchaseRequestId: {}, correctionNote: {}", purchaseRequestId, correctionNote);
 
