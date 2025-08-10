@@ -8,6 +8,7 @@ import com.sep490.gshop.common.enums.UserRole;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.config.security.services.UserDetailsImpl;
 import com.sep490.gshop.entity.*;
+import com.sep490.gshop.entity.subclass.AddressSnapshot;
 import com.sep490.gshop.payload.dto.*;
 import com.sep490.gshop.payload.request.purchaserequest.*;
 import com.sep490.gshop.payload.response.MessageResponse;
@@ -73,7 +74,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
 
             if (user instanceof Customer customer) {
                 PurchaseRequest purchaseRequest = PurchaseRequest.builder()
-                        .shippingAddress(shippingAddress)
+                        .shippingAddress(new AddressSnapshot(shippingAddress))
                         .customer(customer)
                         .status(PurchaseRequestStatus.SENT)
                         .build();
@@ -163,7 +164,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
 
             if (user instanceof Customer customer) {
                 PurchaseRequest purchaseRequest = PurchaseRequest.builder()
-                        .shippingAddress(shippingAddress)
+                        .shippingAddress(new AddressSnapshot(shippingAddress))
                         .customer(customer)
                         .status(PurchaseRequestStatus.SENT)
                         .build();
@@ -384,7 +385,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                     requestItemBusiness.delete(item.getId());
                 }
             }
-            purchaseRequest.setShippingAddress(shippingAddress);
+            purchaseRequest.setShippingAddress(new AddressSnapshot(shippingAddress));
             purchaseRequest.setRequestItems(finalItemList);
             PurchaseRequestHistory history = new PurchaseRequestHistory(purchaseRequest,"Đơn hàng đã được cập nhật");
             purchaseRequest.getHistory().add(history);
@@ -734,7 +735,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
      */
     private UpdateRequestModel convertPurchaseRequestToUpdateRequestModel(PurchaseRequest pr) {
         UpdateRequestModel updateModel = new UpdateRequestModel();
-        updateModel.setShippingAddressId(pr.getShippingAddress() != null ? pr.getShippingAddress().getId().toString() : null);
+        updateModel.setShippingAddressId(pr.getShippingAddress() != null ? pr.getShippingAddress().getShippingAddressId() : null);
 
         List<String> contactInfo = pr.getRequestItems().stream()
                 .filter(item -> item.getSubRequest() != null)

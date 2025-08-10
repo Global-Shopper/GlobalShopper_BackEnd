@@ -193,7 +193,7 @@ public class OrderServiceImpl implements OrderService {
             Order order = Order.builder()
                     .status(OrderStatus.ORDER_REQUESTED)
                     .customer(user)
-                    .shippingAddress(new AddressSnapshot(purchaseRequest.getShippingAddress()))
+                    .shippingAddress(purchaseRequest.getShippingAddress())
                     .admin(purchaseRequest.getAdmin())
                     .contactInfo(subRequest.getContactInfo())
                     .seller(subRequest.getSeller())

@@ -2,6 +2,7 @@ package com.sep490.gshop.entity;
 
 import com.sep490.gshop.common.enums.PurchaseRequestStatus;
 import com.sep490.gshop.common.enums.RequestType;
+import com.sep490.gshop.entity.subclass.AddressSnapshot;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,9 +24,9 @@ public class PurchaseRequest extends BaseEntity {
     
     @Column(columnDefinition = "TEXT")
     private String correctionNote;
-    @ManyToOne
-    @JoinColumn(name = "shipping_address_id", nullable = false)
-    private ShippingAddress shippingAddress;
+
+    @Embedded
+    private AddressSnapshot shippingAddress;
 
     @ManyToOne
     @JoinColumn(name = "customer_id", nullable = false)
