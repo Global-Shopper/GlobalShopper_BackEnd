@@ -342,7 +342,7 @@ public class OrderServiceImpl implements OrderService {
                     .balanceBefore(user.getWallet().getBalance())
                     .build();
             transactionBusiness.create(transaction);
-            String url = vNPayServiceImpl.createURL(totalPrice, "Thanh toán đơn hàng", user.getEmail(),referenceCode,checkOutModel.getRedirectUri());
+            String url = vNPayServiceImpl.createURL(totalPrice, "Thanh toán đơn hàng", user.getEmail(),referenceCode,checkOutModel.getRedirectUri().replace(":id", createdOrder.getId().toString()));
             if (url == null || url.isBlank()) {
                 log.error("directCheckoutOrder() OrderServiceImpl VNPay URL creation failed | subRequestId: {}", checkOutModel.getSubRequestId());
                 throw new AppException(500, "Không thể tạo URL thanh toán");
