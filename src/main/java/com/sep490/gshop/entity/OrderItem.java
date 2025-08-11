@@ -25,6 +25,8 @@ public class OrderItem extends BaseEntity{
 
     //QuotationDetail data
     private double basePrice;
+    private String currency;
+    private double totalVNDPrice;
     private double serviceFee;
     @ElementCollection
     @CollectionTable(name = "order_item_tax_rate", joinColumns = @JoinColumn(name = "order_item_id"))

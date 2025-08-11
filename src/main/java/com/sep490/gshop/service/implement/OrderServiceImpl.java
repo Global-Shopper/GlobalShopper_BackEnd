@@ -100,7 +100,7 @@ public class OrderServiceImpl implements OrderService {
             order.setOrderItems(orderItems);
             var totalPrice = 0.0;
             for(OrderItem orderItem : orderItems) {
-                totalPrice += 0.0; // Assuming you will calculate the price based on the product and quantity
+                totalPrice += 0.0;
             }
             order.setTotalPrice(totalPrice);
             log.debug("createOrder() OrderServiceImpl End | orderId: {}", order.getId());
