@@ -8,7 +8,7 @@ import com.sep490.gshop.payload.request.WithdrawRequest;
 import com.sep490.gshop.payload.response.IPNResponse;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.MessageWithBankInformationResponse;
-import com.sep490.gshop.payload.response.MoneyChargeResponse;
+import com.sep490.gshop.payload.response.PaymentURLResponse;
 import com.sep490.gshop.service.WalletService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
@@ -60,10 +60,10 @@ public class WalletController {
 
     @PostMapping
     @Operation(summary = "Nạp tiền vào ví người dùng hiện tại")
-    public ResponseEntity<MoneyChargeResponse> depositMoney(@Valid @RequestBody WalletRequest walletRequest) {
+    public ResponseEntity<PaymentURLResponse> depositMoney(@Valid @RequestBody WalletRequest walletRequest) {
         log.info("depositMoney() Start | request: {}", walletRequest);
         try {
-            MoneyChargeResponse response = walletService.depositMoney(walletRequest);
+            PaymentURLResponse response = walletService.depositMoney(walletRequest);
             log.info("depositMoney() End | response: {}", response);
             return ResponseEntity.ok(response);
         } catch (Exception e) {

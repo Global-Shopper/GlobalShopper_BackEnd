@@ -6,7 +6,9 @@ import com.sep490.gshop.payload.dto.OrderDTO;
 import com.sep490.gshop.payload.request.CancelModel;
 import com.sep490.gshop.payload.request.OrderRequest;
 import com.sep490.gshop.payload.request.order.CheckOutModel;
+import com.sep490.gshop.payload.request.order.DirectCheckoutModel;
 import com.sep490.gshop.payload.request.order.ShippingInformationModel;
+import com.sep490.gshop.payload.response.PaymentURLResponse;
 import com.sep490.gshop.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.log4j.Log4j2;
@@ -92,6 +94,16 @@ public class OrderController {
         OrderDTO orderDTO = orderService.checkoutOrder(checkOutModel);
         log.info("checkoutOrder() OrderController End | orderDTO: {}", orderDTO);
         return ResponseEntity.ok(orderDTO);
+    }
+
+    @PostMapping("/direct-checkout")
+    @Operation(summary = "Thanh toán đơn hàng")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<PaymentURLResponse> directCheckoutOrder(@RequestBody DirectCheckoutModel checkOutModel) {
+        log.info("directCheckoutOrder() OrderController Start | subRequestId: {}", checkOutModel.getSubRequestId());
+        PaymentURLResponse response = orderService.directCheckoutOrder(checkOutModel);
+        log.info("directCheckoutOrder() OrderController End | orderDTO: {}", response);
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/update-shipping/{orderId}")
