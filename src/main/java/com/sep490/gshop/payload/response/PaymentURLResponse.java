@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class MoneyChargeResponse {
+public class PaymentURLResponse {
     private String message;
     private String url;
     private boolean isSuccess;

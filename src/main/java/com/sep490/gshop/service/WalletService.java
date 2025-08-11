@@ -7,7 +7,7 @@ import com.sep490.gshop.payload.request.WithdrawRequest;
 import com.sep490.gshop.payload.response.IPNResponse;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.MessageWithBankInformationResponse;
-import com.sep490.gshop.payload.response.MoneyChargeResponse;
+import com.sep490.gshop.payload.response.PaymentURLResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface WalletService {
-    MoneyChargeResponse depositMoney(@Valid WalletRequest request);
+    PaymentURLResponse depositMoney(@Valid WalletRequest request);
     MessageResponse withdrawMoneyRequest(@Valid WithdrawRequest request);
     WalletDTO getWalletByCurrent();
     List<WithdrawTicketDTO> getWithdrawTicketsWithPendingStatus();

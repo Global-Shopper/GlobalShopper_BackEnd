@@ -65,7 +65,7 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
-    public MoneyChargeResponse depositMoney(@Valid WalletRequest request) {
+    public PaymentURLResponse depositMoney(@Valid WalletRequest request) {
         log.debug("depositMoney() Start | request: {}", request);
         try {
             Customer customer = customerBusiness.getById(AuthUtils.getCurrentUserId())
@@ -81,7 +81,7 @@ public class WalletServiceImpl implements WalletService {
                             .build());
 
 
-            String txnRef = UUID.randomUUID().toString().replace("-", "");
+            String txnRef = UUID.randomUUID().toString();
             Transaction transaction = Transaction.builder()
                     .amount(request.getBalance())
                     .type(TransactionType.DEPOSIT)
@@ -99,7 +99,7 @@ public class WalletServiceImpl implements WalletService {
 
             log.debug("depositMoney() End | url: {}", url);
             String formattedAmount = formatAmount(request.getBalance());
-            return MoneyChargeResponse.builder()
+            return PaymentURLResponse.builder()
                     .isSuccess(true)
                     .message("Đã yêu cầu nạp thành công số tiền " + formattedAmount + " VNĐ vào ví của bạn")
                     .url(url)

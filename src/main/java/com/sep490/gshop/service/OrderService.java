@@ -5,7 +5,9 @@ import com.sep490.gshop.payload.dto.OrderDTO;
 import com.sep490.gshop.payload.request.CancelModel;
 import com.sep490.gshop.payload.request.OrderRequest;
 import com.sep490.gshop.payload.request.order.CheckOutModel;
+import com.sep490.gshop.payload.request.order.DirectCheckoutModel;
 import com.sep490.gshop.payload.request.order.ShippingInformationModel;
+import com.sep490.gshop.payload.response.PaymentURLResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -19,6 +21,7 @@ public interface OrderService {
         Page<OrderDTO> getAllOrders(Pageable pageable, OrderStatus status);
         boolean deleteOrder(UUID orderId);
         OrderDTO checkoutOrder(CheckOutModel checkOutModel);
+        PaymentURLResponse directCheckoutOrder(DirectCheckoutModel checkOutModel);
 
         OrderDTO updateShippingInfo(String orderId, ShippingInformationModel shippingInformationModel);
 
