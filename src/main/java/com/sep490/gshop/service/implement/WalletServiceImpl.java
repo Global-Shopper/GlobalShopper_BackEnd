@@ -1,6 +1,7 @@
 package com.sep490.gshop.service.implement;
 
 import com.sep490.gshop.business.*;
+import com.sep490.gshop.common.enums.OrderStatus;
 import com.sep490.gshop.common.enums.TransactionStatus;
 import com.sep490.gshop.common.enums.TransactionType;
 import com.sep490.gshop.common.enums.WithdrawStatus;
@@ -37,6 +38,7 @@ public class WalletServiceImpl implements WalletService {
     private final WalletBusiness walletBusiness;
     private final CustomerBusiness customerBusiness;
     private final ModelMapper modelMapper;
+    private final OrderBusiness orderBusiness;
     private VNPayServiceImpl vnPayServiceImpl;
     private BankAccountBusiness bankAccountBusiness;
     private UserBusiness userBusiness;
@@ -52,7 +54,7 @@ public class WalletServiceImpl implements WalletService {
                              UserBusiness userBusiness,
                              WithdrawTicketBusiness withdrawTicketBusiness,
                              CloudinaryService cloudinaryService,
-                             TransactionBusiness transactionBusiness) {
+                             TransactionBusiness transactionBusiness, OrderBusiness orderBusiness) {
         this.walletBusiness = walletBusiness;
         this.customerBusiness = customerBusiness;
         this.modelMapper = modelMapper;
@@ -62,10 +64,11 @@ public class WalletServiceImpl implements WalletService {
         this.withdrawTicketBusiness = withdrawTicketBusiness;
         this.cloudinaryService = cloudinaryService;
         this.transactionBusiness = transactionBusiness;
+        this.orderBusiness = orderBusiness;
     }
 
     @Override
-    public MoneyChargeResponse depositMoney(@Valid WalletRequest request) {
+    public PaymentURLResponse depositMoney(@Valid WalletRequest request) {
         log.debug("depositMoney() Start | request: {}", request);
         try {
             Customer customer = customerBusiness.getById(AuthUtils.getCurrentUserId())
@@ -81,7 +84,7 @@ public class WalletServiceImpl implements WalletService {
                             .build());
 
 
-            String txnRef = UUID.randomUUID().toString().replace("-", "");
+            String txnRef = UUID.randomUUID().toString();
             Transaction transaction = Transaction.builder()
                     .amount(request.getBalance())
                     .type(TransactionType.DEPOSIT)
@@ -99,7 +102,7 @@ public class WalletServiceImpl implements WalletService {
 
             log.debug("depositMoney() End | url: {}", url);
             String formattedAmount = formatAmount(request.getBalance());
-            return MoneyChargeResponse.builder()
+            return PaymentURLResponse.builder()
                     .isSuccess(true)
                     .message("Đã yêu cầu nạp thành công số tiền " + formattedAmount + " VNĐ vào ví của bạn")
                     .url(url)
@@ -460,22 +463,33 @@ public class WalletServiceImpl implements WalletService {
                         .build();
             }
             if ("00".equals(status)) {
-                transaction.setStatus(TransactionStatus.SUCCESS);
-                Optional<Wallet> walletOpt = walletBusiness.getById(transaction.getCustomer().getWallet().getId());
-                if (walletOpt.isEmpty()) {
-                    log.error("ipnCallback() WalletServiceImpl | Wallet not found for customer id: {}", transaction.getCustomer().getId());
-                    transaction.setStatus(TransactionStatus.FAIL);
-                    transactionBusiness.update(transaction);
-                    return IPNResponse.builder()
-                            .rspCode("99")
-                            .message("Wallet not found")
-                            .build();
+                if (TransactionType.CHECKOUT.equals(transaction.getType())) {
+                    String orderId = transaction.getReferenceCode().split("_")[1];
+                    Order order = orderBusiness.getById(UUID.fromString(orderId)).orElse(null);
+                    if (order != null) {
+                        order.setStatus(OrderStatus.ORDER_REQUESTED);
+                        orderBusiness.update(order);
+                        transaction.setStatus(TransactionStatus.SUCCESS);
+                        transactionBusiness.update(transaction);
+                    }
+                } else {
+                    transaction.setStatus(TransactionStatus.SUCCESS);
+                    Optional<Wallet> walletOpt = walletBusiness.getById(transaction.getCustomer().getWallet().getId());
+                    if (walletOpt.isEmpty()) {
+                        log.error("ipnCallback() WalletServiceImpl | Wallet not found for customer id: {}", transaction.getCustomer().getId());
+                        transaction.setStatus(TransactionStatus.FAIL);
+                        transactionBusiness.update(transaction);
+                        return IPNResponse.builder()
+                                .rspCode("99")
+                                .message("Wallet not found")
+                                .build();
+                    }
+                    Wallet wallet = walletOpt.get();
+                    double balanceBefore = wallet.getBalance();
+                    transaction.setBalanceBefore(balanceBefore);
+                    wallet.setBalance(balanceBefore + transaction.getAmount());
+                    walletBusiness.update(wallet);
                 }
-                Wallet wallet = walletOpt.get();
-                double balanceBefore = wallet.getBalance();
-                transaction.setBalanceBefore(balanceBefore);
-                wallet.setBalance(balanceBefore + transaction.getAmount());
-                walletBusiness.update(wallet);
                 log.debug("ipnCallback() WalletServiceImpl | Successfully processed transaction with ref: {}", vnpTxnRef);
                 ipnResponse.setRspCode("00");
                 ipnResponse.setMessage("Transaction successful");

@@ -8,12 +8,16 @@ import com.sep490.gshop.entity.*;
 import com.sep490.gshop.entity.subclass.AddressSnapshot;
 import com.sep490.gshop.payload.dto.FeedbackDTO;
 import com.sep490.gshop.payload.dto.OrderDTO;
+import com.sep490.gshop.payload.dto.TransactionDTO;
 import com.sep490.gshop.payload.request.CancelModel;
 import com.sep490.gshop.payload.request.OrderRequest;
 import com.sep490.gshop.payload.request.order.CheckOutModel;
+import com.sep490.gshop.payload.request.order.DirectCheckoutModel;
 import com.sep490.gshop.payload.request.order.ShippingInformationModel;
+import com.sep490.gshop.payload.response.PaymentURLResponse;
 import com.sep490.gshop.service.OrderService;
 import com.sep490.gshop.utils.AuthUtils;
+import com.sep490.gshop.utils.RandomUtil;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +45,7 @@ public class OrderServiceImpl implements OrderService {
     private final TransactionBusiness transactionBusiness;
     private final UserBusiness userBusiness;
     private final FeedbackBusiness feedbackBusiness;
+    private final VNPayServiceImpl vNPayServiceImpl;
 
     @Autowired
     public OrderServiceImpl(OrderBusiness orderBusiness,
@@ -53,7 +58,7 @@ public class OrderServiceImpl implements OrderService {
                             WalletBusiness walletBusiness,
                             TransactionBusiness transactionBusiness,
                             UserBusiness userBusiness,
-                            FeedbackBusiness feedbackBusiness) {
+                            FeedbackBusiness feedbackBusiness, VNPayServiceImpl vNPayServiceImpl) {
         this.orderBusiness = orderBusiness;
         this.modelMapper = modelMapper;
         this.shippingAddressBusiness = shippingAddressBusiness;
@@ -65,6 +70,7 @@ public class OrderServiceImpl implements OrderService {
         this.transactionBusiness = transactionBusiness;
         this.userBusiness = userBusiness;
         this.feedbackBusiness = feedbackBusiness;
+        this.vNPayServiceImpl = vNPayServiceImpl;
     }
 
     @Override
@@ -267,6 +273,85 @@ public class OrderServiceImpl implements OrderService {
             return res;
         } catch (Exception e) {
             log.error("checkoutOrder() OrderServiceImpl Exception | subRequestId: {}, message: {}", checkOutModel.getSubRequestId(), e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
+    @Transactional
+    public PaymentURLResponse directCheckoutOrder(DirectCheckoutModel checkOutModel) {
+        try {
+            UUID userId = AuthUtils.getCurrentUserId();
+            UUID subRequestId = UUID.fromString(checkOutModel.getSubRequestId());
+            Customer user = (Customer) userBusiness.getByUserId(userId);
+            SubRequest subRequest = subRequestBusiness.getById(subRequestId)
+                    .orElseThrow(() -> new AppException(404, "Không tìm thấy yêu cầu"));
+            PurchaseRequest purchaseRequest = purchaseRequestBusiness.findPurchaseRequestBySubRequestId(subRequestId);
+            if (purchaseRequest == null) {
+                log.error("directCheckoutOrder() OrderServiceImpl PurchaseRequest not found | subRequestId: {}", subRequestId);
+                throw new AppException(404, "Không tìm thấy yêu cầu mua hàng");
+            }
+            if (!purchaseRequest.getCustomer().getId().equals(user.getId())) {
+                log.error("directCheckoutOrder() OrderServiceImpl Unauthorized | subRequestId: {}, userId: {}", subRequestId, userId);
+                throw new AppException(403, "Bạn không có quyền thực hiện hành động này");
+            }
+
+            if (subRequest.getQuotation() == null) {
+                log.error("directCheckoutOrder() OrderServiceImpl Invalid PurchaseRequest status | subRequestId: {}, status: {}", subRequestId, purchaseRequest.getStatus());
+                throw new AppException(400, "Yêu cầu mua hàng chưa được báo giá");
+            }
+            Order order = Order.builder()
+                    .status(OrderStatus.AWAITING_PAYMENT)
+                    .customer(user)
+                    .shippingAddress(purchaseRequest.getShippingAddress())
+                    .admin(purchaseRequest.getAdmin())
+                    .contactInfo(subRequest.getContactInfo())
+                    .seller(subRequest.getSeller())
+                    .ecommercePlatform(subRequest.getEcommercePlatform())
+                    .totalPrice(subRequest.getQuotation().getTotalPriceEstimate())
+                    .shippingFee(subRequest.getQuotation().getShippingEstimate())
+                    .build();
+            List<OrderItem> orderItems = subRequest.getRequestItems().stream()
+                    .map(requestItem -> {
+                        OrderItem orderItem = new OrderItem(requestItem);
+                        orderItem.setOrder(order);
+                        return orderItem;
+                    }).toList();
+            order.setOrderItems(orderItems);
+            //Assuming calculate total price based and shipping fee
+            double totalPrice = subRequest.getQuotation().getTotalPriceEstimate() + subRequest.getQuotation().getShippingEstimate();
+
+            if (totalPrice != checkOutModel.getTotalPriceEstimate()) {
+                log.error("directCheckoutOrder() OrderServiceImpl Total price mismatch | subRequestId: {}, expected: {}, actual: {}", subRequestId, checkOutModel.getTotalPriceEstimate(), totalPrice);
+                throw new AppException(400, "Tổng giá trị đơn hàng không khớp");
+            }
+            Order createdOrder = orderBusiness.create(order);
+            String referenceCode = RandomUtil.randomNumber(6) + "_" + createdOrder.getId().toString();
+            Transaction transaction = Transaction.builder()
+                    .type(TransactionType.CHECKOUT)
+                    .status(TransactionStatus.PENDING)
+                    .amount(totalPrice)
+                    .referenceCode(referenceCode)
+                    .description("Thanh toán đơn hàng " + createdOrder.getId())
+                    .customer(user)
+                    .balanceAfter(user.getWallet().getBalance())
+                    .balanceBefore(user.getWallet().getBalance())
+                    .build();
+            transactionBusiness.create(transaction);
+            String url = vNPayServiceImpl.createURL(totalPrice, "Thanh toán đơn hàng", user.getEmail(),referenceCode,checkOutModel.getRedirectUri());
+            if (url == null || url.isBlank()) {
+                log.error("directCheckoutOrder() OrderServiceImpl VNPay URL creation failed | subRequestId: {}", checkOutModel.getSubRequestId());
+                throw new AppException(500, "Không thể tạo URL thanh toán");
+            }
+            PaymentURLResponse response = PaymentURLResponse.builder()
+                    .url(url)
+                    .message("Vui lòng thanh toán để hoàn tất đơn hàng")
+                    .isSuccess(true)
+                    .build();
+            log.debug("directCheckoutOrder() OrderServiceImpl End | subRequestId: {}, orderId: {}", checkOutModel.getSubRequestId(), createdOrder.getId());
+            return response;
+        } catch (Exception e) {
+            log.error("directCheckoutOrder() OrderServiceImpl Exception | subRequestId: {}, message: {}", checkOutModel.getSubRequestId(), e.getMessage());
             throw e;
         }
     }
