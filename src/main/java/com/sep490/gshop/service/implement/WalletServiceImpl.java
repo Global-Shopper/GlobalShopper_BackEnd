@@ -468,6 +468,8 @@ public class WalletServiceImpl implements WalletService {
                     Order order = orderBusiness.getById(UUID.fromString(orderId)).orElse(null);
                     if (order != null) {
                         order.setStatus(OrderStatus.ORDER_REQUESTED);
+                        OrderHistory orderHistory = new OrderHistory(order,"Đã thánh toán đơn hàng");
+                        order.getHistory().add(orderHistory);
                         orderBusiness.update(order);
                         transaction.setStatus(TransactionStatus.SUCCESS);
                         transactionBusiness.update(transaction);
