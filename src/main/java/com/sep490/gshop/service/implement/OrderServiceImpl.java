@@ -231,6 +231,8 @@ public class OrderServiceImpl implements OrderService {
                     .map(requestItem -> {
                         OrderItem orderItem = new OrderItem(requestItem);
                         orderItem.setOrder(order);
+                        orderItem.setCurrency(requestItem.getQuotationDetail().getCurrency());
+                        orderItem.setTotalVNDPrice(requestItem.getQuotationDetail().getTotalVNDPrice());
                         return orderItem;
                     }).toList();
             order.setOrderItems(orderItems);
