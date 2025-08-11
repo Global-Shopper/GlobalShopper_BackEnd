@@ -1,5 +1,6 @@
 package com.sep490.gshop.payload.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.sep490.gshop.common.enums.OrderStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,6 +11,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class OrderDTO {
     private String id;
     private String trackingNumber;
@@ -29,6 +31,7 @@ public class OrderDTO {
     private List<OrderItemDTO> orderItems;
     private AddressSnapshotDTO shippingAddress;
     private List<OrderHistoryDTO> history;
+    private FeedbackDTO feedback;
 
     private long createdAt;
     private long updatedAt;
