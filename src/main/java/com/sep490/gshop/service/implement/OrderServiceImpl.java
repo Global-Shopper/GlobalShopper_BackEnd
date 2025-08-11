@@ -6,6 +6,7 @@ import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.config.security.services.UserDetailsImpl;
 import com.sep490.gshop.entity.*;
 import com.sep490.gshop.entity.subclass.AddressSnapshot;
+import com.sep490.gshop.payload.dto.FeedbackDTO;
 import com.sep490.gshop.payload.dto.OrderDTO;
 import com.sep490.gshop.payload.request.CancelModel;
 import com.sep490.gshop.payload.request.OrderRequest;
@@ -39,12 +40,20 @@ public class OrderServiceImpl implements OrderService {
     private final WalletBusiness walletBusiness;
     private final TransactionBusiness transactionBusiness;
     private final UserBusiness userBusiness;
+    private final FeedbackBusiness feedbackBusiness;
 
     @Autowired
     public OrderServiceImpl(OrderBusiness orderBusiness,
                             ModelMapper modelMapper,
                             ShippingAddressBusiness shippingAddressBusiness,
-                            ProductBusiness productBusiness, PurchaseRequestBusiness purchaseRequestBusiness, RequestItemBusiness requestItemBusiness, SubRequestBusiness subRequestBusiness, WalletBusiness walletBusiness, TransactionBusiness transactionBusiness, UserBusiness userBusiness) {
+                            ProductBusiness productBusiness,
+                            PurchaseRequestBusiness purchaseRequestBusiness,
+                            RequestItemBusiness requestItemBusiness,
+                            SubRequestBusiness subRequestBusiness,
+                            WalletBusiness walletBusiness,
+                            TransactionBusiness transactionBusiness,
+                            UserBusiness userBusiness,
+                            FeedbackBusiness feedbackBusiness) {
         this.orderBusiness = orderBusiness;
         this.modelMapper = modelMapper;
         this.shippingAddressBusiness = shippingAddressBusiness;
@@ -55,12 +64,13 @@ public class OrderServiceImpl implements OrderService {
         this.walletBusiness = walletBusiness;
         this.transactionBusiness = transactionBusiness;
         this.userBusiness = userBusiness;
+        this.feedbackBusiness = feedbackBusiness;
     }
 
     @Override
     @Transactional
     public OrderDTO createOrder(OrderRequest orderRequest) {
-        log.debug("createOrder() Start | request: {}", orderRequest);
+        log.debug("createOrder() OrderServiceImpl Start | request: {}", orderRequest);
         try {
             ShippingAddress shippingAddress = shippingAddressBusiness.getById(UUID.fromString(orderRequest.getShippingAddressId()))
                     .orElseThrow(() -> new AppException(404, "Shipping address not found"));
@@ -87,10 +97,10 @@ public class OrderServiceImpl implements OrderService {
                 totalPrice += 0.0; // Assuming you will calculate the price based on the product and quantity
             }
             order.setTotalPrice(totalPrice);
-            log.debug("createOrder() End | orderId: {}", order.getId());
+            log.debug("createOrder() OrderServiceImpl End | orderId: {}", order.getId());
             return modelMapper.map(orderBusiness.create(order), OrderDTO.class);
         } catch (Exception e) {
-            log.error("createOrder() Exception | message: {}", e.getMessage());
+            log.error("createOrder() OrderServiceImpl Exception | message: {}", e.getMessage());
             throw e;
         }
     }
@@ -98,7 +108,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderDTO updateOrder(OrderRequest orderRequest, UUID orderId) {
-        log.debug("updateOrder() Start | orderId: {}, request: {}", orderId, orderRequest);
+        log.debug("updateOrder() OrderServiceImpl Start | orderId: {}, request: {}", orderId, orderRequest);
         try {
             Order existingOrder = orderBusiness.getById(orderId)
                     .orElseThrow(() -> new AppException(404, "Order not found"));
@@ -106,27 +116,37 @@ public class OrderServiceImpl implements OrderService {
             existingOrder.setStatus(OrderStatus.ARRIVED_IN_DESTINATION);
 
             Order updatedOrder = orderBusiness.update(existingOrder);
+            log.debug("updateOrder() OrderServiceImpl End | orderId: {}", orderId);
             return modelMapper.map(updatedOrder, OrderDTO.class);
         } catch (Exception e) {
-            log.error("updateOrder() Exception | orderId: {}, message: {}", orderId, e.getMessage());
+            log.error("updateOrder() OrderServiceImpl Exception | orderId: {}, message: {}", orderId, e.getMessage());
             throw e;
         }
     }
 
     @Override
     public OrderDTO getOrderById(UUID orderId) {
-        log.debug("getOrderById() Start | orderId: {}", orderId);
+        log.debug("getOrderById() OrderServiceImpl Start | orderId: {}", orderId);
         try {
+
             UserDetailsImpl userDetails = AuthUtils.getCurrentUser();
+
             Order order = orderBusiness.getById(orderId)
-                    .orElseThrow(() -> new AppException(404, "Order not found"));
+                    .orElseThrow(() -> new AppException(404, "Không tìm thấy đơn hàng"));
             if (UserRole.CUSTOMER.equals(userDetails.getRole()) && !order.getCustomer().getId().equals(userDetails.getId())) {
                 log.error("getOrderById() Unauthorized access | orderId: {}, userId: {}, role: {}", orderId, userDetails.getId(), userDetails.getRole());
                 throw new AppException(403, "Bạn không có quyền truy cập vào đơn hàng này");
             }
-            return modelMapper.map(order, OrderDTO.class);
+            OrderDTO orderDTO = modelMapper.map(order, OrderDTO.class);
+            Feedback feedback = feedbackBusiness.getByOrderId(orderId);
+            if (feedback != null) {
+                FeedbackDTO feedbackDTO = modelMapper.map(feedback, FeedbackDTO.class);
+                orderDTO.setFeedback(feedbackDTO);
+            }
+            log.debug("getOrderById() OrderServiceImpl End | orderId: {}", orderId);
+            return orderDTO;
         } catch (Exception e) {
-            log.error("getOrderById() Exception | orderId: {}, message: {}", orderId, e.getMessage());
+            log.error("getOrderById() OrderServiceImpl Exception | orderId: {}, message: {}", orderId, e.getMessage());
             throw e;
         }
     }
@@ -149,19 +169,19 @@ public class OrderServiceImpl implements OrderService {
                 throw new AppException(403, "Bạn không có quyền truy cập vào danh sách đơn hàng");
             }
         } catch (Exception e) {
-            log.error("getAllOrders() Exception | message: {}", e.getMessage());
+            log.error("getAllOrders() OrderServiceImpl Exception | message: {}", e.getMessage());
             throw e;
         }
     }
 
     @Override
     public boolean deleteOrder(UUID orderId) {
-        log.debug("deleteOrder() Start | orderId: {}", orderId);
+        log.debug("deleteOrder() OrderServiceImpl Start | orderId: {}", orderId);
         try {
             orderBusiness.delete(orderId);
             return true;
         } catch (Exception e) {
-            log.error("deleteOrder() Exception | orderId: {}, message: {}", orderId, e.getMessage());
+            log.error("deleteOrder() OrderServiceImpl Exception | orderId: {}, message: {}", orderId, e.getMessage());
             throw e;
         }
     }
