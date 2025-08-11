@@ -325,6 +325,10 @@ public class OrderServiceImpl implements OrderService {
                 log.error("directCheckoutOrder() OrderServiceImpl Total price mismatch | subRequestId: {}, expected: {}, actual: {}", subRequestId, checkOutModel.getTotalPriceEstimate(), totalPrice);
                 throw new AppException(400, "Tổng giá trị đơn hàng không khớp");
             }
+
+            OrderHistory history = new OrderHistory(order, "Đơn hàng đã được tạo");
+            order.setHistory(List.of(history));
+            
             Order createdOrder = orderBusiness.create(order);
             String referenceCode = RandomUtil.randomNumber(6) + "_" + createdOrder.getId().toString();
             Transaction transaction = Transaction.builder()
