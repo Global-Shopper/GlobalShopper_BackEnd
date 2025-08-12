@@ -45,10 +45,10 @@ public class ShippingServiceImpl implements ShippingService {
     @Override
     public String getShippingRate(JSONStringInput inputJson) {
         try {
-            log.debug("getShippingRate() ShippingServiceImpl Start | inputJson: {}", inputJson);
+            log.debug("getShippingRate() ShippingServiceImpl Start");
             ShippingTPS shippingTPS = shippingTPSFactory.getService(DeliveryCode.FEDEX);
             String shippingRate = shippingTPS.getShippingRate(inputJson);
-            log.debug("getShippingRate() ShippingServiceImpl End | shippingRate: {}", shippingRate);
+            log.debug("getShippingRate() ShippingServiceImpl End");
             return shippingRate;
         } catch (Exception e) {
             log.error("Error getting shipping rate: {}", e.getMessage());

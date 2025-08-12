@@ -56,7 +56,7 @@ public class ShippingController {
     public ResponseEntity<String> getShippingRate(@RequestBody JSONStringInput inputJson) {
         log.info("getShippingRate() ShippingController Start | deliveryCode: {}", inputJson);
         String rate = shippingService.getShippingRate(inputJson);
-        log.info("getShippingRate() End | rate: {}", rate);
+        log.info("getShippingRate() End");
         return ResponseEntity.ok(rate);
     }
 }
