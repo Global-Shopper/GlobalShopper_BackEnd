@@ -29,11 +29,36 @@ public class FedExShippingTPS implements ShippingTPS {
 
     @Override
     public String getTrackingToken() {
-        return getString(shipApiKey, shipSecretKey);
+        return getString(apiKey, secretKey);
     }
     @Override
     public String getShippingToken() {
-        return getString(apiKey, secretKey);
+        return getString(shipApiKey, shipSecretKey);
+    }
+
+    @Override
+    public String getShippingRate(String inputJson) {
+        try {
+            OkHttpClient client = new OkHttpClient();
+            String token = getShippingToken();
+            MediaType mediaType = MediaType.parse("application/json");
+            RequestBody body = RequestBody.create(mediaType, inputJson);
+            Request request = new Request.Builder()
+                    .url("https://apis-sandbox.fedex.com/rate/v1/rates/quotes")
+                    .post(body)
+                    .addHeader("Content-Type", "application/json")
+                    .addHeader("X-locale", "en_US")
+                    .addHeader("Authorization", "Bearer "+ token)
+                    .build();
+
+            Response response = client.newCall(request).execute();
+            if (!response.isSuccessful()) {
+                throw new AppException(400, "Failed to fetch FedEx shipping rate");
+            }
+            return response.body().string();
+        } catch (IOException e) {
+            throw new AppException(400, "Failed to fetch FedEx shipping rate");
+        }
     }
 
     private String getString(String apiKey, String secretKey) {
