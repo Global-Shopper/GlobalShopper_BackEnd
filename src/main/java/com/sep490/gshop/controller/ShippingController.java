@@ -48,5 +48,15 @@ public class ShippingController {
         MessageResponse response = shippingService.handleWebhook(payload);
         log.info("webhook() End | response: {}", response);
         return ResponseEntity.ok(response);
-}
+    }
+
+    @PostMapping("/rate")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
+    public ResponseEntity<String> getShippingRate(@RequestParam String inputJson) {
+        log.info("getShippingRate() ShippingController Start | deliveryCode: {}", inputJson);
+        String rate = shippingService.getShippingRate(inputJson);
+        log.info("getShippingRate() End | rate: {}", rate);
+        return ResponseEntity.ok(rate);
+
+    }
 }

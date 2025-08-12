@@ -14,4 +14,9 @@ public class UPSShippingTPS implements ShippingTPS {
     public String getShippingToken() {
         return "ups-token-12345";
     }
+
+    @Override
+    public String getShippingRate(String inputJson) {
+        return "";
+    }
 }

@@ -10,4 +10,6 @@ public interface ShippingService {
     MessageResponse handleWebhook(ShipmentStatusRequest payload);
 
     String getShippingToken(DeliveryCode deliveryCode);
+
+    String getShippingRate(String inputJson);
 }

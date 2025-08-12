@@ -43,6 +43,20 @@ public class ShippingServiceImpl implements ShippingService {
     }
 
     @Override
+    public String getShippingRate(String inputJson) {
+        try {
+            log.debug("getShippingRate() ShippingServiceImpl Start | inputJson: {}", inputJson);
+            ShippingTPS shippingTPS = shippingTPSFactory.getService(DeliveryCode.FEDEX);
+            String shippingRate = shippingTPS.getShippingRate(inputJson);
+            log.debug("getShippingRate() ShippingServiceImpl End | shippingRate: {}", shippingRate);
+            return shippingRate;
+        } catch (Exception e) {
+            log.error("Error getting shipping rate: {}", e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
     public MessageResponse handleWebhook(ShipmentStatusRequest payload) {
         try {
             log.debug("handleWebhook() ShippingServiceImpl Start | payload: {}", payload);
