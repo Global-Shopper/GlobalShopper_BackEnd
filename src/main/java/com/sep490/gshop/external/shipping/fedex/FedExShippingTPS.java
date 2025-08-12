@@ -6,44 +6,47 @@ import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.external.shipping.ShippingTPS;
 import com.sep490.gshop.payload.request.JSONStringInput;
 import com.squareup.okhttp.*;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 
 @Service("fedex")
+@Log4j2
 public class FedExShippingTPS implements ShippingTPS {
 
     @Value("${fedex.url}")
     private String url;
-    @Value("${fedex.apiKey}")
-    private String apiKey;
-    @Value("${fedex.secretKey}")
-    private String secretKey;
-    @Value("${fedex.accountNumber}")
-    private String accountNumber;
-    @Value("${fedex.ship.apiKey}")
-    private String shipApiKey;
-    @Value("${fedex.ship.secretKey}")
-    private String shipSecretKey;
+
+    private final FedExAuthService fedExAuthService;
+
+    @Autowired
+    public FedExShippingTPS(FedExAuthService fedExAuthService) {
+        this.fedExAuthService = fedExAuthService;
+    }
 
 
     @Override
     public String getTrackingToken() {
-        return getString(apiKey, secretKey);
+        return fedExAuthService.getTrackingToken();
     }
     @Override
     public String getShippingToken() {
-        return getString(shipApiKey, shipSecretKey);
+        return fedExAuthService.getShippingToken();
     }
+
 
     @Override
     public String getShippingRate(JSONStringInput inputJson) {
         try {
             OkHttpClient client = new OkHttpClient();
-            String token = getShippingToken();
+            String token = fedExAuthService.getShippingToken();
             MediaType mediaType = MediaType.parse("application/json");
-            RequestBody body = RequestBody.create(mediaType, inputJson.getInputJson());
+            RequestBody body = RequestBody.create(mediaType, inputJson.getInputJson().toString());
             Request request = new Request.Builder()
                     .url(url + "/rate/v1/rates/quotes")
                     .post(body)
@@ -61,32 +64,4 @@ public class FedExShippingTPS implements ShippingTPS {
             throw new AppException(400, "Failed to fetch FedEx shipping rate");
         }
     }
-
-    private String getString(String apiKey, String secretKey) {
-        try {
-            OkHttpClient client = new OkHttpClient();
-
-            MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
-
-            String input = "grant_type=client_credentials"
-                    + "&client_id=" + apiKey
-                    + "&client_secret=" + secretKey;
-
-            RequestBody body = RequestBody.create(mediaType, input);
-
-            Request request = new Request.Builder()
-                    .url(url + "/oauth/token")
-                    .post(body)
-                    .addHeader("Content-Type", "application/x-www-form-urlencoded")
-                    .build();
-
-            Response response = client.newCall(request).execute();
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(response.body().string());
-            return root.path("access_token").asText();
-        } catch (IOException e) {
-            throw new AppException(400, "Failed to fetch FedEx shipping token");
-        }
-    }
-
 }
