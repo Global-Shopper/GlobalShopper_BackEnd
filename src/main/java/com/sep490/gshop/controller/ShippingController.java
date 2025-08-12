@@ -2,6 +2,7 @@ package com.sep490.gshop.controller;
 
 import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.common.enums.DeliveryCode;
+import com.sep490.gshop.payload.request.JSONStringInput;
 import com.sep490.gshop.payload.request.shipment.ShipmentStatusRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.service.ShippingService;
@@ -52,11 +53,10 @@ public class ShippingController {
 
     @PostMapping("/rate")
     @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
-    public ResponseEntity<String> getShippingRate(@RequestParam String inputJson) {
+    public ResponseEntity<String> getShippingRate(@RequestBody JSONStringInput inputJson) {
         log.info("getShippingRate() ShippingController Start | deliveryCode: {}", inputJson);
         String rate = shippingService.getShippingRate(inputJson);
         log.info("getShippingRate() End | rate: {}", rate);
         return ResponseEntity.ok(rate);
-
     }
 }
