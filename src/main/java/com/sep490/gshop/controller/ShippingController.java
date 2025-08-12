@@ -7,7 +7,6 @@ import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.service.ShippingService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -25,8 +24,17 @@ public class ShippingController {
         this.shippingService = shippingService;
     }
 
-    @GetMapping(path = "/get-token")
-    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping(path = "/tracking-token")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
+    public ResponseEntity<Object> getTrackingToken(@RequestParam DeliveryCode deliveryCode) {
+        log.info("getTrackingToken() ShippingController Start | deliveryCode: {}", deliveryCode.getName());
+        String token = shippingService.getTrackingToken(deliveryCode);
+        log.info("getTrackingToken() End | token: {}", token);
+        return ResponseEntity.ok(token);
+    }
+
+    @GetMapping(path = "/shipping-token")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
     public ResponseEntity<Object> getShippingToken(@RequestParam DeliveryCode deliveryCode) {
         log.info("getShippingToken() ShippingController Start | deliveryCode: {}", deliveryCode.getName());
         String token = shippingService.getShippingToken(deliveryCode);

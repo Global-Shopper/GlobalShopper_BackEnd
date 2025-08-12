@@ -6,6 +6,11 @@ import org.springframework.stereotype.Service;
 @Service("ups")
 public class UPSShippingTPS implements ShippingTPS {
     @Override
+    public String getTrackingToken() {
+        return "";
+    }
+
+    @Override
     public String getShippingToken() {
         return "ups-token-12345";
     }

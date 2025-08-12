@@ -29,6 +29,13 @@ public class ShippingServiceImpl implements ShippingService {
 
 
     @Override
+    public String getTrackingToken(DeliveryCode deliveryCode) {
+        ShippingTPS shippingTPS = shippingTPSFactory.getService(deliveryCode);
+
+        return shippingTPS.getTrackingToken();
+    }
+
+    @Override
     public String getShippingToken(DeliveryCode deliveryCode) {
         ShippingTPS shippingTPS = shippingTPSFactory.getService(deliveryCode);
 
