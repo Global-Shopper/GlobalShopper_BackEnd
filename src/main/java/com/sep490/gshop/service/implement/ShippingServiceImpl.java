@@ -2,11 +2,11 @@ package com.sep490.gshop.service.implement;
 
 import com.sep490.gshop.business.OrderBusiness;
 import com.sep490.gshop.common.enums.DeliveryCode;
-import com.sep490.gshop.common.enums.OrderStatus;
 import com.sep490.gshop.entity.Order;
 import com.sep490.gshop.entity.OrderHistory;
 import com.sep490.gshop.external.shipping.ShippingTPS;
 import com.sep490.gshop.external.shipping.ShippingTPSFactory;
+import com.sep490.gshop.payload.request.JSONStringInput;
 import com.sep490.gshop.payload.request.shipment.ShipmentStatusRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.service.ShippingService;
@@ -43,7 +43,7 @@ public class ShippingServiceImpl implements ShippingService {
     }
 
     @Override
-    public String getShippingRate(String inputJson) {
+    public String getShippingRate(JSONStringInput inputJson) {
         try {
             log.debug("getShippingRate() ShippingServiceImpl Start | inputJson: {}", inputJson);
             ShippingTPS shippingTPS = shippingTPSFactory.getService(DeliveryCode.FEDEX);

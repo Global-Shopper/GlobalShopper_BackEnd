@@ -1,6 +1,7 @@
 package com.sep490.gshop.external.shipping.ups;
 
 import com.sep490.gshop.external.shipping.ShippingTPS;
+import com.sep490.gshop.payload.request.JSONStringInput;
 import org.springframework.stereotype.Service;
 
 @Service("ups")
@@ -16,7 +17,7 @@ public class UPSShippingTPS implements ShippingTPS {
     }
 
     @Override
-    public String getShippingRate(String inputJson) {
+    public String getShippingRate(JSONStringInput inputJson) {
         return "";
     }
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.external.shipping.ShippingTPS;
+import com.sep490.gshop.payload.request.JSONStringInput;
 import com.squareup.okhttp.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -37,14 +38,14 @@ public class FedExShippingTPS implements ShippingTPS {
     }
 
     @Override
-    public String getShippingRate(String inputJson) {
+    public String getShippingRate(JSONStringInput inputJson) {
         try {
             OkHttpClient client = new OkHttpClient();
             String token = getShippingToken();
             MediaType mediaType = MediaType.parse("application/json");
-            RequestBody body = RequestBody.create(mediaType, inputJson);
+            RequestBody body = RequestBody.create(mediaType, inputJson.getInputJson());
             Request request = new Request.Builder()
-                    .url("https://apis-sandbox.fedex.com/rate/v1/rates/quotes")
+                    .url(url + "/rate/v1/rates/quotes")
                     .post(body)
                     .addHeader("Content-Type", "application/json")
                     .addHeader("X-locale", "en_US")
