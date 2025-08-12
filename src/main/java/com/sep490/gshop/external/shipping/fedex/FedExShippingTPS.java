@@ -21,9 +21,22 @@ public class FedExShippingTPS implements ShippingTPS {
     private String secretKey;
     @Value("${fedex.accountNumber}")
     private String accountNumber;
+    @Value("${fedex.ship.apiKey}")
+    private String shipApiKey;
+    @Value("${fedex.ship.secretKey}")
+    private String shipSecretKey;
+
 
     @Override
+    public String getTrackingToken() {
+        return getString(shipApiKey, shipSecretKey);
+    }
+    @Override
     public String getShippingToken() {
+        return getString(apiKey, secretKey);
+    }
+
+    private String getString(String apiKey, String secretKey) {
         try {
             OkHttpClient client = new OkHttpClient();
 
