@@ -167,7 +167,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                         .status(PurchaseRequestStatus.SENT)
                         .build();
                 SubRequest subRequest = SubRequest.builder()
-                        .contactInfo(offlineRequest.getContactInfo()).status(SubRequestStatus.PENDING)
+                        .contactInfo(offlineRequest.getContactInfo())
                         .build();
                 purchaseRequest.setAdmin(null);
                 purchaseRequest.setExpiredAt(System.currentTimeMillis() + 24 * 60 * 60 * 1000);
