@@ -23,4 +23,6 @@ public class SubRequestDTO {
     private QuotationForPurchaseRequestDTO quotationForPurchase;
     private String rejectionReason;
     private SubRequestStatus status;
+
+
 }
