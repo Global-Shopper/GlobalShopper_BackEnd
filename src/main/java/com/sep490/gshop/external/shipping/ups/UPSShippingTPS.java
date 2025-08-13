@@ -25,4 +25,9 @@ public class UPSShippingTPS implements ShippingTPS {
     public String createShipment(JSONStringInput inputJson) {
         return "";
     }
+
+    @Override
+    public String tracking(String trackingNumber) {
+        return "";
+    }
 }
