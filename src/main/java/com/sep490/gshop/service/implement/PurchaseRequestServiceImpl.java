@@ -775,6 +775,9 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                 }).toList();
                 requestItemBusiness.saveAll(listItem);
             }
+            if (PurchaseRequestStatus.INSUFFICIENT.equals(pr.getStatus())) {
+                pr.setStatus(PurchaseRequestStatus.CHECKING);
+            }
             PurchaseRequestModel updatedPurchaseRequest = convertToPurchaseRequestModel(purchaseRequestBusiness.update(pr));
             log.debug("getPurchaseRequestForEdit() PurchaseRequestServiceImpl End | purchaseRequestId: {}", purchaseRequestId);
             return  updatedPurchaseRequest;
