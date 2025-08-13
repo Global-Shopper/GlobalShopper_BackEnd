@@ -59,4 +59,13 @@ public class ShippingController {
         log.info("getShippingRate() End");
         return ResponseEntity.ok(rate);
     }
+
+    @PostMapping("/ship")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
+    public ResponseEntity<String> createShipment(@RequestBody JSONStringInput inputJson) {
+        log.info("createShipment() ShippingController Start | deliveryCode: {}", inputJson);
+        String rate = shippingService.createShipment(inputJson);
+        log.info("createShipment() End");
+        return ResponseEntity.ok(rate);
+    }
 }

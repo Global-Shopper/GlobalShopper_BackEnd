@@ -7,4 +7,6 @@ public interface ShippingTPS {
     String getShippingToken();
 
     String getShippingRate(JSONStringInput inputJson);
+
+    String createShipment(JSONStringInput inputJson);
 }

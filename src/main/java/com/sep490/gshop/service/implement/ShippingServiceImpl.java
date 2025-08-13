@@ -57,6 +57,20 @@ public class ShippingServiceImpl implements ShippingService {
     }
 
     @Override
+    public String createShipment(JSONStringInput inputJson) {
+        try {
+            log.debug("createShipment() ShippingServiceImpl Start");
+            ShippingTPS shippingTPS = shippingTPSFactory.getService(DeliveryCode.FEDEX);
+            String shippingRate = shippingTPS.createShipment(inputJson);
+            log.debug("createShipment() ShippingServiceImpl End");
+            return shippingRate;
+        } catch (Exception e) {
+            log.error("createShipment() ShippingServiceImpl error: {}", e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
     public MessageResponse handleWebhook(ShipmentStatusRequest payload) {
         try {
             log.debug("handleWebhook() ShippingServiceImpl Start | payload: {}", payload);
