@@ -91,16 +91,13 @@ public class RefundTicketServiceImpl implements RefundTicketService {
             UserDetailsImpl user = AuthUtils.getCurrentUser();
 
             Page<RefundTicketDTO> refundList = refundTicketBusiness.getAll(user.getId(), status, pageable)
-                    .map(refundTicket -> modelMapper.map(refundTicket, RefundTicketDTO.class));
-
-            var entitysList = refundTicketBusiness.getAll().stream()
-                    .map(refundTicket -> {
+                    .map(refundTicket ->{
                         RefundTicketDTO dto = modelMapper.map(refundTicket, RefundTicketDTO.class);
                         dto.setOrderId(refundTicket.getOrder().getId().toString());
                         return dto;
-                    })
-                    .toList();
-            log.debug("getAllRefundTickets() RefundTicketServiceImpl End | Size: {}", entitysList.size());
+                    });
+
+            log.debug("getAllRefundTickets() RefundTicketServiceImpl End | Size: {}", refundList.getSize());
             return refundList;
         } catch (Exception e) {
             log.error("createNewRefundTicket() Exception | message: {}", e.getMessage());
