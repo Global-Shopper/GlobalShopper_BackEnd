@@ -85,6 +85,9 @@ public class AuthServiceImpl implements AuthService {
             if (user == null) {
                 throw new AppException(401, "Email chưa được đăng ký");
             }
+            if (!user.isActive()) {
+                throw new AppException(401, "Tài khoản của bạn đã bị khóa");
+            }
             if (!passwordEncoder.matches(password, user.getPassword())) {
                 throw new AppException(401, "Mật khẩu không đúng");
             }

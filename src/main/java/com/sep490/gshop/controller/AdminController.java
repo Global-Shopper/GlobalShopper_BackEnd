@@ -104,4 +104,14 @@ public class AdminController {
 
         return ResponseEntity.ok(updatedCustomer);
     }
+
+    @PatchMapping("/{id}/active")
+    @PreAuthorize("hasRole('BUSINESS_MANAGER')")
+    @Operation(summary = "Kích hoạt hoặc vô hiệu hoá admin")
+    public ResponseEntity<MessageResponse> toggleAdminActiveStatus(@PathVariable UUID id) {
+        log.info("toggleAdminActiveStatus() start | id: {}", id);
+        MessageResponse response = adminService.toggleAdminActiveStatus(id);
+        log.info("toggleAdminActiveStatus() end | id: {}, success: {}", id, response.isSuccess());
+        return ResponseEntity.ok(response);
+    }
 }

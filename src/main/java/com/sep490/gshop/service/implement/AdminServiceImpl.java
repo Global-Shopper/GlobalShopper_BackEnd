@@ -204,4 +204,21 @@ public class AdminServiceImpl implements AdminService {
             throw new RuntimeException("Lỗi khi upload avatar: " + e.getMessage());
         }
     }
+
+    @Override
+    public MessageResponse toggleAdminActiveStatus(UUID id) {
+        try {
+            log.debug("toggleAdminActiveStatus() AdminServiceImpl Start | id: {}", id);
+            Admin admin = adminBusiness.getById(id)
+                    .orElseThrow(() -> new AppException(404, "Không tìm thấy admin với id: " + id));
+            admin.setActive(!admin.isActive());
+            Admin updatedAdmin = adminBusiness.update(admin);
+            String status = updatedAdmin.isActive() ? "Kích hoạt" : "Vô hiệu hoá";
+            log.debug("toggleAdminActiveStatus() AdminServiceImpl End | id: {}, status: {}", id, status);
+            return new MessageResponse(status  +" admin thành công", true);
+        } catch (Exception e) {
+            log.error("toggleAdminActiveStatus() AdminServiceImpl Exception | message: {}", e.getMessage());
+            throw e;
+        }
+    }
 }
