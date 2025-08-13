@@ -727,6 +727,61 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
         }
     }
 
+    @Override
+    @Transactional
+    public PurchaseRequestModel editPurchaseRequest(UUID purchaseRequestId, UpdateRequestModel updateRequestModel) {
+        try {
+            log.debug("editPurchaseRequest() PurchaseRequestController Start | purchaseRequestId: {}", purchaseRequestId);
+            PurchaseRequest pr = purchaseRequestBusiness.getById(purchaseRequestId)
+                    .orElseThrow(() -> AppException.builder()
+                            .message("Không tìm thấy đơn hàng")
+                            .code(404)
+                            .build());
+            if (updateRequestModel.getShippingAddressId() != null) {
+                ShippingAddress shippingAddress = shippingAddressBusiness.getById(UUID.fromString(updateRequestModel.getShippingAddressId()))
+                        .orElseThrow(() -> AppException.builder()
+                                .message("Không tìm thấy địa chỉ nhận hàng")
+                                .code(404)
+                                .build());
+                pr.setShippingAddress(new AddressSnapshot(shippingAddress));
+            } else if (updateRequestModel.getShippingAddress() != null) {
+                pr.setShippingAddress(updateRequestModel.getShippingAddress());
+            }
+            if (RequestType.OFFLINE.equals(pr.getRequestType()) && updateRequestModel.getContactInfo() != null) {
+                SubRequest subRequest = pr.getRequestItems().stream()
+                        .filter(item -> item.getSubRequest() != null)
+                        .findFirst()
+                        .map(RequestItem::getSubRequest)
+                        .orElseThrow(() -> AppException.builder()
+                                .message("Không tìm thấy nhóm yêu cầu để cập nhật")
+                                .code(404)
+                                .build());
+                subRequest.setContactInfo(updateRequestModel.getContactInfo());
+            }
+            if (updateRequestModel.getItems() != null && !updateRequestModel.getItems().isEmpty()) {
+                List<RequestItem> listItem =  updateRequestModel.getItems().stream().map(item -> {
+                    RequestItem requestItem = requestItemBusiness
+                            .getById(UUID.fromString(item.getId())).orElseThrow(
+                                    () -> new AppException(404, "Không tìm thấy sản phẩm với ID: " + item.getId()));
+                    requestItem.setProductName(item.getProductName());
+                    requestItem.setProductURL(item.getProductURL());
+                    requestItem.setQuantity(item.getQuantity());
+                    requestItem.setDescription(item.getDescription());
+                    requestItem.setVariants(item.getVariants());
+                    requestItem.setImages(item.getImages());
+                    return requestItem;
+                }).toList();
+                requestItemBusiness.saveAll(listItem);
+            }
+            PurchaseRequestModel updatedPurchaseRequest = convertToPurchaseRequestModel(purchaseRequestBusiness.update(pr));
+            log.debug("getPurchaseRequestForEdit() PurchaseRequestServiceImpl End | purchaseRequestId: {}", purchaseRequestId);
+            return  updatedPurchaseRequest;
+        } catch (Exception e) {
+            log.error("editPurchaseRequest() PurchaseRequestServiceImpl error | message : {}", e.getMessage());
+            throw e;
+        }
+    }
+
 
     /**
      * Chuyển đổi PurchaseRequest entity -> UpdateRequestModel (input form sửa)

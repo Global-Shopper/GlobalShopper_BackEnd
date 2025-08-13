@@ -140,4 +140,15 @@ public class PurchaseRequestController {
         return ResponseEntity.ok(updateRequest);
     }
 
+    @PutMapping("/edit/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
+    public ResponseEntity<PurchaseRequestModel> editPurchaseRequest(@PathVariable("id") UUID purchaseRequestId, @Valid @RequestBody UpdateRequestModel updateRequestModel) {
+        log.info("editPurchaseRequest() PurchaseRequestController Start | purchaseRequestId: {}, updateRequestModel: {}", purchaseRequestId, updateRequestModel);
+
+        PurchaseRequestModel response = purchaseRequestService.editPurchaseRequest(purchaseRequestId, updateRequestModel);
+
+        log.info("editPurchaseRequest() PurchaseRequestController End | purchaseRequestId: {}", purchaseRequestId);
+        return ResponseEntity.ok(response);
+    }
+
 }

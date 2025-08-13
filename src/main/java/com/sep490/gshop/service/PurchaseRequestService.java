@@ -10,6 +10,7 @@ import com.sep490.gshop.payload.request.purchaserequest.UpdateRequestModel;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.PurchaseRequestModel;
 import com.sep490.gshop.payload.response.PurchaseRequestResponse;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -36,4 +37,5 @@ public interface PurchaseRequestService {
     MessageResponse requestCorrection(UUID purchaseRequestId, String correctionNote);
     UpdateRequestModel getPurchaseRequestForEdit(UUID purchaseRequestId);
 
+    PurchaseRequestModel editPurchaseRequest(UUID purchaseRequestId, UpdateRequestModel updateRequestModel);
 }
