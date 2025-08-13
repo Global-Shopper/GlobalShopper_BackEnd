@@ -61,4 +61,26 @@ public class FedExShippingTPS implements ShippingTPS {
             throw new AppException(400, "Failed to fetch FedEx shipping rate");
         }
     }
+
+    @Override
+    public String createShipment(JSONStringInput inputJson) {
+        try {
+            OkHttpClient client = new OkHttpClient();
+            String token = fedExAuthService.getShippingToken();
+            MediaType mediaType = MediaType.parse("application/json");
+            RequestBody body = RequestBody.create(mediaType, inputJson.getInputJson().toString());
+            Request request = new Request.Builder()
+                    .url(url + "/ship/v1/shipments")
+                    .post(body)
+                    .addHeader("Content-Type", "application/json")
+                    .addHeader("X-locale", "en_US")
+                    .addHeader("Authorization", "Bearer "+ token)
+                    .build();
+
+            Response response = client.newCall(request).execute();
+            return response.body().string();
+        } catch (IOException e) {
+            throw new AppException(400, e.getMessage());
+        }
+    }
 }

@@ -13,4 +13,6 @@ public interface ShippingService {
     String getShippingToken(DeliveryCode deliveryCode);
 
     String getShippingRate(JSONStringInput inputJson);
+
+    String createShipment(JSONStringInput inputJson);
 }

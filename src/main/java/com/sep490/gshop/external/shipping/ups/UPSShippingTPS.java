@@ -20,4 +20,9 @@ public class UPSShippingTPS implements ShippingTPS {
     public String getShippingRate(JSONStringInput inputJson) {
         return "";
     }
+
+    @Override
+    public String createShipment(JSONStringInput inputJson) {
+        return "";
+    }
 }
