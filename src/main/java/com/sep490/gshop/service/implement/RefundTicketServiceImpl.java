@@ -58,6 +58,7 @@ public class RefundTicketServiceImpl implements RefundTicketService {
                     .order(order)
                     .build();
             RefundTicketDTO refundTicketDTO = modelMapper.map(refundTicketBusiness.create(newRefundTicket), RefundTicketDTO.class);
+            refundTicketDTO.setOrderId(order.getId().toString());
             log.debug("createNewRefundTicket() RefundTicketServiceImpl End | entity: {}", refundTicketDTO);
             return refundTicketDTO;
         }catch (Exception e) {
@@ -74,6 +75,7 @@ public class RefundTicketServiceImpl implements RefundTicketService {
             var entityFound = refundTicketBusiness.getById(id)
                     .orElseThrow(() -> new AppException(404, "Không tìm thấy yêu cầu hoàn tiền với id: " + id));
             RefundTicketDTO refundDTO = modelMapper.map(entityFound, RefundTicketDTO.class);
+            refundDTO.setOrderId(entityFound.getOrder().getId().toString());
             log.debug("getRefundTicketById() End | RefundTicketDTO: {}", refundDTO);
             return refundDTO;
         } catch (Exception e) {
@@ -92,7 +94,11 @@ public class RefundTicketServiceImpl implements RefundTicketService {
                     .map(refundTicket -> modelMapper.map(refundTicket, RefundTicketDTO.class));
 
             var entitysList = refundTicketBusiness.getAll().stream()
-                    .map(refundTicket -> modelMapper.map(refundTicket, RefundTicketDTO.class))
+                    .map(refundTicket -> {
+                        RefundTicketDTO dto = modelMapper.map(refundTicket, RefundTicketDTO.class);
+                        dto.setOrderId(refundTicket.getOrder().getId().toString());
+                        return dto;
+                    })
                     .toList();
             log.debug("getAllRefundTickets() RefundTicketServiceImpl End | Size: {}", entitysList.size());
             return refundList;
@@ -111,6 +117,7 @@ public class RefundTicketServiceImpl implements RefundTicketService {
             entityFound.setEvidence(request.getEvidence());
             entityFound.setReason(request.getReason());
             RefundTicketDTO dto = modelMapper.map(refundTicketBusiness.update(entityFound), RefundTicketDTO.class);
+            dto.setOrderId(entityFound.getOrder().getId().toString());
             log.debug("updateRefundTicket() RefundTicketServiceImpl  End | Updated RefundTicketDTO: {}", dto);
             return dto;
         } catch (Exception e) {
@@ -160,6 +167,7 @@ public class RefundTicketServiceImpl implements RefundTicketService {
             wallet.setBalance(wallet.getBalance() + amount);
             walletBusiness.update(wallet);
             RefundTicketDTO dto = modelMapper.map(refundTicketBusiness.update(refundTicket), RefundTicketDTO.class);
+            dto.setOrderId(order.getId().toString());
             log.debug("processRefundTicket() RefundTicketServiceImpl End | Updated RefundTicketDTO: {}", dto);
             return dto;
         } catch (Exception e) {
@@ -177,6 +185,7 @@ public class RefundTicketServiceImpl implements RefundTicketService {
             refundTicket.setStatus(RefundStatus.REJECTED);
             refundTicket.setRejectionReason(rejectRefundModel.getRejectionReason());
             RefundTicketDTO dto = modelMapper.map(refundTicketBusiness.update(refundTicket), RefundTicketDTO.class);
+            dto.setOrderId(refundTicket.getOrder().getId().toString());
             log.debug("rejectRefundTicket() RefundTicketServiceImpl End | Updated RefundTicketDTO: {}", dto);
             return dto;
         } catch (Exception e) {

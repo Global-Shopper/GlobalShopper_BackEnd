@@ -20,4 +20,5 @@ public class RefundTicketDTO {
     private String rejectionReason;
     private Double refundRate;
     private RefundStatus status;
+    private String orderId;
 }
