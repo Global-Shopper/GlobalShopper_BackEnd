@@ -71,6 +71,20 @@ public class ShippingServiceImpl implements ShippingService {
     }
 
     @Override
+    public String tracking(String trackingNumber, DeliveryCode deliveryCode) {
+        try {
+            log.debug("tracking() TrackingServiceImpl Start");
+            ShippingTPS shippingTPS = shippingTPSFactory.getService(deliveryCode);
+            String trackingInfo = shippingTPS.tracking(trackingNumber);
+            log.debug("tracking() TrackingServiceImpl End | trackingInfo: {}", trackingInfo);
+            return trackingInfo;
+        } catch (Exception e) {
+            log.error("tracking() ShippingServiceImpl error: {}", e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
     public MessageResponse handleWebhook(ShipmentStatusRequest payload) {
         try {
             log.debug("handleWebhook() ShippingServiceImpl Start | payload: {}", payload);
