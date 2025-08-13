@@ -4,7 +4,7 @@ import com.sep490.gshop.business.RequestItemBusiness;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.QuotationDetail;
 import com.sep490.gshop.entity.TaxRate;
-import com.sep490.gshop.payload.dto.QuotationDetailDTO;
+import com.sep490.gshop.payload.dto.OfflineQuotationDetailDTO;
 import com.sep490.gshop.payload.dto.RequestItemDTO;
 import com.sep490.gshop.payload.response.TaxCalculationResult;
 import com.sep490.gshop.service.RequestItemService;
@@ -54,8 +54,8 @@ public class RequestItemServiceImpl implements RequestItemService {
 
 
 
-    private QuotationDetailDTO enrichQuotationDetailDto(QuotationDetail detail) {
-        QuotationDetailDTO detailDTO = modelMapper.map(detail, QuotationDetailDTO.class);
+    private OfflineQuotationDetailDTO enrichQuotationDetailDto(QuotationDetail detail) {
+        OfflineQuotationDetailDTO detailDTO = modelMapper.map(detail, OfflineQuotationDetailDTO.class);
 
         UUID requestItemId = detail.getRequestItem() != null ? detail.getRequestItem().getId() : null;
         detailDTO.setRequestItemId(requestItemId.toString());

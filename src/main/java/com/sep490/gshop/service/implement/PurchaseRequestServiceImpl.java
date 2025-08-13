@@ -24,9 +24,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -132,7 +130,6 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                 }
                 purchaseRequest.setRequestItems(allItems);
                 purchaseRequest.setRequestType(RequestType.ONLINE);
-
                 PurchaseRequestHistory history = new PurchaseRequestHistory(purchaseRequest,"Yêu cầu đã được tạo");
                 purchaseRequest.setHistory(List.of(history));
 
@@ -143,6 +140,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                         .map(item -> modelMapper.map(item, RequestItemDTO.class))
                         .toList();
                 response.setData(data);
+                response.setStatus(PurchaseRequestStatus.SENT.toString());
                 log.debug("createPurchaseRequest() PurchaseRequestServiceImpl end | response : {}", response);
                 return response;
             } else {
@@ -189,7 +187,6 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                 purchaseRequest.setRequestItems(requestItems);
                 purchaseRequest.setRequestType(RequestType.OFFLINE);
 
-
                 PurchaseRequestHistory history = new PurchaseRequestHistory(purchaseRequest,"Yêu cầu đã được tạo");
                 purchaseRequest.setHistory(List.of(history));
                 purchaseRequest = purchaseRequestBusiness.create(purchaseRequest);
@@ -204,6 +201,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                         .toList();
 
                 subRequestDTO.setRequestItems(listItem);
+                response.setStatus(PurchaseRequestStatus.SENT.toString());
                 response.setData(subRequestDTO);
                 log.debug("createOfflinePurchaseRequest() PurchaseRequestServiceImpl end | response : {}", requestItems);
                 return response;
@@ -508,12 +506,12 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
 
 
 
-    private QuotationDetailDTO enrichQuotationDetailDto(QuotationDetail detail) {
+    private OfflineQuotationDetailDTO enrichQuotationDetailDto(QuotationDetail detail) {
         if (detail == null) {
             return null;
         }
 
-        QuotationDetailDTO detailDTO = modelMapper.map(detail, QuotationDetailDTO.class);
+        OfflineQuotationDetailDTO detailDTO = modelMapper.map(detail, OfflineQuotationDetailDTO.class);
 
         UUID requestItemId = detail.getRequestItem() != null ? detail.getRequestItem().getId() : null;
         detailDTO.setRequestItemId(requestItemId != null ? requestItemId.toString() : null);

@@ -1,6 +1,5 @@
 package com.sep490.gshop.payload.dto;
 
-import com.sep490.gshop.common.enums.TaxRegion;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,7 +13,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class QuotationDetailDTO {
+public class OfflineQuotationDetailDTO {
     private UUID id;
     private String requestItemId;
     private double basePrice;
@@ -27,4 +26,5 @@ public class QuotationDetailDTO {
     private double totalTaxAmount;
     private double totalPriceBeforeExchange;
     private double totalVNDPrice;
+    private String hsCode;
 }
