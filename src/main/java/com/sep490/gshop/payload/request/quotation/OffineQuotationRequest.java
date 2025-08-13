@@ -1,5 +1,9 @@
 package com.sep490.gshop.payload.request.quotation;
 
+import com.sep490.gshop.common.enums.PackageType;
+import com.sep490.gshop.entity.subclass.RecipientInformation;
+import com.sep490.gshop.entity.subclass.ShipperInformation;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,7 +16,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class QuotationRequest {
+public class OffineQuotationRequest {
     @NotNull(message = "subRequestId không được để trống")
     private String subRequestId;
 
@@ -21,7 +25,7 @@ public class QuotationRequest {
 
     @NotNull(message = "Details không được để trống")
     @Size(min = 1, message = "Phải có ít nhất một phần tử trong details")
-    private List<QuotationDetailRequest> details;
+    private List<OfflineQuotationDetailRequest> details;
 
     @PositiveOrZero(message = "shippingEstimate phải là số dương hoặc bằng 0")
     private Double shippingEstimate;
@@ -29,5 +33,17 @@ public class QuotationRequest {
     @Positive(message = "expiredDate phải lớn hơn 0")
     private long expiredDate;
 
+    @PositiveOrZero(message = "totalWeightEstimate phải là số dương hoặc bằng 0")
+    private Double totalWeightEstimate;
 
+    @NotNull(message = "packageType không được để trống")
+    private PackageType packageType;
+
+    @Valid
+    @NotNull(message = "Shipper không được để trống")
+    private ShipperInformation shipper;
+
+    @Valid
+    @NotNull(message = "Recipient không được để trống")
+    private RecipientInformation recipient;
 }

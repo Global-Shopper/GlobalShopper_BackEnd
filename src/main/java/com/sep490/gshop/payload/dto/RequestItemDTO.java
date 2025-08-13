@@ -22,5 +22,5 @@ public class RequestItemDTO {
     private int quantity;
     private String seller;
     private String ecommercePlatform;
-    private QuotationDetailDTO quotationDetail;
+    private OfflineQuotationDetailDTO quotationDetail;
 }
