@@ -68,4 +68,14 @@ public class ShippingController {
         log.info("createShipment() End");
         return ResponseEntity.ok(rate);
     }
+
+    @GetMapping("/tracking")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
+    public ResponseEntity<String> getTrackingInfo(@RequestParam String trackingNumber,
+                                                  @RequestParam DeliveryCode deliveryCode) {
+        log.info("getTrackingInfo() ShippingController Start | trackingNumber: {}", trackingNumber);
+        String trackingInfo = shippingService.tracking(trackingNumber, deliveryCode);
+        log.info("getTrackingInfo() End | trackingInfo: {}", trackingInfo);
+        return ResponseEntity.ok(trackingInfo);
+    }
 }

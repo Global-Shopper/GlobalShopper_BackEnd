@@ -2,6 +2,8 @@ package com.sep490.gshop.external.shipping.fedex;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.external.shipping.ShippingTPS;
 import com.sep490.gshop.payload.request.JSONStringInput;
@@ -83,4 +85,56 @@ public class FedExShippingTPS implements ShippingTPS {
             throw new AppException(400, e.getMessage());
         }
     }
+
+    @Override
+    public String tracking(String trackingNumber) {
+        try {
+            JsonNode input = createTrackingInput(trackingNumber);
+            OkHttpClient client = new OkHttpClient();
+            String token = fedExAuthService.getTrackingToken();
+            MediaType mediaType = MediaType.parse("application/json");
+            RequestBody body = RequestBody.create(mediaType, input.toString());
+            Request request = new Request.Builder()
+                    .url(url + "/track/v1/trackingnumbers")
+                    .post(body)
+                    .addHeader("Content-Type", "application/json")
+                    .addHeader("X-locale", "en_US")
+                    .addHeader("Authorization", "Bearer "+ token)
+                    .build();
+
+            Response response = client.newCall(request).execute();
+            return response.body().string();
+        } catch (IOException e) {
+            throw new AppException(400, e.getMessage());
+        }
+    }
+
+    private JsonNode createTrackingInput(String trackingNumber) {
+        ObjectMapper mapper = new ObjectMapper();
+
+        // Root object
+        ObjectNode root = mapper.createObjectNode();
+
+        // trackingInfo array
+        ArrayNode trackingInfoArray = mapper.createArrayNode();
+
+        // trackingNumberInfo object
+        ObjectNode trackingNumberInfo = mapper.createObjectNode();
+        trackingNumberInfo.put("trackingNumber", trackingNumber);
+
+        // trackingInfo item
+        ObjectNode trackingInfoItem = mapper.createObjectNode();
+        trackingInfoItem.set("trackingNumberInfo", trackingNumberInfo);
+
+        // Add item to trackingInfo array
+        trackingInfoArray.add(trackingInfoItem);
+
+        // Put trackingInfo into root
+        root.set("trackingInfo", trackingInfoArray);
+
+        // includeDetailedScans field
+        root.put("includeDetailedScans", true);
+        return root;
+    }
+
 }

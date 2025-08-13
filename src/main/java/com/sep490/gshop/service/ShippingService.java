@@ -15,4 +15,6 @@ public interface ShippingService {
     String getShippingRate(JSONStringInput inputJson);
 
     String createShipment(JSONStringInput inputJson);
+
+    String tracking(String trackingNumber, DeliveryCode deliveryCode);
 }
