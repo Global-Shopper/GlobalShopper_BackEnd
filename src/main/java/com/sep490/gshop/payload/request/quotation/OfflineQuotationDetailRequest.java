@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class QuotationDetailRequest {
+public class OfflineQuotationDetailRequest {
 
     @NotNull(message = "requestItemId không được để trống")
     private String requestItemId;
@@ -23,7 +23,7 @@ public class QuotationDetailRequest {
     @NotNull(message = "region không được để trống")
     private TaxRegion region;
 
-    @DecimalMin(value = "0.0", message = "basePrice phải lớn hơn 0")
+    @DecimalMin(value = "0.0", inclusive = false, message = "basePrice phải lớn hơn 0")
     private double basePrice;
 
     @DecimalMin(value = "0.0", message = "serviceFee phải lớn hơn hoặc bằng 0")

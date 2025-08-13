@@ -24,4 +24,5 @@ public class QuotationDetailCalculatedDTO {
     private double totalTaxAmount;
     private double totalPriceBeforeExchange;
     private double totalVNDPrice;
+    private String hsCode;
 }

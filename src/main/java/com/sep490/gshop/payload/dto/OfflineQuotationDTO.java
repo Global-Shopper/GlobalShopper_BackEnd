@@ -1,6 +1,10 @@
 package com.sep490.gshop.payload.dto;
 
+import com.sep490.gshop.common.enums.PackageType;
+import com.sep490.gshop.common.enums.QuotationType;
 import com.sep490.gshop.common.enums.SubRequestStatus;
+import com.sep490.gshop.entity.subclass.RecipientInformation;
+import com.sep490.gshop.entity.subclass.ShipperInformation;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,13 +16,19 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class QuotationDTO {
+public class OfflineQuotationDTO {
     private String id;
     private String note;
     private String subRequestId;
     private long expiredDate;
-    private List<QuotationDetailDTO> details;
+    private List<OfflineQuotationDetailDTO> details;
     private double shippingEstimate;
     private double totalPriceEstimate;
     private SubRequestStatus subRequestStatus;
+
+    private Double totalWeightEstimate;
+    private PackageType packageType;
+    private QuotationType quotationType;
+    private ShipperInformation shipper;
+    private RecipientInformation recipient;
 }

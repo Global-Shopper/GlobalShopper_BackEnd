@@ -1,5 +1,10 @@
 package com.sep490.gshop.entity;
 
+import com.sep490.gshop.common.enums.PackageType;
+import com.sep490.gshop.common.enums.QuotationType;
+import com.sep490.gshop.entity.converter.StringListConverter;
+import com.sep490.gshop.entity.subclass.RecipientInformation;
+import com.sep490.gshop.entity.subclass.ShipperInformation;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,10 +27,21 @@ public class Quotation extends BaseEntity {
     private double shippingEstimate;
     private long expiredDate;
     private double totalPriceEstimate;
+    private Double totalWeightEstimate;
+    private PackageType packageType;
+    @Embedded
+    private ShipperInformation shipper;
+    @Embedded
+    private RecipientInformation recipient;
+
+
+    @Convert(converter = StringListConverter.class)
+    private List<String> fees;
+    private QuotationType quotationType;
+    private Double totalPriceBeforeExchange;
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sub_request_id", nullable = false, unique = true)
     private SubRequest subRequest;
-
     @OneToMany(mappedBy = "quotation", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<QuotationDetail> details = new ArrayList<>();
 }

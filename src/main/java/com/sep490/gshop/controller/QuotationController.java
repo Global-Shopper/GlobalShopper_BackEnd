@@ -1,9 +1,11 @@
 package com.sep490.gshop.controller;
 
 import com.sep490.gshop.common.constants.URLConstant;
+import com.sep490.gshop.payload.dto.OnlineQuotationDTO;
 import com.sep490.gshop.payload.dto.QuotationCalculatedDTO;
-import com.sep490.gshop.payload.dto.QuotationDTO;
-import com.sep490.gshop.payload.request.quotation.QuotationRequest;
+import com.sep490.gshop.payload.dto.OfflineQuotationDTO;
+import com.sep490.gshop.payload.request.quotation.OffineQuotationRequest;
+import com.sep490.gshop.payload.request.quotation.OnlineQuotationRequest;
 import com.sep490.gshop.payload.request.quotation.RejectQuotationRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.service.QuotationService;
@@ -27,10 +29,10 @@ public class QuotationController {
 
     @PostMapping("calculate")
     @PreAuthorize("(hasRole('ADMIN'))")
-    public QuotationCalculatedDTO calculateQuotation(@RequestBody @Valid QuotationRequest input) {
+    public QuotationCalculatedDTO calculateQuotation(@RequestBody @Valid OffineQuotationRequest input) {
         log.debug("calculateQuotation() - Start | subRequestId: {}", input.getSubRequestId());
         try {
-            QuotationCalculatedDTO dto = quotationService.calculateQuotationInternal(input);
+            QuotationCalculatedDTO dto = quotationService.calculateOfflineQuotationInternal(input);
             log.debug("calculateQuotation() - End | subRequestId: {}", input.getSubRequestId());
             return dto;
         } catch (Exception e) {
@@ -39,13 +41,25 @@ public class QuotationController {
         }
     }
 
+    @PostMapping("online")
+    public ResponseEntity<OnlineQuotationDTO> createOnlineQuotation(
+            @Valid @RequestBody OnlineQuotationRequest request) {
+        log.info("[API] createOnlineQuotation - START | subRequestId: {}", request.getSubRequestId());
 
-    @PostMapping
+        OnlineQuotationDTO dto = quotationService.createOnlineQuotation(request);
+
+        log.info("[API] createOnlineQuotation - END | subRequestId: {}, totalVND: {}",
+                request.getSubRequestId(), dto.getTotalPriceEstimate());
+
+        return ResponseEntity.ok(dto);
+    }
+
+    @PostMapping("offline")
     @Operation(summary = "Tạo báo giá cho sub request (Bao gồm nhiều request item")
     @PreAuthorize("(hasRole('ADMIN'))")
-    public ResponseEntity<QuotationDTO> createQuotation(@RequestBody @Valid QuotationRequest request) {
+    public ResponseEntity<OfflineQuotationDTO> createQuotation(@RequestBody @Valid OffineQuotationRequest request) {
         log.info("createQuotation() - Start | subRequestId: {}", request.getSubRequestId());
-        QuotationDTO dto = quotationService.createQuotation(request);
+        OfflineQuotationDTO dto = quotationService.createOfflineQuotation(request);
         log.info("createQuotation() - End | subRequestId: {}", request.getSubRequestId());
         return ResponseEntity.ok(dto);
     }
@@ -63,9 +77,9 @@ public class QuotationController {
     @GetMapping
     @Operation(summary = "Lấy danh sách tất cả các báo giá")
     @PreAuthorize("(hasRole('ADMIN'))")
-    public ResponseEntity<List<QuotationDTO>> findAllQuotations() {
+    public ResponseEntity<List<OfflineQuotationDTO>> findAllQuotations() {
         log.info("findAllQuotations() - Start");
-        List<QuotationDTO> dtos = quotationService.findAllQuotations();
+        List<OfflineQuotationDTO> dtos = quotationService.findAllQuotations();
         log.info("findAllQuotations() - End | total: {}", dtos.size());
         return ResponseEntity.ok(dtos);
     }
@@ -73,9 +87,9 @@ public class QuotationController {
     @GetMapping("/{id}")
     @Operation(summary = "Tìm báo giá theo id")
     @PreAuthorize("(hasRole('ADMIN'))")
-    public ResponseEntity<QuotationDTO> getQuotationById(@PathVariable("id") String id) {
+    public ResponseEntity<OfflineQuotationDTO> getQuotationById(@PathVariable("id") String id) {
         log.info("getQuotationById() - Start | quotationId: {}", id);
-        QuotationDTO dto = quotationService.getQuotationById(id);
+        OfflineQuotationDTO dto = quotationService.getQuotationById(id);
         log.info("getQuotationById() - End | quotationId: {}", id);
         return ResponseEntity.ok(dto);
     }

@@ -1,5 +1,7 @@
 package com.sep490.gshop.entity;
 
+import com.sep490.gshop.common.enums.QuotationType;
+import com.sep490.gshop.entity.converter.StringListConverter;
 import com.sep490.gshop.entity.subclass.TaxRateSnapshot;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -19,6 +21,9 @@ public class QuotationDetail extends BaseEntity {
     private String currency;
     private double ExchangeRate;
     private double totalVNDPrice;
+    private String hsCode;
+
+
     @ElementCollection
     @CollectionTable(name = "tax_rate_snapshots", joinColumns = @JoinColumn(name = "quotation_detail_id"))
     private List<TaxRateSnapshot> taxRates = new ArrayList<>();
