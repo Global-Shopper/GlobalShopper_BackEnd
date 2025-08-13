@@ -21,4 +21,6 @@ public interface AdminService {
     List<AdminDTO> getAllAdmins();
     AdminDTO getCurrentAdmin();
     AdminDTO uploadAvatar(MultipartFile multipartFile);
+
+    MessageResponse toggleAdminActiveStatus(UUID id);
 }
