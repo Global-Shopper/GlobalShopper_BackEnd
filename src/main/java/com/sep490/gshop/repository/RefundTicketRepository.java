@@ -13,7 +13,6 @@ import java.util.UUID;
 
 @Repository
 public interface RefundTicketRepository extends JpaRepository<RefundTicket, UUID> {
-    RefundTicket findRefundTicketByOrderId(UUID orderId);
 
     @Query("SELECT rt FROM RefundTicket rt WHERE rt.order.customer.id = ?1")
     Page<RefundTicket> findByCustomerId(UUID id, Pageable pageable);
@@ -22,4 +21,6 @@ public interface RefundTicketRepository extends JpaRepository<RefundTicket, UUID
             "WHERE (rt.order.customer.id = :userId OR rt.order.admin.id = :userId) " +
             "AND (:status is null OR rt.status = :status) ")
     Page<RefundTicket> findAllByUserId(@Param("userId") UUID userId, @Param("status") RefundStatus status, Pageable pageable);
+
+    RefundTicket getRefundTicketByOrderId(UUID orderId);
 }

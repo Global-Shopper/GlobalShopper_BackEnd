@@ -4,6 +4,7 @@ import com.sep490.gshop.business.*;
 import com.sep490.gshop.common.enums.RefundStatus;
 import com.sep490.gshop.common.enums.TransactionStatus;
 import com.sep490.gshop.common.enums.TransactionType;
+import com.sep490.gshop.common.enums.UserRole;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.config.security.services.UserDetailsImpl;
 import com.sep490.gshop.entity.*;
@@ -35,14 +36,16 @@ public class RefundTicketServiceImpl implements RefundTicketService {
     private final OrderBusiness orderBusiness;
     private final WalletBusiness walletBusiness;
     private final TransactionBusiness transactionBusiness;
+    private UserBusiness userBusiness;
 
     @Autowired
-    public RefundTicketServiceImpl(RefundTicketBusiness refundTicketBusiness, ModelMapper modelMapper, OrderBusiness orderBusiness, WalletBusiness walletBusiness, TransactionBusiness transactionBusiness) {
+    public RefundTicketServiceImpl(RefundTicketBusiness refundTicketBusiness, ModelMapper modelMapper, OrderBusiness orderBusiness, WalletBusiness walletBusiness, TransactionBusiness transactionBusiness, UserBusiness userBusiness) {
         this.refundTicketBusiness = refundTicketBusiness;
         this.modelMapper = modelMapper;
         this.orderBusiness = orderBusiness;
         this.walletBusiness = walletBusiness;
         this.transactionBusiness = transactionBusiness;
+        this.userBusiness = userBusiness;
     }
 
     @Override
@@ -190,4 +193,62 @@ public class RefundTicketServiceImpl implements RefundTicketService {
             throw e;
         }
     }
+
+    @Override
+    public RefundTicketDTO getTicketByOrderId(String orderId) {
+        log.debug("getTicketByOrderId() START | orderId: {}", orderId);
+
+        try {
+            UUID currentUserId = AuthUtils.getCurrentUserId();
+            var currentUser = userBusiness.getById(currentUserId)
+                    .orElseThrow(() -> AppException.builder()
+                            .message("Vui lòng đăng nhập để tiếp tục")
+                            .code(401)
+                            .build());
+
+            var order = orderBusiness.getById(UUID.fromString(orderId))
+                    .orElseThrow(() -> AppException.builder()
+                            .message("Không tìm thấy order")
+                            .code(404)
+                            .build());
+
+            if (currentUser.getRole() == UserRole.CUSTOMER) {
+                if (!order.getCustomer().getId().equals(currentUserId)) {
+                    throw AppException.builder()
+                            .message("Bạn không có quyền truy cập tài nguyên này")
+                            .code(403)
+                            .build();
+                }
+            }
+
+            if (currentUser.getRole() == UserRole.ADMIN) {
+                if (!order.getAdmin().getId().equals(currentUserId)) {
+                    throw AppException.builder()
+                            .message("Bạn không có quyền truy cập tài nguyên này")
+                            .code(403)
+                            .build();
+                }
+            }
+
+            var refundTicket = refundTicketBusiness.getRefundTicketByOrderId(order.getId());
+            if (refundTicket == null) {
+                AppException.builder()
+                        .message("Không tìm thấy refund ticket cho order này")
+                        .code(404)
+                        .build();
+            }
+
+            var refundTicketDTO = modelMapper.map(refundTicket, RefundTicketDTO.class);
+
+            log.debug("getTicketByOrderId() SUCCESS | orderId: {}", orderId);
+            return refundTicketDTO;
+
+        } catch (Exception e) {
+            log.error("getTicketByOrderId() ERROR | orderId: {}, error: {}", orderId, e.getMessage());
+            throw e;
+        }
+    }
+
+
+
 }

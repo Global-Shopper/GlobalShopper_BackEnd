@@ -100,5 +100,17 @@ public class RefundTicketController {
         return ResponseEntity.ok(dto);
     }
 
+    @GetMapping("/order/{orderId}")
+    @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
+    public ResponseEntity<RefundTicketDTO> getRefundTicketByOrderId(@PathVariable String orderId) {
+        log.info("[API] getRefundTicketByOrderId() START | orderId: {}", orderId);
+
+        RefundTicketDTO dto = refundTicketService.getTicketByOrderId(orderId);
+
+        log.info("[API] getRefundTicketByOrderId() SUCCESS | orderId: {}, ticketId: {}",
+                orderId, dto != null ? dto.getId() : null);
+
+        return ResponseEntity.ok(dto);
+    }
 
 }
