@@ -25,4 +25,5 @@ public class QuotationDetailCalculatedDTO {
     private double totalPriceBeforeExchange;
     private double totalVNDPrice;
     private String hsCode;
+    private double ServiceRate;
 }

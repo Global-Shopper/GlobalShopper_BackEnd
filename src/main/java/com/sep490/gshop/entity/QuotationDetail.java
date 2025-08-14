@@ -22,7 +22,7 @@ public class QuotationDetail extends BaseEntity {
     private double ExchangeRate;
     private double totalVNDPrice;
     private String hsCode;
-
+    private Double ServiceRate;
 
     @ElementCollection
     @CollectionTable(name = "tax_rate_snapshots", joinColumns = @JoinColumn(name = "quotation_detail_id"))
