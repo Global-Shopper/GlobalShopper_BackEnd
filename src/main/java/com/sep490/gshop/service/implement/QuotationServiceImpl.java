@@ -545,8 +545,9 @@ public class QuotationServiceImpl implements QuotationService {
             double total = detailDTOs.stream()
                     .mapToDouble(OfflineQuotationDetailDTO::getTotalVNDPrice)
                     .sum();
+            double totalBeforeExchange = detailDTOs.stream().mapToDouble(OfflineQuotationDetailDTO::getTotalPriceBeforeExchange).sum();
             quotation.setTotalPriceEstimate(total);
-
+            quotation.setTotalPriceBeforeExchange(totalBeforeExchange);
             quotationBusiness.update(quotation);
 
             // Cập nhật trạng thái SubRequest và PurchaseRequest
