@@ -19,7 +19,7 @@ public class RefundTicketBusinessImpl extends BaseBusinessImpl<RefundTicket, Ref
 
     @Override
     public RefundTicket getRefundTicketByOrderId(UUID orderId) {
-        return repository.findRefundTicketByOrderId(orderId);
+        return repository.getRefundTicketByOrderId(orderId);
     }
 
     @Override

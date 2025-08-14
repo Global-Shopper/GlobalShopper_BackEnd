@@ -19,4 +19,7 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     Page<Order> findByCustomerIdAndStatus(UUID id, OrderStatus status, Pageable pageable);
 
     Page<Order> findByAdminIdAndStatus(UUID id, OrderStatus status, Pageable pageable);
+
+    Order getOrderByAdminId(UUID adminId);
 }
+
