@@ -382,6 +382,7 @@ public class OrderServiceImpl implements OrderService {
                 log.error("updateShippingInfo() Invalid order status | orderId: {}, status: {}", orderId, order.getStatus());
                 throw new AppException(400, "Không thể cập nhật thông tin vận chuyển cho đơn hàng này");
             }
+            order.setShippingCarrier(shippingInformationModel.getName());
             order.setOrderCode(shippingInformationModel.getOrderCode());
             order.setTrackingNumber(shippingInformationModel.getTrackingNumber());
             order.setStatus(OrderStatus.PURCHASED);
