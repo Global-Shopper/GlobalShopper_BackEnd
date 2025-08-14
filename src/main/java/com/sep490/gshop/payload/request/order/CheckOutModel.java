@@ -16,4 +16,6 @@ public class CheckOutModel {
     private String subRequestId;
     @NotNull(message = "Cần có tổng giá trị đơn hàng")
     private double totalPriceEstimate;
+    private String trackingNumber;
+    private Double shippingFee;
 }
