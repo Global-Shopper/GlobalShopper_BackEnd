@@ -16,6 +16,7 @@ import lombok.NoArgsConstructor;
 public class PurchaseRequestHistory extends BaseEntity{
 
     private String description;
+    @Enumerated(EnumType.STRING)
     private PurchaseRequestStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
