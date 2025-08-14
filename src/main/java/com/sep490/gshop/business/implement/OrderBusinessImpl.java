@@ -25,6 +25,11 @@ public class OrderBusinessImpl extends BaseBusinessImpl<Order, OrderRepository> 
     }
 
     @Override
+    public Order getOrderByAdmin(UUID id) {
+        return repository.getOrderByAdminId(id);
+    }
+
+    @Override
     public Page<Order> getAssignedOrdersByAdminId(UUID id, OrderStatus status, Pageable pageable) {
         if (status != null) {
             return repository.findByAdminIdAndStatus(id, status, pageable);

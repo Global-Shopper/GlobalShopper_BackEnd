@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public interface OrderBusiness extends BaseBusiness<Order>{
     Page<Order> getOrdersByCustomerId(UUID id, OrderStatus status, Pageable pageable);
-
+    Order getOrderByAdmin(UUID id);
 
     Page<Order> getAssignedOrdersByAdminId(UUID id, OrderStatus status, Pageable pageable);
 

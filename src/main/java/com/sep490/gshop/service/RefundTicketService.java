@@ -20,4 +20,5 @@ public interface RefundTicketService {
     RefundTicketDTO processRefundTicket(ProcessRefundModel processRefundModel, String ticketId);
 
     RefundTicketDTO rejectRefundTicket(String ticketId, RejectRefundModel rejectRefundModel);
+    RefundTicketDTO getTicketByOrderId(String orderId);
 }
