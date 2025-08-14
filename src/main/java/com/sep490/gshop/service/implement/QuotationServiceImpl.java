@@ -86,7 +86,7 @@ public class QuotationServiceImpl implements QuotationService {
         }
 
         List<QuotationDetailCalculatedDTO> detailDTOs = new ArrayList<>();
-
+        var serviceRate = businessManagerBusiness.getConfig().getServiceFee();
         for (OfflineQuotationDetailRequest detailReq : input.getDetails()) {
 
             //Kiểm tra requestItem tồn tại
@@ -113,20 +113,18 @@ public class QuotationServiceImpl implements QuotationService {
 
             //Lấy thuế áp dụng
             List<TaxRate> taxRates = taxRateBusiness.findTaxRateHsCodeAndRegion(hsCode, detailReq.getRegion());
-            double basePriceWithQuantity = detailReq.getBasePrice() * item.getQuantity();
 
-            //Tính thuế
-            TaxCalculationResult taxResult = calculationUtil.calculateTaxes(basePriceWithQuantity, taxRates);
+            var serviceFee = serviceRate * detailReq.getBasePrice();
+
+            TaxCalculationResult taxResult = calculationUtil.calculateTaxes(detailReq.getBasePrice(), taxRates);
 
             //Tính tổng trước quy đổi
-            var serviceRate = businessManagerBusiness.getConfig().getServiceFee();
-            var serviceFee = serviceRate * detailReq.getBasePrice();
             double totalDetail = calculationUtil.calculateTotalPrice(
-                    basePriceWithQuantity,
+                    detailReq.getBasePrice(),
                     serviceFee,
                     taxResult.getTaxAmounts()
             );
-
+            double totalDetailWithQuantity = totalDetail * item.getQuantity();
             //Xử lý tiền tệ & tỷ giá
             String currency = detailReq.getCurrency() != null
                     ? detailReq.getCurrency().toUpperCase(Locale.ROOT)
@@ -136,11 +134,11 @@ public class QuotationServiceImpl implements QuotationService {
             double exchangeRate;
 
             if (!"VND".equalsIgnoreCase(currency)) {
-                BigDecimal converted = calculationUtil.convertToVND(BigDecimal.valueOf(totalDetail), currency);
+                BigDecimal converted = calculationUtil.convertToVND(BigDecimal.valueOf(totalDetailWithQuantity), currency);
                 totalVNPrice = converted.doubleValue();
-                exchangeRate = converted.doubleValue() / totalDetail;
+                exchangeRate = converted.doubleValue() / totalDetailWithQuantity;
             } else {
-                totalVNPrice = totalDetail;
+                totalVNPrice = totalDetailWithQuantity;
                 exchangeRate = 1.0;
             }
 
@@ -279,6 +277,9 @@ public class QuotationServiceImpl implements QuotationService {
         List<QuotationDetail> detailEntities = new ArrayList<>();
 
         // 5. Map chi tiết sản phẩm
+        var serviceRate = businessManagerBusiness.getConfig().getServiceFee();
+        double totalItemsVNDPrice =  0;
+
         for (OnlineQuotationDetailRequest d : request.getDetails()) {
             RequestItem item = requestItemBusiness.getById(UUID.fromString(d.getRequestItemId()))
                     .orElseThrow(() -> AppException.builder()
@@ -293,9 +294,9 @@ public class QuotationServiceImpl implements QuotationService {
                         .build();
             }
 
-            var serviceRate = businessManagerBusiness.getConfig().getServiceFee();
             double serviceFee = serviceRate * d.getBasePrice();
-            double itemTotalBeforeExchange = d.getBasePrice() * d.getQuantity() + serviceFee;
+            double itemTotalBeforeExchange = (d.getBasePrice() + serviceFee) * item.getQuantity();
+            //
             double itemTotalVND = itemTotalBeforeExchange;
             double exchangeRate = 1.0;
 
@@ -314,28 +315,46 @@ public class QuotationServiceImpl implements QuotationService {
             detail.setExchangeRate(exchangeRate);
             detail.setTotalVNDPrice(itemTotalVND);
             detail.setServiceRate(serviceRate);
-            detail.setServiceRate(serviceRate);
             detailEntities.add(detail);
+            totalItemsVNDPrice += itemTotalVND;
         }
         quotation.setDetails(detailEntities);
 
         // 6. Tính totalPriceEstimate từ totalPriceBeforeExchange (convert 1 lần)
-        double totalPriceEstimate = request.getTotalPriceBeforeExchange();
+        double totalPriceEstimate = 0;
         double shippingEstimate = request.getShippingEstimate();
         double exchangeRate = 1.0;
         String currency = !request.getDetails().isEmpty() ? request.getDetails().get(0).getCurrency() : null;
 
         if (currency != null && !"VND".equalsIgnoreCase(currency)) {
-            BigDecimal convertedTotal = calculationUtil.convertToVND(BigDecimal.valueOf(request.getTotalPriceBeforeExchange()), currency);
             BigDecimal convertedShip = calculationUtil.convertToVND(BigDecimal.valueOf(request.getShippingEstimate()), currency);
-            totalPriceEstimate = convertedTotal.doubleValue();
             shippingEstimate = convertedShip.doubleValue();
             exchangeRate = totalPriceEstimate/request.getTotalPriceBeforeExchange();
         }
+        double otherFeesVND = 0.0;
+        if (request.getFees() != null) {
+            for (String fee : request.getFees()) {
+                // Tách số từ chuỗi, ví dụ "Phí vận chuyển quốc tế: 43.93 USD"
+                java.util.regex.Matcher matcher = java.util.regex.Pattern
+                        .compile("(\\d+(?:\\.\\d+)?)")
+                        .matcher(fee);
+                if (matcher.find()) {
+                    double value = Double.parseDouble(matcher.group(1));
+                    if (currency != null && !"VND".equalsIgnoreCase(currency)) {
+                        BigDecimal convertedFee = calculationUtil.convertToVND(BigDecimal.valueOf(value), currency);
+                        otherFeesVND += convertedFee.doubleValue();
+                    } else {
+                        otherFeesVND += value;
+                    }
+                }
+            }
+        }
 
+// === Tổng VNĐ cuối cùng ===
+        totalPriceEstimate = totalItemsVNDPrice + shippingEstimate + otherFeesVND;
         quotation.setShippingEstimate(shippingEstimate);
+        // chua luu dc phải totalItemsVNDPrice + shippingVND + phí khác VND
         quotation.setTotalPriceEstimate(totalPriceEstimate);
-
         // 7. Lưu quotation
         quotationBusiness.create(quotation);
 
@@ -348,7 +367,6 @@ public class QuotationServiceImpl implements QuotationService {
         dto.setSubRequestId(request.getSubRequestId());
         dto.setQuotationType(QuotationType.ONLINE);
         dto.setSubRequestStatus(sub.getStatus());
-        dto.setExchangeRate(exchangeRate);
         List<OnlineQuotationDetailDTO> detailDTOs = quotation.getDetails().stream()
                 .map(detail -> {
                     OnlineQuotationDetailDTO dDto = new OnlineQuotationDetailDTO();
@@ -359,6 +377,16 @@ public class QuotationServiceImpl implements QuotationService {
                     dDto.setTotalVNPrice(detail.getTotalVNDPrice());
                     dDto.setCurrency(detail.getCurrency());
                     dDto.setServiceRate(detail.getServiceRate());
+                    dDto.setExchangeRate(detail.getExchangeRate());
+                    for (OnlineQuotationDetailRequest d : request.getDetails()) {
+                        RequestItem item = requestItemBusiness.getById(UUID.fromString(d.getRequestItemId()))
+                                .orElseThrow(() -> AppException.builder()
+                                        .message("Không tìm thấy request item: " + d.getRequestItemId())
+                                        .code(404)
+                                        .build());
+                        dDto.setQuantity(item.getQuantity());
+                    }
+
                     // Nếu DTO của bạn có field totalVNPrice thì set:
                     try {
                         dDto.getClass().getMethod("setTotalVNPrice", Double.class)
@@ -428,7 +456,7 @@ public class QuotationServiceImpl implements QuotationService {
 
             List<QuotationDetail> detailEntities = new ArrayList<>();
             List<OfflineQuotationDetailDTO> detailDTOs = new ArrayList<>();
-
+            var serviceRate = businessManagerBusiness.getConfig().getServiceFee();
             for (OfflineQuotationDetailRequest detailReq : input.getDetails()) {
 
                 RequestItem item = requestItemBusiness.getById(UUID.fromString(detailReq.getRequestItemId()))
@@ -462,21 +490,17 @@ public class QuotationServiceImpl implements QuotationService {
                         .toList();
                 detail.setTaxRates(snapshots);
 
-                // Tính toán theo quantity
-                double basePriceWithQuantity = detailReq.getBasePrice() * item.getQuantity();
-
-                // Tính thuế
-                TaxCalculationResult taxResult = calculationUtil.calculateTaxes(basePriceWithQuantity, taxRates);
-
-                // Tổng trước quy đổi
-
-                var serviceRate = businessManagerBusiness.getConfig().getServiceFee();
                 var serviceFee = serviceRate * detailReq.getBasePrice();
+
+                TaxCalculationResult taxResult = calculationUtil.calculateTaxes(detailReq.getBasePrice(), taxRates);
+
+                //Tính tổng trước quy đổi
                 double totalDetail = calculationUtil.calculateTotalPrice(
-                        basePriceWithQuantity,
+                        detailReq.getBasePrice(),
                         serviceFee,
                         taxResult.getTaxAmounts()
                 );
+                double totalDetailWithQuantity = totalDetail * item.getQuantity();
 
                 // Currency & ExchangeRate
                 String currency = detailReq.getCurrency() != null
@@ -487,11 +511,11 @@ public class QuotationServiceImpl implements QuotationService {
                 double exchangeRate;
 
                 if (!"VND".equalsIgnoreCase(currency)) {
-                    BigDecimal converted = calculationUtil.convertToVND(BigDecimal.valueOf(totalDetail), currency);
+                    BigDecimal converted = calculationUtil.convertToVND(BigDecimal.valueOf(totalDetailWithQuantity), currency);
                     totalVNPrice = converted.doubleValue();
-                    exchangeRate = converted.doubleValue() / totalDetail;
+                    exchangeRate = converted.doubleValue() / totalDetailWithQuantity;
                 } else {
-                    totalVNPrice = totalDetail;
+                    totalVNPrice = totalDetailWithQuantity;
                     exchangeRate = 1.0;
                 }
 

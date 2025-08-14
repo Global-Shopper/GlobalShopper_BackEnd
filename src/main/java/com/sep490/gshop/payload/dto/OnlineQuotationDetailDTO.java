@@ -15,5 +15,7 @@ public class OnlineQuotationDetailDTO {
     private double basePrice;
     private double serviceFee;
     private double totalVNPrice;
+    private int quantity;
     private double ServiceRate;
+    private double exchangeRate;
 }
