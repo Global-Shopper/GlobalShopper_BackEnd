@@ -227,6 +227,10 @@ public class OrderServiceImpl implements OrderService {
                     .totalPrice(subRequest.getQuotation().getTotalPriceEstimate())
                     .shippingFee(subRequest.getQuotation().getShippingEstimate())
                     .build();
+            if (checkOutModel.getTrackingNumber() != null && checkOutModel.getShippingFee() != null) {
+                order.setShippingFee(checkOutModel.getShippingFee());
+                order.setTrackingNumber(checkOutModel.getTrackingNumber());
+            }
             List<OrderItem> orderItems = subRequest.getRequestItems().stream()
                     .map(requestItem -> {
                         OrderItem orderItem = new OrderItem(requestItem);
@@ -237,7 +241,7 @@ public class OrderServiceImpl implements OrderService {
                     }).toList();
             order.setOrderItems(orderItems);
             //Assuming calculate total price based and shipping fee
-            double totalPrice = subRequest.getQuotation().getTotalPriceEstimate() + subRequest.getQuotation().getShippingEstimate();
+            double totalPrice = order.getTotalPrice() + order.getShippingFee();
 
             if (totalPrice != checkOutModel.getTotalPriceEstimate()) {
                 log.error("checkoutOrder() OrderServiceImpl Total price mismatch | subRequestId: {}, expected: {}, actual: {}", subRequestId, checkOutModel.getTotalPriceEstimate(), totalPrice);
@@ -302,6 +306,7 @@ public class OrderServiceImpl implements OrderService {
                 log.error("directCheckoutOrder() OrderServiceImpl Invalid PurchaseRequest status | subRequestId: {}, status: {}", subRequestId, purchaseRequest.getStatus());
                 throw new AppException(400, "Yêu cầu mua hàng chưa được báo giá");
             }
+
             Order order = Order.builder()
                     .status(OrderStatus.AWAITING_PAYMENT)
                     .customer(user)
@@ -313,6 +318,10 @@ public class OrderServiceImpl implements OrderService {
                     .totalPrice(subRequest.getQuotation().getTotalPriceEstimate())
                     .shippingFee(subRequest.getQuotation().getShippingEstimate())
                     .build();
+            if (checkOutModel.getTrackingNumber() != null && checkOutModel.getShippingFee() != null) {
+                order.setShippingFee(checkOutModel.getShippingFee());
+                order.setTrackingNumber(checkOutModel.getTrackingNumber());
+            }
             List<OrderItem> orderItems = subRequest.getRequestItems().stream()
                     .map(requestItem -> {
                         OrderItem orderItem = new OrderItem(requestItem);
@@ -321,7 +330,7 @@ public class OrderServiceImpl implements OrderService {
                     }).toList();
             order.setOrderItems(orderItems);
             //Assuming calculate total price based and shipping fee
-            double totalPrice = subRequest.getQuotation().getTotalPriceEstimate() + subRequest.getQuotation().getShippingEstimate();
+            double totalPrice = order.getTotalPrice() + order.getShippingFee();
 
             if (totalPrice != checkOutModel.getTotalPriceEstimate()) {
                 log.error("directCheckoutOrder() OrderServiceImpl Total price mismatch | subRequestId: {}, expected: {}, actual: {}", subRequestId, checkOutModel.getTotalPriceEstimate(), totalPrice);

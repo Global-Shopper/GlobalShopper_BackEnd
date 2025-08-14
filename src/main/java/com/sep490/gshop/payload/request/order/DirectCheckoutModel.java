@@ -17,4 +17,6 @@ public class DirectCheckoutModel {
     private double totalPriceEstimate;
     @NotBlank(message = "Cần có liên kết chuyển hướng")
     private String redirectUri;
+    private String trackingNumber;
+    private Double shippingFee;
 }
