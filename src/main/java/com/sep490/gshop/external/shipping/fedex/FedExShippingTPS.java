@@ -59,8 +59,8 @@ public class FedExShippingTPS implements ShippingTPS {
 
             Response response = client.newCall(request).execute();
             return response.body().string();
-        } catch (IOException e) {
-            throw new AppException(400, "Failed to fetch FedEx shipping rate");
+        } catch (Exception e) {
+            throw new AppException(400, e.getMessage());
         }
     }
 
