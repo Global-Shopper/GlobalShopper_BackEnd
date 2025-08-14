@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class OrderHistory extends BaseEntity{
     private String description;
+    @Enumerated(EnumType.STRING)
     private OrderStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
