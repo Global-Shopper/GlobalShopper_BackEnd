@@ -15,5 +15,4 @@ public class OnlineQuotationDetailRequest {
     private String requestItemId;
     private String currency;
     private double basePrice;
-    private int quantity;
 }
