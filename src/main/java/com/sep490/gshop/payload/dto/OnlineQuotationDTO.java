@@ -23,7 +23,6 @@ public class OnlineQuotationDTO {
     private double totalPriceEstimate;
     private List<String> fees;
     private List<OnlineQuotationDetailDTO> details;
-    private double exchangeRate;
     private SubRequestStatus subRequestStatus;
     private QuotationType quotationType;
 }
