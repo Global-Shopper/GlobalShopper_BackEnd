@@ -27,4 +27,5 @@ public class OfflineQuotationDetailDTO {
     private double totalPriceBeforeExchange;
     private double totalVNDPrice;
     private String hsCode;
+    private double ServiceRate;
 }

@@ -26,9 +26,6 @@ public class OfflineQuotationDetailRequest {
     @DecimalMin(value = "0.0", inclusive = false, message = "basePrice phải lớn hơn 0")
     private double basePrice;
 
-    @DecimalMin(value = "0.0", message = "serviceFee phải lớn hơn hoặc bằng 0")
-    private double serviceFee;
-
     @Size(max = 500, message = "Note không được vượt quá 500 ký tự")
     private String note;
 

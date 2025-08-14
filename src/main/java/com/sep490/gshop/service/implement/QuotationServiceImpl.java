@@ -41,10 +41,11 @@ public class QuotationServiceImpl implements QuotationService {
     private TaxRateService taxRateService;
     private ExchangeRateService exchangeRateService;
     private CalculationUtil calculationUtil;
+    private BusinessManagerBusiness businessManagerBusiness;
     @Autowired
     public QuotationServiceImpl(QuotationBusiness quotationBusiness, SubRequestBusiness subRequestBusiness, RequestItemBusiness requestItemBusiness,
                                 TaxRateBusiness taxRateBusiness, HsCodeBusiness hsCodeBusiness, ModelMapper modelMapper
-    , TaxRateService taxRateService, ExchangeRateService exchangeRateService, PurchaseRequestBusiness purchaseRequestBusiness) {
+    , TaxRateService taxRateService, ExchangeRateService exchangeRateService, PurchaseRequestBusiness purchaseRequestBusiness, BusinessManagerBusiness businessManagerBusiness) {
         this.quotationBusiness = quotationBusiness;
         this.subRequestBusiness = subRequestBusiness;
         this.requestItemBusiness = requestItemBusiness;
@@ -54,6 +55,7 @@ public class QuotationServiceImpl implements QuotationService {
         this.taxRateService = taxRateService;
         this.exchangeRateService = exchangeRateService;
         this.purchaseRequestBusiness = purchaseRequestBusiness;
+        this.businessManagerBusiness = businessManagerBusiness;
     }
     @PostConstruct
     public void init() {
@@ -117,9 +119,11 @@ public class QuotationServiceImpl implements QuotationService {
             TaxCalculationResult taxResult = calculationUtil.calculateTaxes(basePriceWithQuantity, taxRates);
 
             //Tính tổng trước quy đổi
+            var serviceRate = businessManagerBusiness.getConfig().getServiceFee();
+            var serviceFee = serviceRate * detailReq.getBasePrice();
             double totalDetail = calculationUtil.calculateTotalPrice(
                     basePriceWithQuantity,
-                    detailReq.getServiceFee(),
+                    serviceFee,
                     taxResult.getTaxAmounts()
             );
 
@@ -156,7 +160,8 @@ public class QuotationServiceImpl implements QuotationService {
             detailDTO.setRequestItemId(detailReq.getRequestItemId());
             detailDTO.setProductName(item.getProductName());
             detailDTO.setBasePrice(detailReq.getBasePrice());
-            detailDTO.setServiceFee(detailReq.getServiceFee());
+            detailDTO.setServiceFee(serviceFee);
+            detailDTO.setServiceRate(serviceRate);
             detailDTO.setCurrency(currency);
             detailDTO.setExchangeRate(exchangeRate);
             detailDTO.setTaxAmounts(taxResult.getTaxAmounts());
@@ -288,7 +293,9 @@ public class QuotationServiceImpl implements QuotationService {
                         .build();
             }
 
-            double itemTotalBeforeExchange = d.getBasePrice() + d.getServiceFee();
+            var serviceRate = businessManagerBusiness.getConfig().getServiceFee();
+            double serviceFee = serviceRate * d.getBasePrice();
+            double itemTotalBeforeExchange = d.getBasePrice() * d.getQuantity() + serviceFee;
             double itemTotalVND = itemTotalBeforeExchange;
             double exchangeRate = 1.0;
 
@@ -303,13 +310,13 @@ public class QuotationServiceImpl implements QuotationService {
             detail.setRequestItem(item);
             detail.setCurrency(d.getCurrency());
             detail.setBasePrice(d.getBasePrice());
-            detail.setServiceFee(d.getServiceFee());
+            detail.setServiceFee(serviceFee);
             detail.setExchangeRate(exchangeRate);
             detail.setTotalVNDPrice(itemTotalVND);
-
+            detail.setServiceRate(serviceRate);
+            detail.setServiceRate(serviceRate);
             detailEntities.add(detail);
         }
-
         quotation.setDetails(detailEntities);
 
         // 6. Tính totalPriceEstimate từ totalPriceBeforeExchange (convert 1 lần)
@@ -351,7 +358,7 @@ public class QuotationServiceImpl implements QuotationService {
                     dDto.setServiceFee(detail.getServiceFee());
                     dDto.setTotalVNPrice(detail.getTotalVNDPrice());
                     dDto.setCurrency(detail.getCurrency());
-
+                    dDto.setServiceRate(detail.getServiceRate());
                     // Nếu DTO của bạn có field totalVNPrice thì set:
                     try {
                         dDto.getClass().getMethod("setTotalVNPrice", Double.class)
@@ -462,9 +469,12 @@ public class QuotationServiceImpl implements QuotationService {
                 TaxCalculationResult taxResult = calculationUtil.calculateTaxes(basePriceWithQuantity, taxRates);
 
                 // Tổng trước quy đổi
+
+                var serviceRate = businessManagerBusiness.getConfig().getServiceFee();
+                var serviceFee = serviceRate * detailReq.getBasePrice();
                 double totalDetail = calculationUtil.calculateTotalPrice(
                         basePriceWithQuantity,
-                        detailReq.getServiceFee(),
+                        serviceFee,
                         taxResult.getTaxAmounts()
                 );
 
@@ -490,7 +500,9 @@ public class QuotationServiceImpl implements QuotationService {
                 detail.setCurrency(currency);
                 detail.setTotalVNDPrice(totalVNPrice);
                 detail.setHsCode(hsCode.getHsCode());
-
+                detail.setBasePrice(detailReq.getBasePrice());
+                detail.setServiceRate(serviceRate);
+                detail.setServiceFee(serviceFee);
                 detailEntities.add(detail);
 
                 // Map ra DTO để trả về
