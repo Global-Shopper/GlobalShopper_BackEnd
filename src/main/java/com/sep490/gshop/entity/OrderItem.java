@@ -55,6 +55,7 @@ public class OrderItem extends BaseEntity{
         this.variants = requestItem.getVariants();
         this.description = requestItem.getDescription();
         this.quantity = requestItem.getQuantity();
+        this.totalVNDPrice = requestItem.getQuotationDetail().getTotalVNDPrice();
         this.basePrice = requestItem.getQuotationDetail().getBasePrice();
         this.serviceFee = requestItem.getQuotationDetail().getServiceFee();
         this.taxRates = new ArrayList<>(requestItem.getQuotationDetail().getTaxRates());
