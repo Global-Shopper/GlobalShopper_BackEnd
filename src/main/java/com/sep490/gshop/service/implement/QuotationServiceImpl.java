@@ -327,30 +327,18 @@ public class QuotationServiceImpl implements QuotationService {
             BigDecimal convertedShip = calculationUtil.convertToVND(BigDecimal.valueOf(request.getShippingEstimate()), currency);
             shippingEstimate = convertedShip.doubleValue();
         }
-        double otherFeesVND = 0.0;
 
+        double otherFeesVND = 0.0;
         if (request.getFees() != null) {
             for (String fee : request.getFees()) {
-                // Regex bắt số
-                java.util.regex.Matcher valueMatcher = java.util.regex.Pattern
+                // Tách số từ chuỗi, ví dụ "Phí vận chuyển quốc tế: 43.93 USD"
+                java.util.regex.Matcher matcher = java.util.regex.Pattern
                         .compile("(\\d+(?:\\.\\d+)?)")
                         .matcher(fee);
-
-                // Regex bắt currency code (chuỗi chữ cái, ví dụ USD, EUR, GBP)
-                java.util.regex.Matcher currencyMatcher = java.util.regex.Pattern
-                        .compile("([A-Za-z]{3})")
-                        .matcher(fee);
-
-                if (valueMatcher.find()) {
-                    double value = Double.parseDouble(valueMatcher.group(1));
-
-                    String feesCurrency = null;
-                    if (currencyMatcher.find()) {
-                        feesCurrency = currencyMatcher.group(1); // Lấy ký hiệu tiền tệ từ chuỗi fee
-                    }
-
-                    if (feesCurrency != null && !"VND".equalsIgnoreCase(feesCurrency)) {
-                        BigDecimal convertedFee = calculationUtil.convertToVND(BigDecimal.valueOf(value), feesCurrency);
+                if (matcher.find()) {
+                    double value = Double.parseDouble(matcher.group(1));
+                    if (currency != null && !"VND".equalsIgnoreCase(currency)) {
+                        BigDecimal convertedFee = calculationUtil.convertToVND(BigDecimal.valueOf(value), currency);
                         otherFeesVND += convertedFee.doubleValue();
                     } else {
                         otherFeesVND += value;
