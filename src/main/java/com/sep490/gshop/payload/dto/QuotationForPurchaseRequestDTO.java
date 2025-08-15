@@ -22,6 +22,7 @@ public class QuotationForPurchaseRequestDTO {
     private long expiredDate;
     private double shippingEstimate;
     private double totalPriceEstimate;
+    private List<String> fees;
 
     private Double totalWeightEstimate;
     private PackageType packageType;
