@@ -272,14 +272,12 @@ public class QuotationServiceImpl implements QuotationService {
         quotation.setExpiredDate(request.getExpiredDate());
         quotation.setFees(request.getFees());
         quotation.setQuotationType(QuotationType.ONLINE);
-        quotation.setTotalPriceBeforeExchange(request.getTotalPriceBeforeExchange());
 
         List<QuotationDetail> detailEntities = new ArrayList<>();
 
         // 5. Map chi tiết sản phẩm
         var serviceRate = businessManagerBusiness.getConfig().getServiceFee();
         double totalItemsVNDPrice =  0;
-
         for (OnlineQuotationDetailRequest d : request.getDetails()) {
             RequestItem item = requestItemBusiness.getById(UUID.fromString(d.getRequestItemId()))
                     .orElseThrow(() -> AppException.builder()
@@ -323,25 +321,36 @@ public class QuotationServiceImpl implements QuotationService {
         // 6. Tính totalPriceEstimate từ totalPriceBeforeExchange (convert 1 lần)
         double totalPriceEstimate = 0;
         double shippingEstimate = request.getShippingEstimate();
-        double exchangeRate = 1.0;
         String currency = !request.getDetails().isEmpty() ? request.getDetails().get(0).getCurrency() : null;
 
         if (currency != null && !"VND".equalsIgnoreCase(currency)) {
             BigDecimal convertedShip = calculationUtil.convertToVND(BigDecimal.valueOf(request.getShippingEstimate()), currency);
             shippingEstimate = convertedShip.doubleValue();
-            exchangeRate = totalPriceEstimate/request.getTotalPriceBeforeExchange();
         }
         double otherFeesVND = 0.0;
+
         if (request.getFees() != null) {
             for (String fee : request.getFees()) {
-                // Tách số từ chuỗi, ví dụ "Phí vận chuyển quốc tế: 43.93 USD"
-                java.util.regex.Matcher matcher = java.util.regex.Pattern
+                // Regex bắt số
+                java.util.regex.Matcher valueMatcher = java.util.regex.Pattern
                         .compile("(\\d+(?:\\.\\d+)?)")
                         .matcher(fee);
-                if (matcher.find()) {
-                    double value = Double.parseDouble(matcher.group(1));
-                    if (currency != null && !"VND".equalsIgnoreCase(currency)) {
-                        BigDecimal convertedFee = calculationUtil.convertToVND(BigDecimal.valueOf(value), currency);
+
+                // Regex bắt currency code (chuỗi chữ cái, ví dụ USD, EUR, GBP)
+                java.util.regex.Matcher currencyMatcher = java.util.regex.Pattern
+                        .compile("([A-Za-z]{3})")
+                        .matcher(fee);
+
+                if (valueMatcher.find()) {
+                    double value = Double.parseDouble(valueMatcher.group(1));
+
+                    String feesCurrency = null;
+                    if (currencyMatcher.find()) {
+                        feesCurrency = currencyMatcher.group(1); // Lấy ký hiệu tiền tệ từ chuỗi fee
+                    }
+
+                    if (feesCurrency != null && !"VND".equalsIgnoreCase(feesCurrency)) {
+                        BigDecimal convertedFee = calculationUtil.convertToVND(BigDecimal.valueOf(value), feesCurrency);
                         otherFeesVND += convertedFee.doubleValue();
                     } else {
                         otherFeesVND += value;
@@ -350,8 +359,9 @@ public class QuotationServiceImpl implements QuotationService {
             }
         }
 
+
 // === Tổng VNĐ cuối cùng ===
-        totalPriceEstimate = totalItemsVNDPrice + shippingEstimate + otherFeesVND;
+        totalPriceEstimate = totalItemsVNDPrice + otherFeesVND;
         quotation.setShippingEstimate(shippingEstimate);
         // chua luu dc phải totalItemsVNDPrice + shippingVND + phí khác VND
         quotation.setTotalPriceEstimate(totalPriceEstimate);
@@ -488,6 +498,8 @@ public class QuotationServiceImpl implements QuotationService {
                 List<TaxRateSnapshot> snapshots = taxRates.stream()
                         .map(rate -> modelMapper.map(rate, TaxRateSnapshot.class))
                         .toList();
+
+
                 detail.setTaxRates(snapshots);
 
                 var serviceFee = serviceRate * detailReq.getBasePrice();
@@ -579,7 +591,7 @@ public class QuotationServiceImpl implements QuotationService {
             return dto;
 
         } catch (Exception e) {
-            log.error("createQuotation() - Exception: {}", e.getMessage(), e);
+            log.error("createQuotation() - Exception: {}", e.getMessage());
             throw AppException.builder()
                     .message("Lỗi khi tạo báo giá: " + e.getMessage())
                     .code(500)
