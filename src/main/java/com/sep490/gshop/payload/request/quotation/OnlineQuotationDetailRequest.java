@@ -13,6 +13,5 @@ import java.util.List;
 @Builder
 public class OnlineQuotationDetailRequest {
     private String requestItemId;
-    private String currency;
     private double basePrice;
 }

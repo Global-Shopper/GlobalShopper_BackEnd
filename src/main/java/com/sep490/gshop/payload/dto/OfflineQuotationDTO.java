@@ -25,10 +25,12 @@ public class OfflineQuotationDTO {
     private double shippingEstimate;
     private double totalPriceEstimate;
     private SubRequestStatus subRequestStatus;
-
+    private String region;
+    private String currency;
     private Double totalWeightEstimate;
     private PackageType packageType;
     private QuotationType quotationType;
     private ShipperInformation shipper;
     private RecipientInformation recipient;
+    private List<String> fees;
 }

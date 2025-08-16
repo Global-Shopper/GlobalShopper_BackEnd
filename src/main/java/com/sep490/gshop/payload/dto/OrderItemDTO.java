@@ -14,7 +14,6 @@ import java.util.List;
 public class OrderItemDTO {
     private String id;
     private double basePrice;
-    private String currency;
     private double totalVNDPrice;
     private double serviceFee;
     private List<TaxRateSnapshot> taxRates = new ArrayList<>();

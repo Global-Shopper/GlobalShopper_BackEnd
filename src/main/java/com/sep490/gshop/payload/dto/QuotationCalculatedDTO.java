@@ -22,7 +22,8 @@ public class QuotationCalculatedDTO {
     private List<QuotationDetailCalculatedDTO> details;
     private double shippingEstimate;
     private double totalPriceEstimate;
-
+    private String currency;
+    private String region;
     private Double totalWeightEstimate;
     private PackageType packageType;
     private QuotationType quotationType;

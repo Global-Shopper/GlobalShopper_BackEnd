@@ -30,6 +30,8 @@ public class OffineQuotationRequest {
     @PositiveOrZero(message = "shippingEstimate phải là số dương hoặc bằng 0")
     private Double shippingEstimate;
 
+    private String currency;
+
     @Positive(message = "expiredDate phải lớn hơn 0")
     private long expiredDate;
 
