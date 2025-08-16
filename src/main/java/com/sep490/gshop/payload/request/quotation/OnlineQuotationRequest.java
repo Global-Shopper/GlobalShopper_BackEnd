@@ -1,5 +1,7 @@
 package com.sep490.gshop.payload.request.quotation;
 
+import com.sep490.gshop.entity.subclass.Fee;
+import com.sep490.gshop.payload.request.FeeRequest;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,6 +19,6 @@ public class OnlineQuotationRequest {
     private long expiredDate;
     private String currency;
     private String note;
-    private List<String> fees;
+    private List<FeeRequest> fees;
     private List<OnlineQuotationDetailRequest> details;
 }

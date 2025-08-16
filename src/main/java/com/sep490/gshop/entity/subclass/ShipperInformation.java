@@ -16,4 +16,5 @@ public class ShipperInformation {
     private String shipmentPostalCode;
     private String shipmentPhone;
     private String shipmentName;
+    private String shipmentStateOrProvinceCode;
 }

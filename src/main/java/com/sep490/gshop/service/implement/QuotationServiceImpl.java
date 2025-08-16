@@ -7,8 +7,10 @@ import com.sep490.gshop.common.enums.SubRequestStatus;
 import com.sep490.gshop.common.enums.TaxRegion;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.*;
+import com.sep490.gshop.entity.subclass.Fee;
 import com.sep490.gshop.entity.subclass.TaxRateSnapshot;
 import com.sep490.gshop.payload.dto.*;
+import com.sep490.gshop.payload.request.FeeRequest;
 import com.sep490.gshop.payload.request.quotation.*;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.PurchaseRequestModel;
@@ -301,7 +303,6 @@ public class QuotationServiceImpl implements QuotationService {
         quotation.setSubRequest(sub);
         quotation.setNote(request.getNote());
         quotation.setExpiredDate(request.getExpiredDate());
-        quotation.setFees(request.getFees());
         quotation.setQuotationType(QuotationType.ONLINE);
 
         List<QuotationDetail> detailEntities = new ArrayList<>();
@@ -357,32 +358,35 @@ public class QuotationServiceImpl implements QuotationService {
             shippingEstimate = convertedShip.doubleValue();
         }
 
+        // = Tổng VNĐ cuối cùng =
         double otherFeesVND = 0.0;
         if (request.getFees() != null) {
-            for (String fee : request.getFees()) {
-                // Tách số từ chuỗi, ví dụ "Phí vận chuyển quốc tế: 43.93 USD"
-                java.util.regex.Matcher matcher = java.util.regex.Pattern
-                        .compile("(\\d+(?:\\.\\d+)?)")
-                        .matcher(fee);
-                if (matcher.find()) {
-                    double value = Double.parseDouble(matcher.group(1));
-                    if (request.getCurrency() != null && !"VND".equalsIgnoreCase(request.getCurrency())) {
-                        BigDecimal convertedFee = calculationUtil.convertToVND(BigDecimal.valueOf(value), request.getCurrency());
-                        otherFeesVND += convertedFee.doubleValue();
-                    } else {
-                        otherFeesVND += value;
-                    }
+            for (FeeRequest fee : request.getFees()) {
+                double value = fee.getAmount() != null ? fee.getAmount() : 0.0;
+                String feeCurrency = request.getCurrency();
+
+                if (feeCurrency != null && !"VND".equalsIgnoreCase(feeCurrency)) {
+                    BigDecimal converted = calculationUtil.convertToVND(BigDecimal.valueOf(value), feeCurrency);
+                    otherFeesVND += converted.doubleValue();
+                } else {
+                    otherFeesVND += value;
                 }
             }
         }
 
-
-// === Tổng VNĐ cuối cùng ===
         totalPriceEstimate = totalItemsVNDPrice + otherFeesVND;
+
         quotation.setShippingEstimate(shippingEstimate);
-        // chua luu dc phải totalItemsVNDPrice + shippingVND + phí khác VND
         quotation.setTotalPriceEstimate(totalPriceEstimate);
         quotation.setCurrency(request.getCurrency());
+
+// lưu luôn danh sách object fees xuống DB
+        List<Fee> feeEntities = request.getFees().stream().map(a -> modelMapper.map(a, Fee.class)).toList();
+        for(Fee fee : feeEntities){
+            fee.setCurrency(request.getCurrency());
+        }
+        quotation.setFees(feeEntities);
+
         // 7. Lưu quotation
         quotationBusiness.create(quotation);
 
