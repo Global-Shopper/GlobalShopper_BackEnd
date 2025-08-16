@@ -2,6 +2,7 @@ package com.sep490.gshop.payload.dto;
 
 import com.sep490.gshop.common.enums.QuotationType;
 import com.sep490.gshop.common.enums.SubRequestStatus;
+import com.sep490.gshop.entity.subclass.Fee;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,7 +22,7 @@ public class OnlineQuotationDTO {
     private String note;
     private String currency;
     private double totalPriceEstimate;
-    private List<String> fees;
+    private List<Fee> fees;
     private List<OnlineQuotationDetailDTO> details;
     private SubRequestStatus subRequestStatus;
     private QuotationType quotationType;

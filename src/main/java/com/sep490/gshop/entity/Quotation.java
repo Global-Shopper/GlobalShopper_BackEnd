@@ -2,7 +2,9 @@ package com.sep490.gshop.entity;
 
 import com.sep490.gshop.common.enums.PackageType;
 import com.sep490.gshop.common.enums.QuotationType;
+import com.sep490.gshop.entity.converter.FeeListConverter;
 import com.sep490.gshop.entity.converter.StringListConverter;
+import com.sep490.gshop.entity.subclass.Fee;
 import com.sep490.gshop.entity.subclass.RecipientInformation;
 import com.sep490.gshop.entity.subclass.ShipperInformation;
 import jakarta.persistence.*;
@@ -37,8 +39,10 @@ public class Quotation extends BaseEntity {
     private RecipientInformation recipient;
 
 
-    @Convert(converter = StringListConverter.class)
-    private List<String> fees;
+    @Convert(converter = FeeListConverter.class)
+    private List<Fee> fees;
+
+
     private QuotationType quotationType;
     private Double totalPriceBeforeExchange;
     @OneToOne(fetch = FetchType.LAZY)
