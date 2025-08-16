@@ -16,7 +16,6 @@ public class QuotationDetailCalculatedDTO {
     private String productName;
     private double basePrice;
     private double serviceFee;
-    private String currency;
     private double exchangeRate;
     private List<TaxRateSnapshotDTO> taxRates;
     private String note;

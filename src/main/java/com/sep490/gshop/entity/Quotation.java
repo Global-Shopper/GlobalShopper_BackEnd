@@ -29,6 +29,8 @@ public class Quotation extends BaseEntity {
     private double totalPriceEstimate;
     private Double totalWeightEstimate;
     private PackageType packageType;
+    private String currency;
+    private String region;
     @Embedded
     private ShipperInformation shipper;
     @Embedded

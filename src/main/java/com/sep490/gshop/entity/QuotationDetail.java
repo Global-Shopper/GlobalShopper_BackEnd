@@ -18,7 +18,6 @@ import java.util.List;
 public class QuotationDetail extends BaseEntity {
     private double basePrice;
     private double serviceFee;
-    private String currency;
     private double ExchangeRate;
     private double totalVNDPrice;
     private String hsCode;

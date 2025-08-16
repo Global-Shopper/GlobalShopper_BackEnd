@@ -25,7 +25,6 @@ public class OrderItem extends BaseEntity{
 
     //QuotationDetail data
     private double basePrice;
-    private String currency;
 
     private Double totalVNDPrice;
     private double serviceFee;

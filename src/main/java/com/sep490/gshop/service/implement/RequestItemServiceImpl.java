@@ -77,7 +77,6 @@ public class RequestItemServiceImpl implements RequestItemService {
         }
         detailDTO.setTotalPriceBeforeExchange(totalPriceBeforeExchange);
 
-        detailDTO.setCurrency(detail.getCurrency());
         detailDTO.setExchangeRate(detail.getExchangeRate());
         detailDTO.setNote(detail.getNote());
         return detailDTO;

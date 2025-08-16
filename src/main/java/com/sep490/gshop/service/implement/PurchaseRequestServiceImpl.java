@@ -536,7 +536,6 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
         }
         detailDTO.setTotalPriceBeforeExchange(totalPriceBeforeExchange);
 
-        detailDTO.setCurrency(detail.getCurrency());
         detailDTO.setExchangeRate(detail.getExchangeRate());
         detailDTO.setNote(detail.getNote());
 

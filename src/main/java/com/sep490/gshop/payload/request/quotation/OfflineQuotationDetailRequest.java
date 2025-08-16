@@ -20,8 +20,6 @@ public class OfflineQuotationDetailRequest {
     @Size(max = 8, message = "HS Code chỉ có 8 kí tự")
     private String hsCodeId;
 
-    @NotNull(message = "region không được để trống")
-    private TaxRegion region;
 
     @DecimalMin(value = "0.0", inclusive = false, message = "basePrice phải lớn hơn 0")
     private double basePrice;
@@ -29,7 +27,5 @@ public class OfflineQuotationDetailRequest {
     @Size(max = 500, message = "Note không được vượt quá 500 ký tự")
     private String note;
 
-    @NotBlank(message = "currency không được để trống")
-    private String currency;
 
 }

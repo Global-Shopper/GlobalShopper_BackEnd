@@ -18,7 +18,6 @@ public class OfflineQuotationDetailDTO {
     private String requestItemId;
     private double basePrice;
     private double serviceFee;
-    private String currency;
     private double exchangeRate;
     private List<TaxRateSnapshotDTO> taxRates;
     private String note;
@@ -28,4 +27,6 @@ public class OfflineQuotationDetailDTO {
     private double totalVNDPrice;
     private String hsCode;
     private double ServiceRate;
+    private int quantity;
+
 }
