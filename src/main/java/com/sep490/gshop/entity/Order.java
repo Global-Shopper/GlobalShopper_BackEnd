@@ -27,7 +27,7 @@ public class Order extends BaseEntity {
     private List<String> contactInfo;
     private String seller;
     private String ecommercePlatform;
-
+    private String currency;
     @Column(columnDefinition = "TEXT")
     private String note;
     @Enumerated(EnumType.STRING)

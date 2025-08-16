@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class OnlineQuotationDetailDTO {
     private String requestItemId;
-    private String currency;
     private double basePrice;
     private double serviceFee;
     private double totalVNPrice;

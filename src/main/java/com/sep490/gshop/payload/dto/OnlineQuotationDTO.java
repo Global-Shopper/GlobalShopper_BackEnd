@@ -19,6 +19,7 @@ public class OnlineQuotationDTO {
     private double shippingEstimate;
     private long expiredDate;
     private String note;
+    private String currency;
     private double totalPriceEstimate;
     private List<String> fees;
     private List<OnlineQuotationDetailDTO> details;

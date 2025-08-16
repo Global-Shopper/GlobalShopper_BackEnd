@@ -20,6 +20,8 @@ public class OrderDTO {
     private List<String> contactInfo;
     private String seller;
     private String ecommercePlatform;
+    private String currency;
+    private String region;
 
     private String note;
     private OrderStatus status;

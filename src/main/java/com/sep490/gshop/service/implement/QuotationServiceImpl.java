@@ -4,6 +4,7 @@ import com.sep490.gshop.business.*;
 import com.sep490.gshop.common.enums.PurchaseRequestStatus;
 import com.sep490.gshop.common.enums.QuotationType;
 import com.sep490.gshop.common.enums.SubRequestStatus;
+import com.sep490.gshop.common.enums.TaxRegion;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.*;
 import com.sep490.gshop.entity.subclass.TaxRateSnapshot;
@@ -87,6 +88,7 @@ public class QuotationServiceImpl implements QuotationService {
 
         List<QuotationDetailCalculatedDTO> detailDTOs = new ArrayList<>();
         var serviceRate = businessManagerBusiness.getConfig().getServiceFee();
+        var region = parse(input.getShipper().getShipmentCountryCode());
         for (OfflineQuotationDetailRequest detailReq : input.getDetails()) {
 
             //Kiểm tra requestItem tồn tại
@@ -112,7 +114,8 @@ public class QuotationServiceImpl implements QuotationService {
                             .build());
 
             //Lấy thuế áp dụng
-            List<TaxRate> taxRates = taxRateBusiness.findTaxRateHsCodeAndRegion(hsCode, detailReq.getRegion());
+
+            List<TaxRate> taxRates = taxRateBusiness.findTaxRateHsCodeAndRegion(hsCode, region);
 
             var serviceFee = serviceRate * detailReq.getBasePrice();
 
@@ -126,8 +129,8 @@ public class QuotationServiceImpl implements QuotationService {
             );
             double totalDetailWithQuantity = totalDetail * item.getQuantity();
             //Xử lý tiền tệ & tỷ giá
-            String currency = detailReq.getCurrency() != null
-                    ? detailReq.getCurrency().toUpperCase(Locale.ROOT)
+            String currency = input.getCurrency() != null
+                    ? input.getCurrency().toUpperCase(Locale.ROOT)
                     : "USD";
 
             double totalVNPrice;
@@ -160,7 +163,6 @@ public class QuotationServiceImpl implements QuotationService {
             detailDTO.setBasePrice(detailReq.getBasePrice());
             detailDTO.setServiceFee(serviceFee);
             detailDTO.setServiceRate(serviceRate);
-            detailDTO.setCurrency(currency);
             detailDTO.setExchangeRate(exchangeRate);
             detailDTO.setTaxAmounts(taxResult.getTaxAmounts());
             detailDTO.setTotalTaxAmount(taxResult.getTotalTax());
@@ -191,9 +193,38 @@ public class QuotationServiceImpl implements QuotationService {
         dto.setRecipient(input.getRecipient()); //
         dto.setNote(input.getNote());
         dto.setExpiredDate(input.getExpiredDate());
-
+        dto.setRegion(region.toString());
+        dto.setCurrency(input.getCurrency());
         return dto;
     }
+
+
+        private TaxRegion parse(String shipmentCountryCode) {
+            if (shipmentCountryCode == null || shipmentCountryCode.isEmpty()) {
+                throw AppException.builder().message("Không tìm thấy region dựa trên countryCode").code(404).build();
+            }
+
+            // Kiểm tra và trả về TaxRegion tương ứng với mã quốc gia
+            switch (shipmentCountryCode.toUpperCase()) {
+                case "GB":
+                    return TaxRegion.UK;
+
+                case "US":
+                    return TaxRegion.US;
+
+                case "CN":
+                    return TaxRegion.CHN;
+
+                case "KR":
+                    return TaxRegion.KR;
+
+                case "JP":
+                    return TaxRegion.JP;
+
+                default:
+                    throw AppException.builder().message("shipment country code " + shipmentCountryCode + " không có region hợp lệ tương ứng").code(400).build();
+            }
+        }
 
 
     @Override
@@ -298,8 +329,8 @@ public class QuotationServiceImpl implements QuotationService {
             double itemTotalVND = itemTotalBeforeExchange;
             double exchangeRate = 1.0;
 
-            if (d.getCurrency() != null && !"VND".equalsIgnoreCase(d.getCurrency())) {
-                BigDecimal converted = calculationUtil.convertToVND(BigDecimal.valueOf(itemTotalBeforeExchange), d.getCurrency());
+            if (request.getCurrency() != null && !"VND".equalsIgnoreCase(request.getCurrency())) {
+                BigDecimal converted = calculationUtil.convertToVND(BigDecimal.valueOf(itemTotalBeforeExchange), request.getCurrency());
                 itemTotalVND = converted.doubleValue();
                 exchangeRate = converted.doubleValue() / itemTotalBeforeExchange;
             }
@@ -307,7 +338,6 @@ public class QuotationServiceImpl implements QuotationService {
             QuotationDetail detail = new QuotationDetail();
             detail.setQuotation(quotation);
             detail.setRequestItem(item);
-            detail.setCurrency(d.getCurrency());
             detail.setBasePrice(d.getBasePrice());
             detail.setServiceFee(serviceFee);
             detail.setExchangeRate(exchangeRate);
@@ -321,10 +351,9 @@ public class QuotationServiceImpl implements QuotationService {
         // 6. Tính totalPriceEstimate từ totalPriceBeforeExchange (convert 1 lần)
         double totalPriceEstimate = 0;
         double shippingEstimate = request.getShippingEstimate();
-        String currency = !request.getDetails().isEmpty() ? request.getDetails().get(0).getCurrency() : null;
 
-        if (currency != null && !"VND".equalsIgnoreCase(currency)) {
-            BigDecimal convertedShip = calculationUtil.convertToVND(BigDecimal.valueOf(request.getShippingEstimate()), currency);
+        if (request.getCurrency() != null && !"VND".equalsIgnoreCase(request.getCurrency())) {
+            BigDecimal convertedShip = calculationUtil.convertToVND(BigDecimal.valueOf(request.getShippingEstimate()), request.getCurrency());
             shippingEstimate = convertedShip.doubleValue();
         }
 
@@ -337,8 +366,8 @@ public class QuotationServiceImpl implements QuotationService {
                         .matcher(fee);
                 if (matcher.find()) {
                     double value = Double.parseDouble(matcher.group(1));
-                    if (currency != null && !"VND".equalsIgnoreCase(currency)) {
-                        BigDecimal convertedFee = calculationUtil.convertToVND(BigDecimal.valueOf(value), currency);
+                    if (request.getCurrency() != null && !"VND".equalsIgnoreCase(request.getCurrency())) {
+                        BigDecimal convertedFee = calculationUtil.convertToVND(BigDecimal.valueOf(value), request.getCurrency());
                         otherFeesVND += convertedFee.doubleValue();
                     } else {
                         otherFeesVND += value;
@@ -353,12 +382,21 @@ public class QuotationServiceImpl implements QuotationService {
         quotation.setShippingEstimate(shippingEstimate);
         // chua luu dc phải totalItemsVNDPrice + shippingVND + phí khác VND
         quotation.setTotalPriceEstimate(totalPriceEstimate);
+        quotation.setCurrency(request.getCurrency());
         // 7. Lưu quotation
         quotationBusiness.create(quotation);
 
         // 8. Update trạng thái subRequest
         sub.setStatus(SubRequestStatus.QUOTED);
         subRequestBusiness.update(sub);
+
+        PurchaseRequest purchaseRequest =
+                purchaseRequestBusiness.findPurchaseRequestBySubRequestId(subRequestId);
+        purchaseRequest.setStatus(PurchaseRequestStatus.QUOTED);
+        purchaseRequest.getHistory().add(
+                new PurchaseRequestHistory(purchaseRequest,"Yêu cầu đã được báo giá")
+        );
+        purchaseRequestBusiness.update(purchaseRequest);
 
         // 9. Map trả về DTO (map thủ công phần details)
         OnlineQuotationDTO dto = modelMapper.map(quotation, OnlineQuotationDTO.class);
@@ -369,11 +407,9 @@ public class QuotationServiceImpl implements QuotationService {
                 .map(detail -> {
                     OnlineQuotationDetailDTO dDto = new OnlineQuotationDetailDTO();
                     dDto.setRequestItemId(detail.getRequestItem() != null ? detail.getRequestItem().getId().toString() : null);
-                    dDto.setCurrency(detail.getCurrency());
                     dDto.setBasePrice(detail.getBasePrice());
                     dDto.setServiceFee(detail.getServiceFee());
                     dDto.setTotalVNPrice(detail.getTotalVNDPrice());
-                    dDto.setCurrency(detail.getCurrency());
                     dDto.setServiceRate(detail.getServiceRate());
                     dDto.setExchangeRate(detail.getExchangeRate());
                     for (OnlineQuotationDetailRequest d : request.getDetails()) {
@@ -455,6 +491,7 @@ public class QuotationServiceImpl implements QuotationService {
             List<QuotationDetail> detailEntities = new ArrayList<>();
             List<OfflineQuotationDetailDTO> detailDTOs = new ArrayList<>();
             var serviceRate = businessManagerBusiness.getConfig().getServiceFee();
+            var region = parse(input.getShipper().getShipmentCountryCode());
             for (OfflineQuotationDetailRequest detailReq : input.getDetails()) {
 
                 RequestItem item = requestItemBusiness.getById(UUID.fromString(detailReq.getRequestItemId()))
@@ -482,7 +519,8 @@ public class QuotationServiceImpl implements QuotationService {
                                 .build());
 
                 // Map taxRates sang snapshot
-                List<TaxRate> taxRates = taxRateBusiness.findTaxRateHsCodeAndRegion(hsCode, detailReq.getRegion());
+
+                List<TaxRate> taxRates = taxRateBusiness.findTaxRateHsCodeAndRegion(hsCode, region);
                 List<TaxRateSnapshot> snapshots = taxRates.stream()
                         .map(rate -> modelMapper.map(rate, TaxRateSnapshot.class))
                         .toList();
@@ -502,9 +540,10 @@ public class QuotationServiceImpl implements QuotationService {
                 );
                 double totalDetailWithQuantity = totalDetail * item.getQuantity();
 
-                // Currency & ExchangeRate
-                String currency = detailReq.getCurrency() != null
-                        ? detailReq.getCurrency().toUpperCase(Locale.ROOT)
+
+
+                String currency = input.getCurrency() != null
+                        ? input.getCurrency().toUpperCase(Locale.ROOT)
                         : "USD";
 
                 double totalVNPrice;
@@ -521,7 +560,6 @@ public class QuotationServiceImpl implements QuotationService {
 
                 // Set vào detail
                 detail.setExchangeRate(exchangeRate);
-                detail.setCurrency(currency);
                 detail.setTotalVNDPrice(totalVNPrice);
                 detail.setHsCode(hsCode.getHsCode());
                 detail.setBasePrice(detailReq.getBasePrice());
@@ -548,6 +586,8 @@ public class QuotationServiceImpl implements QuotationService {
             double totalBeforeExchange = detailDTOs.stream().mapToDouble(OfflineQuotationDetailDTO::getTotalPriceBeforeExchange).sum();
             quotation.setTotalPriceEstimate(total);
             quotation.setTotalPriceBeforeExchange(totalBeforeExchange);
+            quotation.setCurrency(input.getCurrency());
+            quotation.setRegion(region.toString());
             quotationBusiness.update(quotation);
 
             // Cập nhật trạng thái SubRequest và PurchaseRequest
@@ -574,6 +614,7 @@ public class QuotationServiceImpl implements QuotationService {
             dto.setShipper(input.getShipper());
             dto.setSubRequestStatus(SubRequestStatus.QUOTED);
             dto.setRecipient(input.getRecipient());
+            dto.setRegion(region.toString());
 
             log.debug("createQuotation() - End | subRequestId: {}", input.getSubRequestId());
             return dto;
@@ -649,6 +690,7 @@ public class QuotationServiceImpl implements QuotationService {
             dto.setDetails(detailDTOs);
             dto.setTotalPriceEstimate(total);
             dto.setSubRequestId(quotation.getSubRequest().getId().toString());
+            dto.setRegion(quotation.getRegion() != null ? quotation.getRegion() : null);
             dto.setSubRequestStatus(quotation.getSubRequest().getStatus());
             log.debug("getQuotationById() - End | quotationId: {}", quotationId);
             return dto;
@@ -673,6 +715,8 @@ public class QuotationServiceImpl implements QuotationService {
 
         UUID requestItemId = detail.getRequestItem() != null ? detail.getRequestItem().getId() : null;
         detailDTO.setRequestItemId(requestItemId.toString());
+        detailDTO.setQuantity(detail.getRequestItem().getQuantity());
+        detailDTO.setHsCode(detail.getHsCode());
         List<TaxRate> taxRates = detail.getTaxRates() != null ?
                 detail.getTaxRates().stream()
                         .map(snapshot -> {
@@ -690,8 +734,6 @@ public class QuotationServiceImpl implements QuotationService {
             totalPriceBeforeExchange += taxResult.getTaxAmounts().values().stream().mapToDouble(Double::doubleValue).sum();
         }
         detailDTO.setTotalPriceBeforeExchange(totalPriceBeforeExchange);
-
-        detailDTO.setCurrency(detail.getCurrency());
         detailDTO.setExchangeRate(detail.getExchangeRate());
         detailDTO.setNote(detail.getNote());
         return detailDTO;

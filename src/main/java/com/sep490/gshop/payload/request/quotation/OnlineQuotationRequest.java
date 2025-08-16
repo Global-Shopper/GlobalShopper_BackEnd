@@ -15,6 +15,7 @@ public class OnlineQuotationRequest {
     private String subRequestId;
     private double shippingEstimate;
     private long expiredDate;
+    private String currency;
     private String note;
     private List<String> fees;
     private List<OnlineQuotationDetailRequest> details;
