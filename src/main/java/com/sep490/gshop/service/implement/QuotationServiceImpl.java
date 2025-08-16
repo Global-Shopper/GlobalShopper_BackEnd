@@ -431,6 +431,13 @@ public class QuotationServiceImpl implements QuotationService {
                 .toList();
 
         dto.setDetails(detailDTOs);
+        PurchaseRequest purchaseRequest =
+                purchaseRequestBusiness.findPurchaseRequestBySubRequestId(subRequestId);
+        purchaseRequest.setStatus(PurchaseRequestStatus.QUOTED);
+        purchaseRequest.getHistory().add(
+                new PurchaseRequestHistory(purchaseRequest,"Yêu cầu đã được báo giá")
+        );
+        purchaseRequestBusiness.update(purchaseRequest);
 
         log.debug("createOnlineQuotation() - End | subRequestId: {}", request.getSubRequestId());
         return dto;
