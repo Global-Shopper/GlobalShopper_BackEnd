@@ -3,6 +3,7 @@ package com.sep490.gshop.payload.dto;
 import com.sep490.gshop.common.enums.PackageType;
 import com.sep490.gshop.common.enums.QuotationType;
 import com.sep490.gshop.common.enums.SubRequestStatus;
+import com.sep490.gshop.entity.subclass.Fee;
 import com.sep490.gshop.entity.subclass.RecipientInformation;
 import com.sep490.gshop.entity.subclass.ShipperInformation;
 import lombok.AllArgsConstructor;
@@ -32,5 +33,5 @@ public class OfflineQuotationDTO {
     private QuotationType quotationType;
     private ShipperInformation shipper;
     private RecipientInformation recipient;
-    private List<String> fees;
+    private List<Fee> fees;
 }
