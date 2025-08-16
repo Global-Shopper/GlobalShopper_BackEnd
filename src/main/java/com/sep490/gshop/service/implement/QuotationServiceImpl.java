@@ -390,14 +390,6 @@ public class QuotationServiceImpl implements QuotationService {
         sub.setStatus(SubRequestStatus.QUOTED);
         subRequestBusiness.update(sub);
 
-        PurchaseRequest purchaseRequest =
-                purchaseRequestBusiness.findPurchaseRequestBySubRequestId(subRequestId);
-        purchaseRequest.setStatus(PurchaseRequestStatus.QUOTED);
-        purchaseRequest.getHistory().add(
-                new PurchaseRequestHistory(purchaseRequest,"Yêu cầu đã được báo giá")
-        );
-        purchaseRequestBusiness.update(purchaseRequest);
-
         // 9. Map trả về DTO (map thủ công phần details)
         OnlineQuotationDTO dto = modelMapper.map(quotation, OnlineQuotationDTO.class);
         dto.setSubRequestId(request.getSubRequestId());
