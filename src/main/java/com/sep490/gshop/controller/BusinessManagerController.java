@@ -4,6 +4,7 @@ import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.payload.dto.ConfigurationDTO;
 import com.sep490.gshop.payload.dto.CustomerDTO;
 import com.sep490.gshop.payload.request.bm.ServiceFeeConfigModel;
+import com.sep490.gshop.payload.response.dashboard.DashBoardResponse;
 import com.sep490.gshop.service.BusinessManagerService;
 import lombok.extern.log4j.Log4j2;
 import org.springdoc.core.annotations.ParameterObject;
@@ -58,6 +59,16 @@ public class BusinessManagerController {
         Page<CustomerDTO> user = businessManagerService.getCustomer(pageable, search, status, startDate, endDate);
         log.info("getBusinessManagerUser() BusinessManagerController End | user: {}", user);
         return ResponseEntity.ok(user);
+    }
+
+    @GetMapping("/dashboard")
+    @PreAuthorize("hasRole('BUSINESS_MANAGER') or hasRole('ADMIN')")
+    public ResponseEntity<DashBoardResponse> getDashboard(@RequestParam(name = "startDate") Long startDate,
+                                                          @RequestParam(name = "endDate") Long endDate) {
+        log.info("getPrDashboard() BusinessManagerController Start | startDate: {}, endDate: {}", startDate, endDate);
+        DashBoardResponse prDashBoard = businessManagerService.getDashboard(startDate, endDate);
+        log.info("getPrDashboard() BusinessManagerController End | prDashBoard: {}", prDashBoard);
+        return ResponseEntity.ok(prDashBoard);
     }
 
 }

@@ -5,6 +5,7 @@ import com.sep490.gshop.entity.Configuration;
 import com.sep490.gshop.payload.dto.ConfigurationDTO;
 import com.sep490.gshop.payload.dto.CustomerDTO;
 import com.sep490.gshop.payload.request.bm.ServiceFeeConfigModel;
+import com.sep490.gshop.payload.response.dashboard.DashBoardResponse;
 import com.sep490.gshop.service.BusinessManagerService;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
@@ -64,6 +65,19 @@ public class BusinessManagerServiceImpl implements BusinessManagerService {
             return user;
         } catch (Exception e) {
             log.error("Error getting customer: {}", e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
+    public DashBoardResponse getDashboard(Long startDate, Long endDate) {
+        try {
+            log.info("getPrDashboard() BusinessManagerController Start | startDate: {}, endDate: {}", startDate, endDate);
+            DashBoardResponse prDashBoard = businessManagerBusiness.getDashboard(startDate, endDate);
+            log.info("getPrDashboard() BusinessManagerController End | prDashBoard: {}", prDashBoard);
+            return prDashBoard;
+        } catch (Exception e) {
+            log.error("Error getting PR dashboard: {}", e.getMessage());
             throw e;
         }
     }
