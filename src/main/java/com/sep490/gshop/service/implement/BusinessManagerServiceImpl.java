@@ -3,11 +3,14 @@ package com.sep490.gshop.service.implement;
 import com.sep490.gshop.business.BusinessManagerBusiness;
 import com.sep490.gshop.entity.Configuration;
 import com.sep490.gshop.payload.dto.ConfigurationDTO;
+import com.sep490.gshop.payload.dto.CustomerDTO;
 import com.sep490.gshop.payload.request.bm.ServiceFeeConfigModel;
 import com.sep490.gshop.service.BusinessManagerService;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -48,6 +51,19 @@ public class BusinessManagerServiceImpl implements BusinessManagerService {
             return updatedBusinessManager;
         } catch (Exception e) {
             log.error("getBusinessManagerConfig() BusinessManagerController error: {}", e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
+    public Page<CustomerDTO> getCustomer(Pageable pageable, String search, Boolean status, Long startDate, Long endDate) {
+        try {
+            log.info("getBusinessManagerUser() BusinessManagerController Start");
+            Page<CustomerDTO> user = businessManagerBusiness.getCustomer(pageable, search, status, startDate, endDate);
+            log.info("getBusinessManagerUser() BusinessManagerController End | user: {}", user);
+            return user;
+        } catch (Exception e) {
+            log.error("Error getting customer: {}", e.getMessage());
             throw e;
         }
     }

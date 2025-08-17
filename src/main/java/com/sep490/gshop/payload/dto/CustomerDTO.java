@@ -1,12 +1,9 @@
 package com.sep490.gshop.payload.dto;
 
 import com.sep490.gshop.common.enums.GenderEnum;
-import com.sep490.gshop.entity.ShippingAddress;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -20,4 +17,7 @@ public class CustomerDTO {
     private long dateOfBirth;
     private String avatar;
     private WalletDTO wallet;
+    private boolean isActive;
+    private long createdAt;
+    private long updatedAt;
 }
