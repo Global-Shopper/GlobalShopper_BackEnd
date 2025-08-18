@@ -165,11 +165,11 @@ public class QuotationServiceImpl implements QuotationService {
             detailDTO.setBasePrice(detailReq.getBasePrice());
             detailDTO.setServiceFee(serviceFee);
             detailDTO.setServiceRate(serviceRate);
-            detailDTO.setExchangeRate(exchangeRate);
+            detailDTO.setExchangeRate(CalculationUtil.roundToNearestThousand(exchangeRate));
             detailDTO.setTaxAmounts(taxResult.getTaxAmounts());
             detailDTO.setTotalTaxAmount(taxResult.getTotalTax());
             detailDTO.setTotalPriceBeforeExchange(totalDetail);
-            detailDTO.setTotalVNDPrice(totalVNPrice);
+            detailDTO.setTotalVNDPrice(CalculationUtil.roundToNearestThousand(totalVNPrice));
             detailDTO.setNote(detailReq.getNote());
             detailDTO.setHsCode(detailReq.getHsCodeId());
             detailDTO.setTaxRates(taxRatesDTO);
@@ -186,7 +186,7 @@ public class QuotationServiceImpl implements QuotationService {
         QuotationCalculatedDTO dto = new QuotationCalculatedDTO();
         dto.setDetails(detailDTOs);
         dto.setSubRequestId(input.getSubRequestId());
-        dto.setTotalPriceEstimate(total);
+        dto.setTotalPriceEstimate(CalculationUtil.roundToNearestThousand(total));
         dto.setShippingEstimate(input.getShippingEstimate());
         dto.setTotalWeightEstimate(input.getTotalWeightEstimate()); //
         dto.setPackageType(input.getPackageType()); //
@@ -341,8 +341,8 @@ public class QuotationServiceImpl implements QuotationService {
             detail.setRequestItem(item);
             detail.setBasePrice(d.getBasePrice());
             detail.setServiceFee(serviceFee);
-            detail.setExchangeRate(exchangeRate);
-            detail.setTotalVNDPrice(itemTotalVND);
+            detail.setExchangeRate(CalculationUtil.roundToNearestThousand(exchangeRate));
+            detail.setTotalVNDPrice(CalculationUtil.roundToNearestThousand(itemTotalVND));
             detail.setServiceRate(serviceRate);
             detailEntities.add(detail);
             totalItemsVNDPrice += itemTotalVND;
@@ -360,14 +360,19 @@ public class QuotationServiceImpl implements QuotationService {
 
         // = Tổng VNĐ cuối cùng =
         double otherFeesVND = 0.0;
+        List<Fee> feeEntities =new ArrayList<>();
         if (request.getFees() != null) {
             for (FeeRequest fee : request.getFees()) {
                 double value = fee.getAmount() != null ? fee.getAmount() : 0.0;
                 String feeCurrency = request.getCurrency();
-
+                var feeToVND = new Fee();
                 if (feeCurrency != null && !"VND".equalsIgnoreCase(feeCurrency)) {
                     BigDecimal converted = calculationUtil.convertToVND(BigDecimal.valueOf(value), feeCurrency);
                     otherFeesVND += converted.doubleValue();
+                    feeToVND.setAmount(CalculationUtil.roundToNearestThousand(converted.doubleValue()));
+                    feeToVND.setCurrency("VNĐ");
+                    feeToVND.setFeeName(fee.getFeeName());
+                    feeEntities.add(feeToVND);
                 } else {
                     otherFeesVND += value;
                 }
@@ -377,14 +382,10 @@ public class QuotationServiceImpl implements QuotationService {
         totalPriceEstimate = totalItemsVNDPrice + otherFeesVND;
 
         quotation.setShippingEstimate(shippingEstimate);
-        quotation.setTotalPriceEstimate(totalPriceEstimate);
+        quotation.setTotalPriceEstimate(CalculationUtil.roundToNearestThousand(totalPriceEstimate));
         quotation.setCurrency(request.getCurrency());
 
 // lưu luôn danh sách object fees xuống DB
-        List<Fee> feeEntities = request.getFees().stream().map(a -> modelMapper.map(a, Fee.class)).toList();
-        for(Fee fee : feeEntities){
-            fee.setCurrency(request.getCurrency());
-        }
         quotation.setFees(feeEntities);
 
         // 7. Lưu quotation
@@ -405,9 +406,9 @@ public class QuotationServiceImpl implements QuotationService {
                     dDto.setRequestItemId(detail.getRequestItem() != null ? detail.getRequestItem().getId().toString() : null);
                     dDto.setBasePrice(detail.getBasePrice());
                     dDto.setServiceFee(detail.getServiceFee());
-                    dDto.setTotalVNPrice(detail.getTotalVNDPrice());
+                    dDto.setTotalVNPrice(CalculationUtil.roundToNearestThousand(detail.getTotalVNDPrice()));
                     dDto.setServiceRate(detail.getServiceRate());
-                    dDto.setExchangeRate(detail.getExchangeRate());
+                    dDto.setExchangeRate(CalculationUtil.roundToNearestThousand(detail.getExchangeRate()));
                     for (OnlineQuotationDetailRequest d : request.getDetails()) {
                         RequestItem item = requestItemBusiness.getById(UUID.fromString(d.getRequestItemId()))
                                 .orElseThrow(() -> AppException.builder()
@@ -416,12 +417,6 @@ public class QuotationServiceImpl implements QuotationService {
                                         .build());
                         dDto.setQuantity(item.getQuantity());
                     }
-
-                    // Nếu DTO của bạn có field totalVNPrice thì set:
-                    try {
-                        dDto.getClass().getMethod("setTotalVNPrice", Double.class)
-                                .invoke(dDto, detail.getTotalVNDPrice());
-                    } catch (Exception ignored) {}
                     return dDto;
                 })
                 .toList();
@@ -562,8 +557,8 @@ public class QuotationServiceImpl implements QuotationService {
                 }
 
                 // Set vào detail
-                detail.setExchangeRate(exchangeRate);
-                detail.setTotalVNDPrice(totalVNPrice);
+                detail.setExchangeRate(CalculationUtil.roundToNearestThousand(exchangeRate));
+                detail.setTotalVNDPrice(CalculationUtil.roundToNearestThousand(totalVNPrice));
                 detail.setHsCode(hsCode.getHsCode());
                 detail.setBasePrice(detailReq.getBasePrice());
                 detail.setServiceRate(serviceRate);
@@ -574,20 +569,21 @@ public class QuotationServiceImpl implements QuotationService {
                 OfflineQuotationDetailDTO detailDTO = modelMapper.map(detail, OfflineQuotationDetailDTO.class);
                 detailDTO.setTaxAmounts(taxResult.getTaxAmounts());
                 detailDTO.setRequestItemId(detailReq.getRequestItemId());
-                detailDTO.setTotalVNDPrice(totalVNPrice);
+                detailDTO.setTotalVNDPrice(CalculationUtil.roundToNearestThousand(totalVNPrice));
                 detailDTO.setTotalTaxAmount(taxResult.getTotalTax());
                 detailDTO.setTotalPriceBeforeExchange(totalDetail);
+                detailDTO.setExchangeRate(CalculationUtil.roundToNearestThousand(exchangeRate));
                 detailDTOs.add(detailDTO);
             }
 
             quotation.setDetails(detailEntities);
 
             // Tổng giá trị báo giá
-            double total = detailDTOs.stream()
-                    .mapToDouble(OfflineQuotationDetailDTO::getTotalVNDPrice)
+            double total = quotation.getDetails().stream()
+                    .mapToDouble(QuotationDetail::getTotalVNDPrice)
                     .sum();
             double totalBeforeExchange = detailDTOs.stream().mapToDouble(OfflineQuotationDetailDTO::getTotalPriceBeforeExchange).sum();
-            quotation.setTotalPriceEstimate(total);
+            quotation.setTotalPriceEstimate(CalculationUtil.roundToNearestThousand(total));
             quotation.setTotalPriceBeforeExchange(totalBeforeExchange);
             quotation.setCurrency(input.getCurrency());
             quotation.setRegion(region.toString());
@@ -609,7 +605,7 @@ public class QuotationServiceImpl implements QuotationService {
             OfflineQuotationDTO dto = modelMapper.map(quotation, OfflineQuotationDTO.class);
             dto.setDetails(detailDTOs);
             dto.setSubRequestId(input.getSubRequestId());
-            dto.setTotalPriceEstimate(total);
+            dto.setTotalPriceEstimate(CalculationUtil.roundToNearestThousand(total));
             dto.setShippingEstimate(input.getShippingEstimate());
             dto.setTotalWeightEstimate(input.getTotalWeightEstimate());
             dto.setPackageType(input.getPackageType());
