@@ -24,7 +24,7 @@ public class RefundTicket extends BaseEntity {
     private List<String> evidence;
     private String reason;
     private double amount;
-    @DecimalMin(value = "0.0", inclusive = true)
+    @DecimalMin(value = "0.0", inclusive = false)
     @DecimalMax(value = "1.0", inclusive = true)
     private Double refundRate;
     private String rejectionReason;
