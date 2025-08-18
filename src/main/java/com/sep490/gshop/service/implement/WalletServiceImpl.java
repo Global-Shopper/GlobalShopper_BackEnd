@@ -24,6 +24,7 @@ import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -532,6 +533,32 @@ public class WalletServiceImpl implements WalletService {
             throw e;
         }
     }
+
+    @Override
+    public Page<WithdrawTicketDTO> getAllWithdrawTicketsForAdmin(int page, int size, WithdrawStatus status) {
+        log.debug("getAllWithdrawTicketsForAdmin() WalletServiceImpl Start | status: {}", status);
+        try {
+            Page<WithdrawTicket> tickets;
+            Pageable pageable = PageRequest.of(page, size);
+            if (status == null) {
+
+                tickets = withdrawTicketBusiness.findAll(pageable);
+            } else {
+                tickets = withdrawTicketBusiness.findByStatus(status, pageable);
+            }
+
+            Page<WithdrawTicketDTO> ticketsDTO = tickets.map(ticket ->
+                    modelMapper.map(ticket, WithdrawTicketDTO.class)
+            );
+            log.debug("getAllWithdrawTicketsForAdmin() WalletServiceImpl End | found {} tickets", ticketsDTO.getSize());
+            return ticketsDTO;
+        } catch (Exception e) {
+            log.error("getAllWithdrawTicketsForAdmin() WalletServiceImpl Exception | message: {}", e.getMessage());
+            throw e;
+        }
+    }
+
+
 
 
 }
