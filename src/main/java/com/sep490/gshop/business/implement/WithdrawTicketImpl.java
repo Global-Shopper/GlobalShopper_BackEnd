@@ -30,4 +30,14 @@ public class WithdrawTicketImpl extends BaseBusinessImpl<WithdrawTicket, Withdra
     public Page<WithdrawTicket> getAllByWalletId(UUID walletId, Pageable pageable) {
         return repository.findByWallet_Id(walletId, pageable);
     }
+
+    @Override
+    public Page<WithdrawTicket> findByStatus(WithdrawStatus status, Pageable pageable) {
+        return repository.findByStatus(status, pageable);
+    }
+
+    @Override
+    public Page<WithdrawTicket> findAll(Pageable pageable) {
+        return repository.findAll(pageable);
+    }
 }

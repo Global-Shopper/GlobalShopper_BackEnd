@@ -1,5 +1,6 @@
 package com.sep490.gshop.service;
 
+import com.sep490.gshop.common.enums.WithdrawStatus;
 import com.sep490.gshop.payload.dto.WalletDTO;
 import com.sep490.gshop.payload.dto.WithdrawTicketDTO;
 import com.sep490.gshop.payload.request.WalletRequest;
@@ -28,4 +29,6 @@ public interface WalletService {
     IPNResponse ipnCallback(HttpServletRequest request);
 
     Page<WithdrawTicketDTO> getWithdrawTicketsByCurrentUser(Pageable pageable);
+
+    Page<WithdrawTicketDTO> getAllWithdrawTicketsForAdmin(int page, int size, WithdrawStatus status);
 }

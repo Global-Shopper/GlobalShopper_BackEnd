@@ -24,4 +24,9 @@ public interface WithdrawTicketRepository extends JpaRepository<WithdrawTicket, 
             "WHERE wt.createdAt BETWEEN :startDate AND :endDate " +
             "GROUP BY wt.status")
     List<PRStatus> countByStatus(Long startDate, Long endDate);
+
+    Page<WithdrawTicket> findByStatus(WithdrawStatus status, Pageable pageable);
+
+    Page<WithdrawTicket> findAll(Pageable pageable);
+
 }
