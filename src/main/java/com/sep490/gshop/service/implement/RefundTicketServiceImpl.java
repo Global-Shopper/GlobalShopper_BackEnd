@@ -1,10 +1,7 @@
 package com.sep490.gshop.service.implement;
 
 import com.sep490.gshop.business.*;
-import com.sep490.gshop.common.enums.RefundStatus;
-import com.sep490.gshop.common.enums.TransactionStatus;
-import com.sep490.gshop.common.enums.TransactionType;
-import com.sep490.gshop.common.enums.UserRole;
+import com.sep490.gshop.common.enums.*;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.config.security.services.UserDetailsImpl;
 import com.sep490.gshop.entity.*;
@@ -141,7 +138,7 @@ public class RefundTicketServiceImpl implements RefundTicketService {
 
     @Override
     @Transactional
-    public RefundTicketDTO processRefundTicket(ProcessRefundModel processRefundModel, String ticketId) {
+    public RefundTicketDTO  processRefundTicket(ProcessRefundModel processRefundModel, String ticketId) {
         try {
             log.debug("processRefundTicket() RefundTicketServiceImpl Start | ticketId: {}, processRefundModel: {}", ticketId, processRefundModel);
             RefundTicket refundTicket = refundTicketBusiness.getById(UUID.fromString(ticketId))
@@ -149,8 +146,7 @@ public class RefundTicketServiceImpl implements RefundTicketService {
             Order order = refundTicket.getOrder();
             Customer customer = order.getCustomer();
             Wallet wallet = customer.getWallet();
-
-            double amount = CalculationUtil.roundToNearestThousand(order.getTotalPrice()*processRefundModel.getRefundRate());
+            double amount = Math.round((order.getTotalPrice()+ order.getShippingFee())*processRefundModel.getRefundRate());
             refundTicket.setAmount(amount);
             refundTicket.setStatus(RefundStatus.COMPLETED);
             refundTicket.setRefundRate(processRefundModel.getRefundRate());
@@ -167,6 +163,10 @@ public class RefundTicketServiceImpl implements RefundTicketService {
             wallet.setBalance(wallet.getBalance() + amount);
             walletBusiness.update(wallet);
             RefundTicketDTO dto = modelMapper.map(refundTicketBusiness.update(refundTicket), RefundTicketDTO.class);
+            order.setStatus(OrderStatus.CANCELLED);
+            OrderHistory orderHistory = new OrderHistory(order,"Đã xác nhận hoàn tiền");
+            order.getHistory().add(orderHistory);
+            orderBusiness.update(order);
             dto.setOrderId(order.getId().toString());
             log.debug("processRefundTicket() RefundTicketServiceImpl End | Updated RefundTicketDTO: {}", dto);
             return dto;

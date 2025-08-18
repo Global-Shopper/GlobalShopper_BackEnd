@@ -8,6 +8,7 @@ import com.sep490.gshop.payload.request.refund.RefundTicketRequest;
 import com.sep490.gshop.payload.request.refund.RejectRefundModel;
 import com.sep490.gshop.service.RefundTicketService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springdoc.core.converters.models.PageableAsQueryParam;
@@ -83,7 +84,7 @@ public class RefundTicketController {
     @PostMapping("/process/{ticketId}")
     @Operation(summary = "Process refund ticket")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<RefundTicketDTO> processRefundTicket(@RequestBody ProcessRefundModel payload, @PathVariable String ticketId) {
+    public ResponseEntity<RefundTicketDTO> processRefundTicket(@Valid @RequestBody ProcessRefundModel payload, @PathVariable String ticketId) {
         log.info("processRefundTicket() RefundTicketController Start | request: {}", payload);
         RefundTicketDTO dto = refundTicketService.processRefundTicket(payload, ticketId);
         log.info("processRefundTicket() RefundTicketController End | dto: {}", dto);
