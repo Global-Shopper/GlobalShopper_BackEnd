@@ -1,7 +1,5 @@
 package com.sep490.gshop.entity;
 
-import com.sep490.gshop.common.enums.QuotationType;
-import com.sep490.gshop.entity.converter.StringListConverter;
 import com.sep490.gshop.entity.subclass.TaxRateSnapshot;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -18,7 +16,7 @@ import java.util.List;
 public class QuotationDetail extends BaseEntity {
     private double basePrice;
     private double serviceFee;
-    private double ExchangeRate;
+    private double exchangeRate;
     private double totalVNDPrice;
     private String hsCode;
     private Double ServiceRate;
