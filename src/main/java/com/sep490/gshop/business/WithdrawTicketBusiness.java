@@ -12,4 +12,8 @@ public interface WithdrawTicketBusiness extends BaseBusiness<WithdrawTicket>{
     List<WithdrawTicket> findByStatus(WithdrawStatus status);
     List<WithdrawTicket> findByWallet(UUID walletId);
     Page<WithdrawTicket> getAllByWalletId(UUID walletId, Pageable pageable);
+    Page<WithdrawTicket> findByStatus(WithdrawStatus status, Pageable pageable);
+    Page<WithdrawTicket> findAll(Pageable pageable);
+
+
 }

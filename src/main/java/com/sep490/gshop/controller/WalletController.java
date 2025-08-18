@@ -1,6 +1,7 @@
 package com.sep490.gshop.controller;
 
 import com.sep490.gshop.common.constants.URLConstant;
+import com.sep490.gshop.common.enums.WithdrawStatus;
 import com.sep490.gshop.payload.dto.WithdrawTicketDTO;
 import com.sep490.gshop.payload.dto.WalletDTO;
 import com.sep490.gshop.payload.request.WalletRequest;
@@ -175,4 +176,17 @@ public class WalletController {
                             .build());
         }
     }
+
+    @GetMapping("/admin/withdraw-tickets")
+    public Page<WithdrawTicketDTO> getAllWithdrawTicketsForAdmin(
+            @RequestParam(required = false) WithdrawStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        log.info("getAllWithdrawTicketsForAdmin() - START | page: {}, size: {}, status: {}", page, size, status);
+        Page<WithdrawTicketDTO> result = walletService.getAllWithdrawTicketsForAdmin(page, size, status);
+        log.info("getAllWithdrawTicketsForAdmin() - END | returned {} records", result.getNumberOfElements());
+        return result;
+    }
+
 }
