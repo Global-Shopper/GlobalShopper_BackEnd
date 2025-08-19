@@ -165,7 +165,7 @@ public class QuotationServiceImpl implements QuotationService {
             detailDTO.setBasePrice(detailReq.getBasePrice());
             detailDTO.setServiceFee(serviceFee);
             detailDTO.setServiceRate(serviceRate);
-            detailDTO.setExchangeRate(CalculationUtil.roundToNearestThousand(exchangeRate));
+            detailDTO.setExchangeRate(exchangeRate);
             detailDTO.setTaxAmounts(taxResult.getTaxAmounts());
             detailDTO.setTotalTaxAmount(taxResult.getTotalTax());
             detailDTO.setTotalPriceBeforeExchange(totalDetail);
@@ -341,7 +341,7 @@ public class QuotationServiceImpl implements QuotationService {
             detail.setRequestItem(item);
             detail.setBasePrice(d.getBasePrice());
             detail.setServiceFee(serviceFee);
-            detail.setExchangeRate(CalculationUtil.roundToNearestThousand(exchangeRate));
+            detail.setExchangeRate(exchangeRate);
             detail.setTotalVNDPrice(CalculationUtil.roundToNearestThousand(itemTotalVND));
             detail.setServiceRate(serviceRate);
             detailEntities.add(detail);
@@ -408,7 +408,7 @@ public class QuotationServiceImpl implements QuotationService {
                     dDto.setServiceFee(detail.getServiceFee());
                     dDto.setTotalVNPrice(CalculationUtil.roundToNearestThousand(detail.getTotalVNDPrice()));
                     dDto.setServiceRate(detail.getServiceRate());
-                    dDto.setExchangeRate(CalculationUtil.roundToNearestThousand(detail.getExchangeRate()));
+                    dDto.setExchangeRate(detail.getExchangeRate());
                     for (OnlineQuotationDetailRequest d : request.getDetails()) {
                         RequestItem item = requestItemBusiness.getById(UUID.fromString(d.getRequestItemId()))
                                 .orElseThrow(() -> AppException.builder()
@@ -557,7 +557,7 @@ public class QuotationServiceImpl implements QuotationService {
                 }
 
                 // Set vào detail
-                detail.setExchangeRate(CalculationUtil.roundToNearestThousand(exchangeRate));
+                detail.setExchangeRate(exchangeRate);
                 detail.setTotalVNDPrice(CalculationUtil.roundToNearestThousand(totalVNPrice));
                 detail.setHsCode(hsCode.getHsCode());
                 detail.setBasePrice(detailReq.getBasePrice());
@@ -572,7 +572,7 @@ public class QuotationServiceImpl implements QuotationService {
                 detailDTO.setTotalVNDPrice(CalculationUtil.roundToNearestThousand(totalVNPrice));
                 detailDTO.setTotalTaxAmount(taxResult.getTotalTax());
                 detailDTO.setTotalPriceBeforeExchange(totalDetail);
-                detailDTO.setExchangeRate(CalculationUtil.roundToNearestThousand(exchangeRate));
+                detailDTO.setExchangeRate(exchangeRate);
                 detailDTOs.add(detailDTO);
             }
 
