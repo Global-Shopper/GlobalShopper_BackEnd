@@ -370,7 +370,7 @@ public class QuotationServiceImpl implements QuotationService {
                     BigDecimal converted = calculationUtil.convertToVND(BigDecimal.valueOf(value), feeCurrency);
                     otherFeesVND += converted.doubleValue();
                     feeToVND.setAmount(CalculationUtil.roundToNearestThousand(converted.doubleValue()));
-                    feeToVND.setCurrency("VNĐ");
+                    feeToVND.setCurrency("VND");
                     feeToVND.setFeeName(fee.getFeeName());
                     feeEntities.add(feeToVND);
                 } else {
