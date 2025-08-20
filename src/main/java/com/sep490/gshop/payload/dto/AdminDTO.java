@@ -15,4 +15,5 @@ public class AdminDTO {
     private String phone;
     private String address;
     private String avatar;
+    private boolean isActive;
 }

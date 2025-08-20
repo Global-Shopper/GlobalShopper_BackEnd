@@ -6,6 +6,8 @@ import com.sep490.gshop.payload.response.CurrencyConvertResponse;
 import com.sep490.gshop.payload.response.TaxCalculationResult;
 import com.sep490.gshop.service.ExchangeRateService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -13,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
-
+@Service
 public class CalculationUtil {
 
     private final ExchangeRateService exchangeRateService;

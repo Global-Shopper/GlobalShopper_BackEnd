@@ -2,11 +2,14 @@ package com.sep490.gshop.business.implement;
 
 import com.sep490.gshop.business.BusinessManagerBusiness;
 import com.sep490.gshop.business.WithdrawTicketBusiness;
+import com.sep490.gshop.common.enums.OrderStatus;
 import com.sep490.gshop.entity.Configuration;
 import com.sep490.gshop.entity.Customer;
+import com.sep490.gshop.entity.Order;
 import com.sep490.gshop.payload.dto.CustomerDTO;
 import com.sep490.gshop.payload.response.dashboard.DashBoardDetail;
 import com.sep490.gshop.payload.response.dashboard.DashBoardResponse;
+import com.sep490.gshop.payload.response.dashboard.RevenueResponse;
 import com.sep490.gshop.payload.response.subclass.PRStatus;
 import com.sep490.gshop.repository.*;
 import com.sep490.gshop.repository.specification.CustomSpecification;
@@ -28,15 +31,17 @@ public class BusinessManagerBusinessImpl implements BusinessManagerBusiness {
     private final PurchaseRequestRepository purchaseRequestRepository;
     private final RefundTicketRepository refundTicketRepository;
     private final WithdrawTicketRepository withdrawTicketRepository;
+    private final OrderRepository orderRepository;
 
     @Autowired
-    public BusinessManagerBusinessImpl(ConfigurationRepository configurationRepository, CustomerRepository customerRepository, ModelMapper modelMapper, PurchaseRequestRepository purchaseRequestRepository, RefundTicketRepository refundTicketRepository, WithdrawTicketBusiness withdrawTicketBusiness, WithdrawTicketRepository withdrawTicketRepository) {
+    public BusinessManagerBusinessImpl(ConfigurationRepository configurationRepository, CustomerRepository customerRepository, ModelMapper modelMapper, PurchaseRequestRepository purchaseRequestRepository, RefundTicketRepository refundTicketRepository, WithdrawTicketBusiness withdrawTicketBusiness, WithdrawTicketRepository withdrawTicketRepository, OrderRepository orderRepository) {
         this.configurationRepository = configurationRepository;
         this.customerRepository = customerRepository;
         this.modelMapper = modelMapper;
         this.purchaseRequestRepository = purchaseRequestRepository;
         this.refundTicketRepository = refundTicketRepository;
         this.withdrawTicketRepository = withdrawTicketRepository;
+        this.orderRepository = orderRepository;
     }
 
     @Override
@@ -92,5 +97,12 @@ public class BusinessManagerBusinessImpl implements BusinessManagerBusiness {
         prDashBoard.addDashBoardDetail(withdrawTicketDetail);
 
         return prDashBoard;
+    }
+
+    @Override
+    public List<Order> getRevenue(Long startDate, Long endDate) {
+        return orderRepository.findByUpdatedAtBetweenAndStatus(
+                startDate, endDate, OrderStatus.DELIVERED
+        );
     }
 }
