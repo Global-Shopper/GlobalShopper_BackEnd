@@ -5,6 +5,7 @@ import com.sep490.gshop.payload.dto.ConfigurationDTO;
 import com.sep490.gshop.payload.dto.CustomerDTO;
 import com.sep490.gshop.payload.request.bm.ServiceFeeConfigModel;
 import com.sep490.gshop.payload.response.dashboard.DashBoardResponse;
+import com.sep490.gshop.payload.response.dashboard.RevenueResponse;
 import com.sep490.gshop.service.BusinessManagerService;
 import lombok.extern.log4j.Log4j2;
 import org.springdoc.core.annotations.ParameterObject;
@@ -69,6 +70,16 @@ public class BusinessManagerController {
         DashBoardResponse prDashBoard = businessManagerService.getDashboard(startDate, endDate);
         log.info("getPrDashboard() BusinessManagerController End | prDashBoard: {}", prDashBoard);
         return ResponseEntity.ok(prDashBoard);
+    }
+
+    @GetMapping("/revenue")
+    @PreAuthorize("hasRole('BUSINESS_MANAGER') or hasRole('ADMIN')")
+    public ResponseEntity<RevenueResponse> getRevenue(@RequestParam(name = "startDate") Long startDate,
+                                                      @RequestParam(name = "endDate") Long endDate) {
+        log.info("getRevenue() BusinessManagerController Start | startDate: {}, endDate: {}", startDate, endDate);
+        RevenueResponse revenue = businessManagerService.getRevenue(startDate, endDate);
+        log.info("getRevenue() BusinessManagerController End | revenue: {}", revenue);
+        return ResponseEntity.ok(revenue);
     }
 
 }
