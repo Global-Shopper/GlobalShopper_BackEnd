@@ -13,4 +13,5 @@ import java.util.UUID;
 public class VariantDTO {
     UUID id;
     String name;
+    Boolean isActive;
 }
