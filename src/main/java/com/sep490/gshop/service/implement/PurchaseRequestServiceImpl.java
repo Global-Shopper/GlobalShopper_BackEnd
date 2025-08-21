@@ -15,6 +15,7 @@ import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.PurchaseRequestModel;
 import com.sep490.gshop.payload.response.PurchaseRequestResponse;
 import com.sep490.gshop.payload.response.TaxCalculationResult;
+import com.sep490.gshop.repository.specification.CustomSpecification;
 import com.sep490.gshop.service.EmailService;
 import com.sep490.gshop.service.PurchaseRequestService;
 import com.sep490.gshop.service.TaxRateService;
@@ -25,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -245,22 +247,23 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
 
 
     @Override
-    public Page<PurchaseRequestModel> getPurchaseRequests(PurchaseRequestStatus status, String type, Pageable pageable) {
+    public Page<PurchaseRequestModel> getPurchaseRequests(PurchaseRequestStatus status, String type, RequestType requestType, Pageable pageable) {
         try {
             log.debug("getPurchaseRequests() start | status: {}, type: {}", status, type);
             UserRole role = AuthUtils.getCurrentUser().getRole();
             UUID userId = AuthUtils.getCurrentUserId();
-            Page<PurchaseRequest> purchaseRequests = null;
+            Specification<PurchaseRequest> spec = null;
             if (UserRole.CUSTOMER.equals(role)) {
-                purchaseRequests = purchaseRequestBusiness.findByCustomerId(userId, status, pageable);
+                spec = CustomSpecification.filterPurchaseRequest(status,requestType, userId, null);
             } else if (UserRole.ADMIN.equals(role)) {
-                purchaseRequests = switch (type != null ? type.toLowerCase() : "") {
-                    case "unassigned" -> purchaseRequestBusiness.findUnassignedRequests(pageable, status);
-                    case "assigned" -> purchaseRequestBusiness.findAssignedRequestsByAdminId(userId, status, pageable);
+                spec = switch (type != null ? type.toLowerCase() : "") {
+                    case "unassigned" -> CustomSpecification.filterPurchaseRequest(status,requestType, null, null);
+                    case "assigned" -> CustomSpecification.filterPurchaseRequest(status,requestType, null, userId);
                     default ->
                             throw new AppException(HttpStatus.BAD_REQUEST.value(), "Sai loại Yêu cầu. Sử dụng 'Chưa được nhận' or 'Đã được nhận'.");
                 };
             }
+            Page<PurchaseRequest> purchaseRequests = purchaseRequestBusiness.getAll(spec, pageable);
             if (purchaseRequests == null || purchaseRequests.isEmpty()) {
                 log.debug("getPurchaseRequests() end | response: empty");
                 return Page.empty();
