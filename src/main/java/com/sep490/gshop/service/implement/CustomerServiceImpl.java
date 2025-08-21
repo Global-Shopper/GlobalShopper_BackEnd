@@ -35,20 +35,20 @@ public class CustomerServiceImpl implements CustomerService {
         this.cloudinaryService = cloudinaryService;
     }
 
-    @Override
-    public List<CustomerDTO> getAllCustomers() {
-        try {
-            log.debug("getAllCustomers() CustomerServiceImpl Start");
-            List<CustomerDTO> customers = customerBusiness.getAll().stream()
-                    .map(customer -> modelMapper.map(customer, CustomerDTO.class))
-                    .toList();
-            log.debug("getAllCustomers() CustomerServiceImpl End | Customers size: {}", customers.size());
-            return customers;
-        } catch (Exception e) {
-            log.error("getAllCustomers() CustomerServiceImpl Error | message: {}", e.getMessage());
-            throw e;
+        @Override
+        public List<CustomerDTO> getAllCustomers() {
+            try {
+                log.debug("getAllCustomers() CustomerServiceImpl Start");
+                List<CustomerDTO> customers = customerBusiness.getAll().stream()
+                        .map(customer -> modelMapper.map(customer, CustomerDTO.class))
+                        .toList();
+                log.debug("getAllCustomers() CustomerServiceImpl End | Customers size: {}", customers.size());
+                return customers;
+            } catch (Exception e) {
+                log.error("getAllCustomers() CustomerServiceImpl Error | message: {}", e.getMessage());
+                throw e;
+            }
         }
-    }
 
     @Override
     public CustomerDTO createCustomer(CustomerRequest customerRequest) {

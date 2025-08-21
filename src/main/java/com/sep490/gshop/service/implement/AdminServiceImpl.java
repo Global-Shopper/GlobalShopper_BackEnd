@@ -71,7 +71,7 @@ public class AdminServiceImpl implements AdminService {
             return dto;
         } catch (Exception e) {
             log.error("createAdmin() Exception | message: {}", e.getMessage());
-            throw new AppException(500, "Failed to create admin: " + e.getMessage());
+            throw e;
         }
     }
 
