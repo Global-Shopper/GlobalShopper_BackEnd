@@ -2,15 +2,20 @@ package com.sep490.gshop.controller;
 
 import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.common.enums.DeliveryCode;
+import com.sep490.gshop.external.shipping.fedex.data.FedexWebhookEvent;
 import com.sep490.gshop.payload.request.JSONStringInput;
 import com.sep490.gshop.payload.request.shipment.ShipmentStatusRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.service.ShippingService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.BufferedReader;
+import java.io.IOException;
 
 @RestController
 @Log4j2
@@ -49,6 +54,14 @@ public class ShippingController {
         MessageResponse response = shippingService.handleWebhook(payload);
         log.info("webhook() End | response: {}", response);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/fedex-webhook/{trackingNumber}")
+    public String webhookFedex(@RequestBody FedexWebhookEvent request, @PathVariable String trackingNumber ) {
+        log.info("webhookFedex() ShippingController Start | payload: {}", request);
+        MessageResponse response = shippingService.handleFedexWebhook(trackingNumber, request);
+        log.info("webhookFedex() End | body: {}", request);
+        return "OK";
     }
 
     @PostMapping("/rate")

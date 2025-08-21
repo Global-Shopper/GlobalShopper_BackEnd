@@ -4,8 +4,10 @@ import com.sep490.gshop.business.OrderBusiness;
 import com.sep490.gshop.common.enums.DeliveryCode;
 import com.sep490.gshop.entity.Order;
 import com.sep490.gshop.entity.OrderHistory;
+import com.sep490.gshop.entity.ShipmentTrackingEvent;
 import com.sep490.gshop.external.shipping.ShippingTPS;
 import com.sep490.gshop.external.shipping.ShippingTPSFactory;
+import com.sep490.gshop.external.shipping.fedex.data.FedexWebhookEvent;
 import com.sep490.gshop.payload.request.JSONStringInput;
 import com.sep490.gshop.payload.request.shipment.ShipmentStatusRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
@@ -80,6 +82,31 @@ public class ShippingServiceImpl implements ShippingService {
             return trackingInfo;
         } catch (Exception e) {
             log.error("tracking() ShippingServiceImpl error: {}", e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
+    public MessageResponse handleFedexWebhook(String trackingNumber, FedexWebhookEvent request) {
+        try {
+            log.debug("handleFedexWebhook() ShippingServiceImpl Start | trackingNumber: {}", trackingNumber);
+            Order order = orderBusiness.findByTrackingNumber(trackingNumber, DeliveryCode.FEDEX.getName().toLowerCase());
+            if (order == null) {
+                log.warn("handleFedexWebhook() ShippingServiceImpl warn | trackingNumber: {}", trackingNumber);
+                return new MessageResponse("Không tìm thấy đơn hàng cho: " + trackingNumber, false);
+            }
+            ShippingTPS shippingTPS = shippingTPSFactory.getService(DeliveryCode.FEDEX);
+            ShipmentTrackingEvent event = shippingTPS.webhookToShipmentTrackingEvent(request, trackingNumber);
+            event.setOrder(order);
+            order.getShipmentTrackingEvents().add(event);
+            orderBusiness.update(order);
+
+
+
+            log.debug("Order status updated successfully for tracking number: {}", trackingNumber);
+            return new MessageResponse("Order status updated successfully for tracking number: " + trackingNumber, true);
+        } catch (Exception e) {
+            log.error("Error handling FedEx webhook for tracking number: {} | Error: {}", trackingNumber, e.getMessage());
             throw e;
         }
     }

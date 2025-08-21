@@ -33,6 +33,7 @@ public class OrderDTO {
     private List<OrderItemDTO> orderItems;
     private AddressSnapshotDTO shippingAddress;
     private List<OrderHistoryDTO> history;
+    private List<ShipmentTrackingEventDto> shipmentTrackingEvents;
     private FeedbackDTO feedback;
 
     private long createdAt;
