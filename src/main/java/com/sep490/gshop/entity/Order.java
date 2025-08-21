@@ -6,6 +6,7 @@ import com.sep490.gshop.entity.subclass.AddressSnapshot;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
@@ -55,6 +56,10 @@ public class Order extends BaseEntity {
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @OrderBy("createdAt DESC")
-    private List<OrderHistory> history;
+    private List<OrderHistory> history = new ArrayList<>();
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OrderBy("eventTime DESC")
+    private List<ShipmentTrackingEvent> shipmentTrackingEvents = new ArrayList<>();
 
 }

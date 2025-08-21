@@ -21,6 +21,6 @@ public class OfflineRequest {
     @Size(min = 1, message = "Thông tin liên hệ của cửa hàng không được để trống")
     private List<String> contactInfo;
     @NotNull(message = "Thông tin sản phẩm không được để trống")
-    @Size(min = 1,message = "Thông tin cửa hàng không được để trống")
+    @Size(min = 1,message = "Thông tin sản phẩm không được để trống")
     private List<ItemRequestModel> requestItems;
 }
