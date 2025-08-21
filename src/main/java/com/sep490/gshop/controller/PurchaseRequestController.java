@@ -2,6 +2,7 @@ package com.sep490.gshop.controller;
 
 import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.common.enums.PurchaseRequestStatus;
+import com.sep490.gshop.common.enums.RequestType;
 import com.sep490.gshop.payload.dto.RequestItemDTO;
 import com.sep490.gshop.payload.dto.SubRequestDTO;
 import com.sep490.gshop.payload.request.purchaserequest.OfflineRequest;
@@ -19,7 +20,6 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springdoc.core.converters.models.PageableAsQueryParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -76,9 +76,11 @@ public class PurchaseRequestController {
     public ResponseEntity<Page<PurchaseRequestModel>> getPurchaseRequests(
             @ParameterObject Pageable pageable,
             @RequestParam(required = false) PurchaseRequestStatus status,
-            @RequestParam(value = "type", defaultValue = "unassigned", required = false) String type) {
+            @RequestParam(value = "type", defaultValue = "unassigned", required = false) String type,
+            @RequestParam(name = "requestType", required = false) RequestType requestType
+    ) {
         log.info("getAllPurchaseRequests() PurchaseRequestController start | status: {}, type: {}", status, type);
-        Page<PurchaseRequestModel> purchaseRequestDTO = purchaseRequestService.getPurchaseRequests(status,type, pageable);
+        Page<PurchaseRequestModel> purchaseRequestDTO = purchaseRequestService.getPurchaseRequests(status,type, requestType, pageable);
         log.info("getAllPurchaseRequests() PurchaseRequestController end | purchaseRequestDTO: {}", purchaseRequestDTO);
         return ResponseEntity.ok(purchaseRequestDTO);
     }
