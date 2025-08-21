@@ -12,4 +12,6 @@ public interface VariantService {
     VariantDTO getVariantById(UUID id);
     VariantDTO updateVariantById(UUID id, String newName);
     MessageResponse deleteVariantById(UUID id);
+
+    MessageResponse toggleVariantActiveStatus(UUID id);
 }

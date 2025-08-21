@@ -11,6 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Variant extends BaseEntity {
     private String name;
-    private Boolean isActive;
+    private Boolean isActive = true;
 
 }

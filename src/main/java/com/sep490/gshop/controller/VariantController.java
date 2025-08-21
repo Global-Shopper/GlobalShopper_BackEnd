@@ -65,4 +65,14 @@ public class VariantController {
         HttpStatus status = response.isSuccess() ? HttpStatus.OK : HttpStatus.BAD_REQUEST;
         return ResponseEntity.status(status).body(response);
     }
+
+    @PatchMapping("/{id}/active")
+    @PreAuthorize("hasRole('BUSINESS_MANAGER')")
+    public ResponseEntity<MessageResponse> toggleVariantActiveStatus(@PathVariable UUID id) {
+        log.info("toggleVariantActiveStatus() - Start | id: {}", id);
+        MessageResponse response = variantService.toggleVariantActiveStatus(id);
+        log.info("toggleVariantActiveStatus() - End | id: {}, success: {}", id, response.isSuccess());
+        HttpStatus status = response.isSuccess() ? HttpStatus.OK : HttpStatus.BAD_REQUEST;
+        return ResponseEntity.status(status).body(response);
+    }
 }
