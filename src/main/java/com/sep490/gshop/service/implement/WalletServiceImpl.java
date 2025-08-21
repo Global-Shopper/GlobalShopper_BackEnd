@@ -245,6 +245,7 @@ public class WalletServiceImpl implements WalletService {
             Transaction transaction = new Transaction();
             transaction.setAmount(request.getAmount());
             transaction.setCustomer(currentUser);
+            transaction.setReferenceCode(withdrawTicket.getId().toString());
             transaction.setType(TransactionType.WITHDRAW);
             transaction.setStatus(TransactionStatus.PENDING);
             transaction.setDescription("Rút tiền về tài khoản");
@@ -357,8 +358,6 @@ public class WalletServiceImpl implements WalletService {
     @Override
     public MessageResponse uploadTransferBill(UUID withdrawTicketId, MultipartFile multipartFile) {
         log.debug("uploadTransferBill() Start | withdrawTicketId: {}, filename: {}", withdrawTicketId, multipartFile.getOriginalFilename());
-
-        Transaction transaction = new Transaction();
         try {
             WithdrawTicket withdrawTicket = withdrawTicketBusiness.getById(withdrawTicketId)
                     .orElseThrow(() -> new AppException(404, "Không tìm thấy yêu cầu rút tiền"));
@@ -399,8 +398,8 @@ public class WalletServiceImpl implements WalletService {
             wallet.setBalance(balanceBefore - withdrawTicket.getAmount());
             walletBusiness.update(wallet);
 
-            var currentTransaction = transactionBusiness.findByCustomerId(customer.getId());
-            if (currentTransaction == null) {
+            var transaction = transactionBusiness.findByCustomerAndReferenceCode(customer.getId(), withdrawTicketId.toString());
+            if (transaction == null) {
                 throw AppException.builder().message("Không tìm thấy transaction request từ customer").code(404).build();
             }
             transaction.setBalanceBefore(balanceBefore);
@@ -419,13 +418,13 @@ public class WalletServiceImpl implements WalletService {
         } catch (Exception e) {
             log.error("uploadTransferBill() Unexpected Exception | message: {}", e.getMessage());
 
-            try {
-                transaction.setStatus(TransactionStatus.FAIL);
-                transaction.setDescription("Lỗi khi upload hóa đơn chuyển khoản: " + e.getMessage());
-                transactionBusiness.create(transaction);
-            } catch (Exception ex) {
-                log.error("Không thể lưu transaction thất bại: {}", ex.getMessage(), ex);
-            }
+//            try {
+//                transaction.setStatus(TransactionStatus.FAIL);
+//                transaction.setDescription("Lỗi khi upload hóa đơn chuyển khoản: " + e.getMessage());
+//                transactionBusiness.update(transaction);
+//            } catch (Exception ex) {
+//                log.error("Không thể lưu transaction thất bại: {}", ex.getMessage(), ex);
+//            }
 
             return MessageResponse.builder()
                     .isSuccess(false)
