@@ -1,6 +1,7 @@
 package com.sep490.gshop.service;
 
 import com.sep490.gshop.common.enums.PurchaseRequestStatus;
+import com.sep490.gshop.common.enums.RequestType;
 import com.sep490.gshop.payload.dto.RequestItemDTO;
 import com.sep490.gshop.payload.dto.SubRequestDTO;
 import com.sep490.gshop.payload.request.purchaserequest.OfflineRequest;
@@ -10,10 +11,8 @@ import com.sep490.gshop.payload.request.purchaserequest.UpdateRequestModel;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.PurchaseRequestModel;
 import com.sep490.gshop.payload.response.PurchaseRequestResponse;
-import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
 import java.util.List;
 import java.util.UUID;
@@ -26,7 +25,7 @@ public interface PurchaseRequestService {
 
     MessageResponse checkPurchaseRequest(String id);
 
-    Page<PurchaseRequestModel> getPurchaseRequests(PurchaseRequestStatus status, String type, Pageable pageable);
+    Page<PurchaseRequestModel> getPurchaseRequests(PurchaseRequestStatus status, String type, RequestType requestType, Pageable pageable);
 
     MessageResponse createSubRequest(SubRequestModel subRequestModel);
 
