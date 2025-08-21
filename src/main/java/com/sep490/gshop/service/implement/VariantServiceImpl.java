@@ -108,6 +108,22 @@ public class VariantServiceImpl  implements VariantService {
         }
     }
 
-
-
+    @Override
+    public MessageResponse toggleVariantActiveStatus(UUID id) {
+        try {
+            log.debug("toggleVariantActiveStatus() VariantServiceImpl Start | id: {}", id);
+            Variant variant = variantBusiness.getById(id)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy variant với id: " + id));
+            variant.setIsActive(!variant.getIsActive());
+            Variant updated = variantBusiness.update(variant);
+            log.debug("toggleVariantActiveStatus() VariantServiceImpl End | id: {}, active: {}", id, updated.getIsActive());
+            return MessageResponse.builder()
+                    .isSuccess(true)
+                    .message("Cập nhật trạng thái thành công")
+                    .build();
+        } catch (Exception e) {
+            log.error("toggleVariantActiveStatus() VariantServiceImpl Exception | id: {}, error: {}", id, e.getMessage());
+            throw e;
+        }
+    }
 }
