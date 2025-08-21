@@ -3,14 +3,18 @@ package com.sep490.gshop.controller;
 import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.payload.dto.UserDTO;
 import com.sep490.gshop.payload.request.UserRequest;
+import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping(URLConstant.USER)
@@ -69,5 +73,15 @@ public class UserController {
             log.error("deleteUser() UserController end | User with id {} not found", id);
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @PatchMapping("/{id}/active")
+    @PreAuthorize("hasRole('BUSINESS_MANAGER')")
+    @Operation(summary = "Kích hoạt hoặc vô hiệu hoá tài khoản người dùng")
+    public ResponseEntity<MessageResponse> toggleActiveStatus(@PathVariable UUID id) {
+        log.info("toggleAdminActiveStatus() start | id: {}", id);
+        MessageResponse response = userService.toggleActiveStatus(id);
+        log.info("toggleAdminActiveStatus() end | id: {}, success: {}", id, response.isSuccess());
+        return ResponseEntity.ok(response);
     }
 }

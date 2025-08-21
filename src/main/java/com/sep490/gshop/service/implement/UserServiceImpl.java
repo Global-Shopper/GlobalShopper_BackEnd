@@ -9,6 +9,7 @@ import com.sep490.gshop.entity.Customer;
 import com.sep490.gshop.entity.User;
 import com.sep490.gshop.payload.dto.UserDTO;
 import com.sep490.gshop.payload.request.UserRequest;
+import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.service.UserService;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
@@ -131,6 +132,23 @@ public class UserServiceImpl implements UserService {
             return true;
         } catch (Exception e) {
             log.error("Error in deleteUser() UserServiceImpl: {}", e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
+    public MessageResponse toggleActiveStatus(UUID id) {
+        try {
+            log.debug("toggleActiveStatus() UserServiceImpl Start | id: {}", id);
+            User user = userBusiness.getById(id)
+                    .orElseThrow(() -> new AppException(404, "Không tìm thấy tài khoản với id: " + id));
+            user.setActive(!user.isActive());
+            User updatedUser = userBusiness.update(user);
+            String status = updatedUser.isActive() ? "Kích hoạt" : "Vô hiệu hoá";
+            log.debug("toggleActiveStatus() UserServiceImpl End | id: {}, status: {}", id, status);
+            return new MessageResponse(status  +" thành công", true);
+        } catch (Exception e) {
+            log.error("Error in toggleActiveStatus() UserServiceImpl: {}", e.getMessage());
             throw e;
         }
     }
