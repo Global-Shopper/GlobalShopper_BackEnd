@@ -42,6 +42,7 @@ public class QuotationController {
     }
 
     @PostMapping("online")
+    @PreAuthorize("(hasRole('ADMIN'))")
     public ResponseEntity<OnlineQuotationDTO> createOnlineQuotation(
             @Valid @RequestBody OnlineQuotationRequest request) {
         log.info("[API] createOnlineQuotation - START | subRequestId: {}", request.getSubRequestId());

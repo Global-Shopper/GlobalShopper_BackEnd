@@ -39,4 +39,9 @@ public class TransactionBusinessImpl extends BaseBusinessImpl<Transaction, Trans
     public Transaction findByCustomerId(UUID customerId) {
         return repository.findByCustomerId(customerId);
     }
+
+    @Override
+    public Transaction findByCustomerAndReferenceCode(UUID customerId, String referenceCode) {
+        return repository.findByCustomerIdAndReferenceCode(customerId, referenceCode);
+    }
 }
