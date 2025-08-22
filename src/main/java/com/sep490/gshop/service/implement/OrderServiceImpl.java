@@ -224,9 +224,11 @@ public class OrderServiceImpl implements OrderService {
                     .contactInfo(subRequest.getContactInfo())
                     .seller(subRequest.getSeller())
                     .currency(subRequest.getQuotation().getCurrency())
+                    .region(subRequest.getQuotation().getRegion())
                     .ecommercePlatform(subRequest.getEcommercePlatform())
                     .totalPrice(subRequest.getQuotation().getTotalPriceEstimate())
                     .shippingFee(subRequest.getQuotation().getShippingEstimate())
+                    .type(purchaseRequest.getRequestType())
                     .build();
             if (checkOutModel.getTrackingNumber() != null && checkOutModel.getShippingFee() != null) {
                 order.setShippingFee(checkOutModel.getShippingFee());
@@ -314,9 +316,12 @@ public class OrderServiceImpl implements OrderService {
                     .admin(purchaseRequest.getAdmin())
                     .contactInfo(subRequest.getContactInfo())
                     .seller(subRequest.getSeller())
+                    .currency(subRequest.getQuotation().getCurrency())
+                    .region(subRequest.getQuotation().getRegion())
                     .ecommercePlatform(subRequest.getEcommercePlatform())
                     .totalPrice(subRequest.getQuotation().getTotalPriceEstimate())
                     .shippingFee(subRequest.getQuotation().getShippingEstimate())
+                    .type(purchaseRequest.getRequestType())
                     .build();
             if (checkOutModel.getTrackingNumber() != null && checkOutModel.getShippingFee() != null) {
                 order.setShippingFee(checkOutModel.getShippingFee());
