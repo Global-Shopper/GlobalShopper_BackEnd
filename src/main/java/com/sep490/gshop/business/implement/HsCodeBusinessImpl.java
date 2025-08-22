@@ -23,4 +23,9 @@ public class HsCodeBusinessImpl extends BaseBusinessGenericImpl<HsCode,String, H
     public Page<HsCode> getAll(Pageable pageable) {
         return repository.getAll(pageable);
     }
+
+    @Override
+    public Page<HsCode> searchByHsCodeAndDescriptionForRoots(String hsCodeSearch, String descSearch, Pageable pageable) {
+        return repository.searchByHsCodeAndDescriptionForRoots(hsCodeSearch, descSearch, pageable);
+    }
 }

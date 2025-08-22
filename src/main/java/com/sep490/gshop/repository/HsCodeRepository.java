@@ -47,4 +47,26 @@ WHERE
     Page<HsCode> getAll(Pageable pageable);
 
 
+
+    @Query(value = """
+SELECT * FROM hs_code
+WHERE
+    (COALESCE(:hsCode, '') = '' OR hs_code ILIKE CONCAT('%', :hsCode, '%'))
+    AND (COALESCE(:desc, '') = '' OR to_tsvector('simple', unaccent(description)) @@ to_tsquery('simple', unaccent(regexp_replace(:desc, '\\s+', ' | ', 'g'))))
+""",
+            countQuery = """
+SELECT COUNT(*) FROM hs_code
+WHERE
+    (COALESCE(:hsCode, '') = '' OR hs_code ILIKE CONCAT('%', :hsCode, '%'))
+    AND (COALESCE(:desc, '') = '' OR to_tsvector('simple', unaccent(description)) @@ to_tsquery('simple', unaccent(regexp_replace(:desc, '\\s+', ' | ', 'g'))))
+""",
+            nativeQuery = true)
+    Page<HsCode> searchByHsCodeAndDescriptionForRoots(
+            @Param("hsCode") String hsCode,
+            @Param("desc") String desc,
+            Pageable pageable
+    );
+
+
+
 }
