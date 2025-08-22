@@ -2,6 +2,7 @@ package com.sep490.gshop.service;
 
 import com.sep490.gshop.payload.dto.HsCodeDTO;
 import com.sep490.gshop.payload.dto.HsCodeSearchDTO;
+import com.sep490.gshop.payload.dto.HsTreeNodeDTO;
 import com.sep490.gshop.payload.request.HsCodeRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
 import org.springframework.data.domain.Page;
@@ -14,5 +15,7 @@ public interface HsCodeService {
     HsCodeDTO createHsCodeIncludeTaxes(HsCodeRequest hsCodeRequest);
     HsCodeDTO getByHsCode(String hsCode);
     MessageResponse deleteHsCode(String hsCode);
-    //Không có update cho hsCode
+
+
+    Page<HsTreeNodeDTO> getRootNodesPaged(Pageable pageable);
 }

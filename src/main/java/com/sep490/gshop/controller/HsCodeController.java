@@ -3,6 +3,7 @@ package com.sep490.gshop.controller;
 import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.payload.dto.HsCodeDTO;
 import com.sep490.gshop.payload.dto.HsCodeSearchDTO;
+import com.sep490.gshop.payload.dto.HsTreeNodeDTO;
 import com.sep490.gshop.payload.request.HsCodeRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.service.HsCodeService;
@@ -10,6 +11,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -72,5 +75,13 @@ public class HsCodeController {
         log.info("deleteHsCode() - End | hsCode: {}, success: {}", hsCode, response.isSuccess());
         HttpStatus status = response.isSuccess() ? HttpStatus.OK : HttpStatus.BAD_REQUEST;
         return ResponseEntity.status(status).body(response);
+    }
+
+    @GetMapping("/tree/root")
+    public Page<HsTreeNodeDTO> getRootNodesPaged(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return hsCodeService.getRootNodesPaged(pageable);
     }
 }
