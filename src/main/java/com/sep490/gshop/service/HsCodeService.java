@@ -16,6 +16,4 @@ public interface HsCodeService {
     HsCodeDTO getByHsCode(String hsCode);
     MessageResponse deleteHsCode(String hsCode);
 
-
-    Page<HsTreeNodeDTO> getRootNodesPaged(Pageable pageable);
 }

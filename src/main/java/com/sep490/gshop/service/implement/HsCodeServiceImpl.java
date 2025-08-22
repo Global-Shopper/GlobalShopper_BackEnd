@@ -180,20 +180,6 @@ public class HsCodeServiceImpl implements HsCodeService {
         }
     }
 
-    @Override
-    public Page<HsTreeNodeDTO> getRootNodesPaged(Pageable pageable) {
-        Page<HsCode> rootsPage = hsCodeBusiness.getAll(pageable);
-        List<HsCode> all = hsCodeBusiness.getAll();
-        Map<String, HsTreeNodeDTO> nodeByCode = buildNodeMap(all);
-        List<HsTreeNodeDTO> roots = rootsPage.stream()
-                .map(rootHsCode -> nodeByCode.get(rootHsCode.getHsCode()))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-        for (HsTreeNodeDTO root : roots) {
-            attachChildrenRecursive(root, nodeByCode);
-        }
-        return new PageImpl<>(roots, pageable, rootsPage.getTotalElements());
-    }
 
     private Map<String, HsTreeNodeDTO> buildNodeMap(List<HsCode> all) {
         Map<String, HsTreeNodeDTO> nodeByCode = new HashMap<>();

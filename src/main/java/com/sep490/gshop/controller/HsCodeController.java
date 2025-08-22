@@ -77,11 +77,5 @@ public class HsCodeController {
         return ResponseEntity.status(status).body(response);
     }
 
-    @GetMapping("/tree/root")
-    public Page<HsTreeNodeDTO> getRootNodesPaged(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return hsCodeService.getRootNodesPaged(pageable);
-    }
+
 }
