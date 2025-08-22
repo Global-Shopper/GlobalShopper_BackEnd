@@ -10,41 +10,19 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface HsCodeRepository extends JpaRepository<HsCode, String> {
+
+
     @Query(value = """
 SELECT * FROM hs_code
-WHERE
-    (
-        COALESCE(:hsCode, '') = ''
-        OR hs_code ILIKE CONCAT('%', :hsCode, '%')
-    )
-    AND
-    (
-        COALESCE(:desc, '') = ''
-        OR to_tsvector('simple', unaccent(description::text)) @@ to_tsquery('simple', unaccent(regexp_replace(:desc, '\\s+', ' | ', 'g')))
-    )
+WHERE LENGTH(hs_code) = 2 AND (parent_code IS NULL OR parent_code = '')
 """,
             countQuery = """
 SELECT COUNT(*) FROM hs_code
-WHERE
-    (
-        COALESCE(:hsCode, '') = ''
-        OR hs_code ILIKE CONCAT('%', :hsCode, '%')
-    )
-    AND
-    (
-        COALESCE(:desc, '') = ''
-        OR to_tsvector('simple', unaccent(description::text)) @@ to_tsquery('simple', unaccent(regexp_replace(:desc, '\\s+', ' | ', 'g')))
-    )
+WHERE LENGTH(hs_code) = 2 AND (parent_code IS NULL OR parent_code = '')
 """,
             nativeQuery = true)
-    Page<HsCode> searchByHsCodeAndDescription(
-            @Param("hsCode") String hsCode,
-            @Param("desc") String desc,
-            Pageable pageable
-    );
-
-    @Query("SELECT h FROM HsCode h WHERE LENGTH(h.hsCode) = 2 AND (h.parentCode IS NULL OR h.parentCode = '') ORDER BY h.hsCode")
     Page<HsCode> getAll(Pageable pageable);
+
 
 
 
