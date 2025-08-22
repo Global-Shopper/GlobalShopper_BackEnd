@@ -11,4 +11,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class RevenueResponse {
     private Double total;
+    private Double totalOnline;
+    private Double totalOffline;
 }

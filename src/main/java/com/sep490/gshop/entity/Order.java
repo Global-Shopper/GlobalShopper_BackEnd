@@ -1,6 +1,7 @@
 package com.sep490.gshop.entity;
 
 import com.sep490.gshop.common.enums.OrderStatus;
+import com.sep490.gshop.common.enums.RequestType;
 import com.sep490.gshop.entity.converter.StringListConverter;
 import com.sep490.gshop.entity.subclass.AddressSnapshot;
 import jakarta.persistence.*;
@@ -29,10 +30,14 @@ public class Order extends BaseEntity {
     private String seller;
     private String ecommercePlatform;
     private String currency;
+    private String region;
     @Column(columnDefinition = "TEXT")
     private String note;
     @Enumerated(EnumType.STRING)
     private OrderStatus status = OrderStatus.ORDER_REQUESTED;
+
+    @Enumerated(EnumType.STRING)
+    private RequestType type;
 
 
     // Order financial information

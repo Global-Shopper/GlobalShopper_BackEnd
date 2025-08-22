@@ -1,6 +1,7 @@
 package com.sep490.gshop.service.implement;
 
 import com.sep490.gshop.business.BusinessManagerBusiness;
+import com.sep490.gshop.common.enums.RequestType;
 import com.sep490.gshop.entity.Configuration;
 import com.sep490.gshop.entity.Order;
 import com.sep490.gshop.entity.OrderItem;
@@ -97,25 +98,37 @@ public class BusinessManagerServiceImpl implements BusinessManagerService {
         try {
             log.info("getRevenue() BusinessManagerController Start | startDate: {}, endDate: {}", startDate, endDate);
             List<Order> orders = businessManagerBusiness.getRevenue(startDate, endDate);
-            double revenue = calculateTotalRevenue(orders);
-            RevenueResponse revenueResponse = new RevenueResponse(revenue);
+            RevenueResponse revenue = calculateTotalRevenue(orders);
             log.info("getRevenue() BusinessManagerController End | revenue: {}", revenue);
-            return revenueResponse;
+            return revenue;
         } catch (Exception e) {
             log.error("Error getting revenue: {}", e.getMessage());
             throw e;
         }
     }
 
-    private double calculateTotalRevenue(List<Order> orders) {
-        return orders.stream()
-                .mapToDouble(order -> {
-                    double serviceFeeSum = order.getOrderItems()
-                            .stream()
-                            .mapToDouble(OrderItem::getServiceFee)
-                            .sum();
-                    return calculationUtil.convertToVND(BigDecimal.valueOf(serviceFeeSum), order.getCurrency()).doubleValue();
-                })
-                .sum();
+
+
+    private RevenueResponse calculateTotalRevenue(List<Order> orders) {
+        double totalOnline = 0.0;
+        double totalOffline = 0.0;
+        double total = 0.0;
+        for (Order o : orders) {
+            double serviceFeeSum = o.getOrderItems()
+                    .stream()
+                    .mapToDouble(OrderItem::getServiceFee)
+                    .sum();
+
+            double vnd = calculationUtil
+                    .convertToVND(BigDecimal.valueOf(serviceFeeSum), o.getCurrency())
+                    .doubleValue();
+            total = total + vnd;
+            if (RequestType.ONLINE.equals(o.getType())) {
+                totalOnline += vnd;
+            } else if (RequestType.OFFLINE.equals(o.getType())) { // OFFLINE
+                totalOffline += vnd;
+            }
+        }
+        return new RevenueResponse(total, totalOnline, totalOffline);
     }
 }
