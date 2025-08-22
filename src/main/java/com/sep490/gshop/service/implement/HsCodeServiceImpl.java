@@ -172,27 +172,16 @@ public class HsCodeServiceImpl implements HsCodeService {
 
     @Override
     public Page<HsTreeNodeDTO> getRootNodesPaged(Pageable pageable) {
-        // Lấy page root nodes (cấp 2 số, parent null) từ DB theo trang
         Page<HsCode> rootsPage = hsCodeBusiness.getAll(pageable);
-
-        // Lấy toàn bộ bảng HsCode để build cây (nếu dữ liệu lớn, cần tối ưu)
         List<HsCode> all = hsCodeBusiness.getAll();
-
-        // Map từng HsCode thành HsTreeNodeDTO theo mã code
         Map<String, HsTreeNodeDTO> nodeByCode = buildNodeMap(all);
-
-        // Lấy danh sách root nodes hiện tại trong trang, lọc null đề phòng lỗi mapping
         List<HsTreeNodeDTO> roots = rootsPage.stream()
                 .map(rootHsCode -> nodeByCode.get(rootHsCode.getHsCode()))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-
-        // Gán cây con cho từng root node trong trang này
         for (HsTreeNodeDTO root : roots) {
             attachChildrenRecursive(root, nodeByCode);
         }
-
-        // Trả về page mới gồm root nodes cùng cây con đã gán
         return new PageImpl<>(roots, pageable, rootsPage.getTotalElements());
     }
 
