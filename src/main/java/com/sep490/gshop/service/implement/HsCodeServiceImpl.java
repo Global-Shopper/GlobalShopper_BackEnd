@@ -7,6 +7,7 @@ import com.sep490.gshop.entity.HsCode;
 import com.sep490.gshop.entity.TaxRate;
 import com.sep490.gshop.payload.dto.HsCodeDTO;
 import com.sep490.gshop.payload.dto.HsCodeSearchDTO;
+import com.sep490.gshop.payload.dto.HsTreeNodeDTO;
 import com.sep490.gshop.payload.dto.TaxRateSnapshotDTO;
 import com.sep490.gshop.payload.request.HsCodeRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
@@ -18,7 +19,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -168,6 +169,71 @@ public class HsCodeServiceImpl implements HsCodeService {
             throw e;
         }
     }
+
+    @Override
+    public Page<HsTreeNodeDTO> getRootNodesPaged(Pageable pageable) {
+        // Lấy page root nodes (cấp 2 số, parent null) từ DB theo trang
+        Page<HsCode> rootsPage = hsCodeBusiness.getAll(pageable);
+
+        // Lấy toàn bộ bảng HsCode để build cây (nếu dữ liệu lớn, cần tối ưu)
+        List<HsCode> all = hsCodeBusiness.getAll();
+
+        // Map từng HsCode thành HsTreeNodeDTO theo mã code
+        Map<String, HsTreeNodeDTO> nodeByCode = buildNodeMap(all);
+
+        // Lấy danh sách root nodes hiện tại trong trang, lọc null đề phòng lỗi mapping
+        List<HsTreeNodeDTO> roots = rootsPage.stream()
+                .map(rootHsCode -> nodeByCode.get(rootHsCode.getHsCode()))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        // Gán cây con cho từng root node trong trang này
+        for (HsTreeNodeDTO root : roots) {
+            attachChildrenRecursive(root, nodeByCode);
+        }
+
+        // Trả về page mới gồm root nodes cùng cây con đã gán
+        return new PageImpl<>(roots, pageable, rootsPage.getTotalElements());
+    }
+
+    private Map<String, HsTreeNodeDTO> buildNodeMap(List<HsCode> all) {
+        Map<String, HsTreeNodeDTO> nodeByCode = new HashMap<>();
+        for (HsCode r : all) {
+            nodeByCode.put(r.getHsCode(), HsTreeNodeDTO.builder()
+                    .code(r.getHsCode())
+                    .description(nz(r.getDescription()))
+                    .level(levelOf(r.getHsCode()))
+                    .parentCode(nz(r.getParentCode()))
+                    .children(new ArrayList<>())
+                    .build());
+        }
+        return nodeByCode;
+    }
+
+    private void attachChildrenRecursive(HsTreeNodeDTO parent, Map<String, HsTreeNodeDTO> nodeByCode) {
+        List<HsTreeNodeDTO> children = nodeByCode.values().stream()
+                .filter(n -> parent.getCode().equals(n.getParentCode()))
+                .sorted(Comparator.comparing(HsTreeNodeDTO::getCode))
+                .collect(Collectors.toList());
+        parent.setChildren(children);
+        for (HsTreeNodeDTO child : children) {
+            attachChildrenRecursive(child, nodeByCode);
+        }
+    }
+
+    private static String nz(String s) {
+        return s == null ? "" : s.trim();
+    }
+
+    private static int levelOf(String code) {
+        int len = code == null ? 0 : code.length();
+        if (len >= 8) return 8;
+        if (len >= 6) return 6;
+        if (len >= 4) return 4;
+        if (len >= 2) return 2;
+        return len;
+    }
+
 
 
 }
