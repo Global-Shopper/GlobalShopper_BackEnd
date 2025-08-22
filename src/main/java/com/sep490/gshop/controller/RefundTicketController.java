@@ -51,7 +51,7 @@ public class RefundTicketController {
     @GetMapping
     @Operation(summary = "get all refund tickets")
     @PageableAsQueryParam
-    @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN') or hasRole('BUSINESS_MANAGER')")
     public ResponseEntity<Page<RefundTicketDTO>> getAllRefundTickets(
             @ParameterObject Pageable pageable,
             @RequestParam(required = false) RefundStatus status) {
