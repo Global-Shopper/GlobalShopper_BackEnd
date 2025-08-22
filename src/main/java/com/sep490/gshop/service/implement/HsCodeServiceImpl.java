@@ -35,31 +35,41 @@ public class HsCodeServiceImpl implements HsCodeService {
         this.modelMapper = modelMapper;
         this.taxRateBusiness = taxRateBusiness;
     }
-
-    public Page<HsCodeSearchDTO> findAll(String hsCode, String description, int page, int size, Sort.Direction direction) {
-        log.debug("findAll() Start | hsCode: {}, description", hsCode, description);
+    @Override
+    public Page<HsTreeNodeDTO> findAll(String hsCode, String description, int page, int size, Sort.Direction direction) {
+        log.debug("findAll() Start | hsCode: {}, description: {}", hsCode, description);
         try {
-            Sort sort = Sort.by(direction, "hsCode");
             Pageable pageable = PageRequest.of(page, size, Sort.by(direction, "hs_code"));
-
 
             String hsCodeSearch = (hsCode != null && !hsCode.trim().isEmpty()) ? hsCode.trim() : null;
             String descriptionSearch = (description != null && !description.trim().isEmpty()) ? description.trim() : null;
 
-            Page<HsCode> pageData = hsCodeBusiness.searchByKeyword(
-                    hsCodeSearch,
-                    descriptionSearch,
-                    pageable
-            );
+            Page<HsCode> rootsPage;
 
-            log.debug("findAll() End | found: {}", pageData.getTotalElements());
+            if (hsCodeSearch != null || descriptionSearch != null) {
+                rootsPage = hsCodeBusiness.searchByHsCodeAndDescriptionForRoots(hsCodeSearch, descriptionSearch, pageable);
+            } else {
+                rootsPage = hsCodeBusiness.getAll(pageable);
+            }
+            List<HsCode> all = hsCodeBusiness.getAll();
+            Map<String, HsTreeNodeDTO> nodeByCode = buildNodeMap(all);
+            List<HsTreeNodeDTO> roots = rootsPage.stream()
+                    .map(rootHsCode -> nodeByCode.get(rootHsCode.getHsCode()))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            for (HsTreeNodeDTO root : roots) {
+                attachChildrenRecursive(root, nodeByCode);
+            }
+            log.debug("findAll() End | found: {}", rootsPage.getTotalElements());
 
-            return pageData.map(hs -> modelMapper.map(hs, HsCodeSearchDTO.class));
+            return new PageImpl<>(roots, pageable, rootsPage.getTotalElements());
+
         } catch (Exception e) {
             log.error("findAll() Exception: {}", e.getMessage());
             throw e;
         }
     }
+
 
 
 
@@ -170,20 +180,6 @@ public class HsCodeServiceImpl implements HsCodeService {
         }
     }
 
-    @Override
-    public Page<HsTreeNodeDTO> getRootNodesPaged(Pageable pageable) {
-        Page<HsCode> rootsPage = hsCodeBusiness.getAll(pageable);
-        List<HsCode> all = hsCodeBusiness.getAll();
-        Map<String, HsTreeNodeDTO> nodeByCode = buildNodeMap(all);
-        List<HsTreeNodeDTO> roots = rootsPage.stream()
-                .map(rootHsCode -> nodeByCode.get(rootHsCode.getHsCode()))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-        for (HsTreeNodeDTO root : roots) {
-            attachChildrenRecursive(root, nodeByCode);
-        }
-        return new PageImpl<>(roots, pageable, rootsPage.getTotalElements());
-    }
 
     private Map<String, HsTreeNodeDTO> buildNodeMap(List<HsCode> all) {
         Map<String, HsTreeNodeDTO> nodeByCode = new HashMap<>();
@@ -222,6 +218,7 @@ public class HsCodeServiceImpl implements HsCodeService {
         if (len >= 2) return 2;
         return len;
     }
+
 
 
 

@@ -36,7 +36,7 @@ public class HsCodeController {
     @Operation(summary = "Tìm kiếm mã HS Code theo mô tả, hỗ trợ phân trang và sắp xếp")
     @GetMapping("/search")
     @PreAuthorize("hasRole('ADMIN') or hasRole('BUSINESS_MANAGER')")
-    public ResponseEntity<Page<HsCodeSearchDTO>> search(
+    public ResponseEntity<Page<HsTreeNodeDTO>> search(
             @RequestParam(required = false) String hsCode,
             @RequestParam(required = false) String description,
             @RequestParam(defaultValue = "0") int page,
@@ -44,7 +44,7 @@ public class HsCodeController {
             @RequestParam(defaultValue = "ASC") Sort.Direction direction
     ) {
         log.info("search() HsCodeController start | desc: {}, description: {}, page: {}, size: {}, direction: {}", hsCode, description, page, size, direction);
-        Page<HsCodeSearchDTO> result = hsCodeService.findAll(hsCode, description, page, size, direction);
+        Page<HsTreeNodeDTO> result = hsCodeService.findAll(hsCode, description, page, size, direction);
         log.info("search() HsCodeController end | totalElements: {}", result.getTotalElements());
         return ResponseEntity.ok(result);
     }
@@ -77,11 +77,5 @@ public class HsCodeController {
         return ResponseEntity.status(status).body(response);
     }
 
-    @GetMapping("/tree/root")
-    public Page<HsTreeNodeDTO> getRootNodesPaged(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return hsCodeService.getRootNodesPaged(pageable);
-    }
+
 }
