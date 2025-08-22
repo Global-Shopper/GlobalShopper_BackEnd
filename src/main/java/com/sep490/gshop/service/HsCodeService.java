@@ -10,7 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 public interface HsCodeService {
-    Page<HsCodeSearchDTO> findAll(String hsCode, String description, int page, int size, Sort.Direction direction);
+    Page<HsTreeNodeDTO> findAll(String hsCode, String description, int page, int size, Sort.Direction direction);
 
     HsCodeDTO createHsCodeIncludeTaxes(HsCodeRequest hsCodeRequest);
     HsCodeDTO getByHsCode(String hsCode);
