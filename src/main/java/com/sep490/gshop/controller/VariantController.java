@@ -30,7 +30,7 @@ public class VariantController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('BUSINESS_MANAGER')")
+
     public ResponseEntity<List<VariantDTO>> getAllVariants() {
         log.info("getAllVariants() - Start");
         List<VariantDTO> variants = variantService.getAllVariants();
