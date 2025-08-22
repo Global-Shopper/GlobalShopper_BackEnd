@@ -43,6 +43,8 @@ WHERE
             Pageable pageable
     );
 
+    @Query("SELECT h FROM HsCode h WHERE LENGTH(h.hsCode) = 2 AND (h.parentCode IS NULL OR h.parentCode = '') ORDER BY h.hsCode")
+    Page<HsCode> getAll(Pageable pageable);
 
 
 }
