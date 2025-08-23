@@ -7,6 +7,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class HsCodeBusinessImpl extends BaseBusinessGenericImpl<HsCode,String, HsCodeRepository> implements HsCodeBusiness {
 
@@ -25,4 +27,6 @@ public class HsCodeBusinessImpl extends BaseBusinessGenericImpl<HsCode,String, H
     public Page<HsCode> searchByHsCodeAndDescriptionForRoots(String hsCodeSearch, String descSearch, Pageable pageable) {
         return repository.searchByHsCodeAndDescriptionForRoots(hsCodeSearch, descSearch, pageable);
     }
+
+
 }
