@@ -228,6 +228,7 @@ public class OrderServiceImpl implements OrderService {
                     .ecommercePlatform(subRequest.getEcommercePlatform())
                     .totalPrice(subRequest.getQuotation().getTotalPriceEstimate())
                     .shippingFee(subRequest.getQuotation().getShippingEstimate())
+                    .shippingCarrier(checkOutModel.getShippingCarrier())
                     .type(purchaseRequest.getRequestType())
                     .build();
             if (checkOutModel.getTrackingNumber() != null && checkOutModel.getShippingFee() != null) {
@@ -322,6 +323,7 @@ public class OrderServiceImpl implements OrderService {
                     .totalPrice(subRequest.getQuotation().getTotalPriceEstimate())
                     .shippingFee(subRequest.getQuotation().getShippingEstimate())
                     .type(purchaseRequest.getRequestType())
+                    .shippingCarrier(checkOutModel.getShippingCarrier())
                     .build();
             if (checkOutModel.getTrackingNumber() != null && checkOutModel.getShippingFee() != null) {
                 order.setShippingFee(checkOutModel.getShippingFee());
