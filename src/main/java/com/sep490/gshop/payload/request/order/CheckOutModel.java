@@ -18,4 +18,5 @@ public class CheckOutModel {
     private double totalPriceEstimate;
     private String trackingNumber;
     private Double shippingFee;
+    private String shippingCarrier;
 }
