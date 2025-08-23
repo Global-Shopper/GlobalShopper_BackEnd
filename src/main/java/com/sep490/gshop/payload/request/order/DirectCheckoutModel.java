@@ -3,7 +3,6 @@ package com.sep490.gshop.payload.request.order;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -19,4 +18,5 @@ public class DirectCheckoutModel {
     private String redirectUri;
     private String trackingNumber;
     private Double shippingFee;
+    private String shippingCarrier;
 }
