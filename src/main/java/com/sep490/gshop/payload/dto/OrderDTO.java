@@ -22,6 +22,7 @@ public class OrderDTO {
     private String ecommercePlatform;
     private String currency;
     private String region;
+    private String shippingCarrier;
 
     private String note;
     private OrderStatus status;
