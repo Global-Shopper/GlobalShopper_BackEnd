@@ -20,4 +20,5 @@ public interface AuthService {
     MessageResponse verifyMail(String otp, String email);
     ResponseEntity<Void> verifyToUpdateEmail(String token);
 
+    AuthUserResponse loginByToken();
 }
