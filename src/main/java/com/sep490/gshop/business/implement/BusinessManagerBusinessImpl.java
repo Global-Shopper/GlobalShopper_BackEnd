@@ -79,6 +79,25 @@ public class BusinessManagerBusinessImpl implements BusinessManagerBusiness {
         purchaseRequestDetail.setStatusList(prStatusList);
         purchaseRequestDetail.setTotal(totalPr);
         prDashBoard.addDashBoardDetail(purchaseRequestDetail);
+
+        //Dashboard for type of Purchase Requests
+        DashBoardDetail prTypeDetail = new DashBoardDetail();
+        List<PRStatus> prTypeList = purchaseRequestRepository.countByType(startDate, endDate);
+        prTypeDetail.setDashBoardName("PurchaseRequestType");
+        prTypeDetail.setStatusList(prTypeList);
+        prTypeDetail.setTotal(totalPr);
+        prDashBoard.addDashBoardDetail(prTypeDetail);
+
+        //Dashboard for Order
+        DashBoardDetail orderDetail = new DashBoardDetail();
+        List<PRStatus> orderStatusList = orderRepository.countByStatus(startDate, endDate);
+        long totalOrder = orderRepository.countByCreatedAtBetween(startDate, endDate);
+        orderDetail.setTotal(totalOrder);
+        orderDetail.setDashBoardName("Order");
+        orderDetail.setStatusList(orderStatusList);
+        prDashBoard.addDashBoardDetail(orderDetail);
+
+
         //Dashboard for RefundTicket
         DashBoardDetail refundTicketDetail = new DashBoardDetail();
         long totalRef = refundTicketRepository.countByCreatedAtBetween(startDate, endDate);

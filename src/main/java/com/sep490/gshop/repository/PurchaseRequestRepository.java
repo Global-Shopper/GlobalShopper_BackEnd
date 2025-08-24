@@ -26,4 +26,9 @@ public interface PurchaseRequestRepository extends JpaRepository<PurchaseRequest
     List<PRStatus> countByStatus(Long startDate, Long endDate);
 
     Page<PurchaseRequest> findAll(Specification<PurchaseRequest> specification, Pageable pageable);
+
+    @Query("SELECT pr.requestType as status, COUNT(pr) as count FROM PurchaseRequest pr " +
+            "WHERE pr.createdAt BETWEEN :startDate AND :endDate " +
+            "GROUP BY pr.requestType")
+    List<PRStatus> countByType(Long startDate, Long endDate);
 }
