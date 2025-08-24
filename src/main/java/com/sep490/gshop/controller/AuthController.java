@@ -128,5 +128,14 @@ public class AuthController {
 
     }
 
+    @GetMapping("/login-token")
+    @Operation(summary = "Đăng nhập bằng token")
+    public ResponseEntity<AuthUserResponse> loginByToken() {
+        log.info("loginByToken() AuthController Start");
+        AuthUserResponse response = authService.loginByToken();
+        log.info("loginByToken() AuthController End | response: {}", response);
+        return ResponseEntity.ok(response);
+    }
+
 
 }
