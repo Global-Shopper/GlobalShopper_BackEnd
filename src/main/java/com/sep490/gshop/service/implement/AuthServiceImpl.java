@@ -466,6 +466,23 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    @Override
+    public AuthUserResponse loginByToken() {
+        try {
+            log.debug("loginByToken() AuthServiceImpl Start");
+            UUID currentUserId = AuthUtils.getCurrentUserId();
+            User user = userBusiness.getById(currentUserId)
+                    .orElseThrow(() -> new AppException(404, "Không tìm thấy người dùng với id: " + currentUserId));
+            String jwt = jwtUtils.generateJwtToken(user);
+            UserDTO userDTO = modelMapper.map(user, UserDTO.class);
+            log.debug("loginByToken() AuthServiceImpl End");
+            return new AuthUserResponse(jwt, userDTO);
+        } catch (Exception e) {
+            log.error("loginByToken() AuthServiceImpl Exception | message: {}", e.getMessage());
+            throw e;
+        }
+    }
+
 
     @Override
     public MessageResponse verifyMail(String otp, String newMail) {
