@@ -15,10 +15,17 @@ import com.sep490.gshop.service.HsCodeService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -179,6 +186,48 @@ public class HsCodeServiceImpl implements HsCodeService {
             throw e;
         }
     }
+
+
+
+        @Override
+        public MessageResponse importHsCodeCSV(MultipartFile file) {
+            log.debug("Start Import HSCode CSV: {}", file.getOriginalFilename());
+
+            try (
+                    BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));
+                    CSVParser csvParser = new CSVParser(br, CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim())
+            ) {
+                List<HsCode> newParse = new ArrayList<>();
+
+                for (CSVRecord csvRecord : csvParser) {
+                    HsCodeDTO hsCode = HsCodeDTO.builder()
+                            .hsCode(csvRecord.get("hsCode"))
+                            .parentCode(csvRecord.get("parentCode"))
+                            .unit(csvRecord.get("unit"))
+                            .description(csvRecord.get("description"))
+                            .build();
+
+                    HsCode addHsCode = modelMapper.map(hsCode, HsCode.class);
+                    newParse.add(addHsCode);
+                }
+
+                hsCodeBusiness.saveAll(newParse);
+
+                log.debug("End Import HSCode CSV: {} rows imported", newParse.size());
+
+                return MessageResponse.builder()
+                        .message("Success Import HSCode")
+                        .isSuccess(true)
+                        .build();
+            } catch (Exception e) {
+                log.error("Error Import HSCode CSV: {}", e.getMessage());
+                return MessageResponse.builder()
+                        .message("Error Import HSCode: " + e.getMessage())
+                        .isSuccess(false)
+                        .build();
+            }
+        }
+
 
 
     private Map<String, HsTreeNodeDTO> buildNodeMap(List<HsCode> all) {
