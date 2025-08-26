@@ -8,6 +8,7 @@ import com.sep490.gshop.payload.response.MessageResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface HsCodeService {
     Page<HsTreeNodeDTO> findAll(String hsCode, String description, int page, int size, Sort.Direction direction);
@@ -16,4 +17,5 @@ public interface HsCodeService {
     HsCodeDTO getByHsCode(String hsCode);
     MessageResponse deleteHsCode(String hsCode);
 
+    MessageResponse importHsCodeCSV(MultipartFile file);
 }

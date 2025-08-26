@@ -15,10 +15,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping(URLConstant.HS_CODE)
@@ -78,4 +80,17 @@ public class HsCodeController {
     }
 
 
+    @PostMapping(path = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<MessageResponse> importHsCodes(@RequestPart("file") MultipartFile file) {
+        log.info("[START] Import HSCode API called. File: {}", file.getOriginalFilename());
+
+        long start = System.currentTimeMillis();
+        MessageResponse response = hsCodeService.importHsCodeCSV(file);
+        long end = System.currentTimeMillis();
+
+        log.info("[END] Import HSCode API finished. Success: {}, Duration: {} ms",
+                response.isSuccess(), (end - start));
+
+        return ResponseEntity.ok(response);
+    }
 }

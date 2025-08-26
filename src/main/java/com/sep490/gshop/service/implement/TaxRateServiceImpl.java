@@ -2,6 +2,7 @@ package com.sep490.gshop.service.implement;
 
 import com.sep490.gshop.business.HsCodeBusiness;
 import com.sep490.gshop.business.TaxRateBusiness;
+import com.sep490.gshop.common.enums.TaxRegion;
 import com.sep490.gshop.common.enums.TaxType;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.HsCode;
@@ -11,15 +12,20 @@ import com.sep490.gshop.payload.request.TaxRateCreateAndUpdateRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.TaxCalculationResult;
 import com.sep490.gshop.service.TaxRateService;
+import jakarta.persistence.*;
 import jakarta.transaction.Transactional;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -210,6 +216,72 @@ public class TaxRateServiceImpl implements TaxRateService {
         } catch (Exception e) {
             log.error("createTaxRate() - Exception | hsCode: {}, error: {}", taxRateReq.getHsCode(), e.getMessage());
             throw e;
+        }
+    }
+
+    @Override
+    public MessageResponse importTaxRatesCSV(MultipartFile file) {
+        log.debug("=== Start Import Tax Rates CSV: {} ===", file.getOriginalFilename());
+
+        try (
+                BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));
+                CSVParser csvParser = new CSVParser(br, CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim())
+        ) {
+            List<TaxRate> newParse = new ArrayList<>();
+
+            for (CSVRecord csvRecord : csvParser) {
+                TaxRate tax = new TaxRate();
+                tax.setTaxName(csvRecord.get("id"));
+                if(csvRecord.get("id")==null) {
+                    tax.setId(UUID.randomUUID());
+                }
+                if(csvRecord.get("taxType")!=null) {
+                    tax.setTaxType(parseTaxType(csvRecord.get("taxType")));
+                }
+                if(csvRecord.get("region")!=null) {
+                    tax.setRegion(parseRegion(csvRecord.get("region")));
+                }
+
+                if(csvRecord.get("hsCode")!=null) {
+                    var hsCode = hsCodeBusiness.getById(csvRecord.get("hsCode")).orElseThrow(() -> AppException.builder().message("Không tìm thấy HSCode").code(404).build());
+                    tax.setHsCode(hsCode);
+                }
+                tax.setTaxName(csvRecord.get("taxName"));
+                tax.setRate(Double.parseDouble(csvRecord.get("rate")));
+                newParse.add(tax);
+            }
+
+            taxRateBusiness.saveAll(newParse);
+
+            log.debug("=== End Import Tax Rates CSV: {} rows imported ===", newParse.size());
+
+            return MessageResponse.builder()
+                    .message("Success Import Tax Rates")
+                    .isSuccess(true)
+                    .build();
+        } catch (Exception e) {
+            log.error("Error Import Tax Rates CSV: {}", e.getMessage(), e);
+            return MessageResponse.builder()
+                    .message("Error Import Tax Rates: " + e.getMessage())
+                    .isSuccess(false)
+                    .build();
+        }
+    }
+
+
+    private TaxRegion parseRegion(String regionStr) {
+        try {
+            return TaxRegion.valueOf(regionStr.trim().toUpperCase());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid TaxRegion: " + regionStr);
+        }
+    }
+
+    private TaxType parseTaxType(String typeStr) {
+        try {
+            return TaxType.valueOf(typeStr.trim().toUpperCase());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid TaxType: " + typeStr);
         }
     }
 

@@ -9,9 +9,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -76,5 +78,19 @@ public class TaxRateController  {
         MessageResponse result = taxRateService.deleteTaxRate(id);
         log.info("deleteTaxRate() - End | id: {}", id + ", isSuccess=" + result.isSuccess());
         return ResponseEntity.ok(result);
+    }
+
+    @PostMapping(path = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<MessageResponse> importTaxRates(@RequestPart("file") MultipartFile file) {
+        log.info("[START] Import Tax Rates API called. File: {}", file.getOriginalFilename());
+
+        long start = System.currentTimeMillis();
+        MessageResponse response = taxRateService.importTaxRatesCSV(file);
+        long end = System.currentTimeMillis();
+
+        log.info("[END] Import Tax Rates API finished. Success: {}, Duration: {} ms",
+                response.isSuccess(), (end - start));
+
+        return ResponseEntity.ok(response);
     }
 }
