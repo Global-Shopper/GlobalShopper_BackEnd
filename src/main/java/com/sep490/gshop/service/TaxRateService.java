@@ -5,6 +5,7 @@ import com.sep490.gshop.payload.dto.TaxRateSnapshotDTO;
 import com.sep490.gshop.payload.request.TaxRateCreateAndUpdateRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.TaxCalculationResult;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -15,4 +16,6 @@ public interface TaxRateService {
     TaxRateSnapshotDTO getTaxRateById(String taxRateId);
     MessageResponse deleteTaxRate(String taxRateId);
     TaxRateSnapshotDTO createTaxRate(TaxRateCreateAndUpdateRequest taxRate);
+
+    MessageResponse importTaxRatesCSV(MultipartFile file);
 }
