@@ -228,7 +228,7 @@ public class TaxRateServiceImpl implements TaxRateService {
                 CSVParser csvParser = new CSVParser(br, CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim())
         ) {
             List<TaxRate> newParse = new ArrayList<>();
-
+            List<String> duplicateParse = new ArrayList<>();
             for (CSVRecord csvRecord : csvParser) {
                 TaxRate tax = new TaxRate();
                 tax.setTaxName(csvRecord.get("id"));
@@ -248,19 +248,28 @@ public class TaxRateServiceImpl implements TaxRateService {
                 }
                 tax.setTaxName(csvRecord.get("taxName"));
                 tax.setRate(Double.parseDouble(csvRecord.get("rate")));
-                newParse.add(tax);
+                boolean exists = taxRateBusiness.existsByHsCodeAndRegionAndTaxType(tax.getHsCode(), tax.getRegion(), tax.getTaxType());
+                if(exists) {
+                    duplicateParse.add(tax.getHsCode().getHsCode());
+                }else {
+                    newParse.add(tax);
+                }
             }
 
             taxRateBusiness.saveAll(newParse);
+            String message = "End Import Tax Rates CSV: " + newParse.size() +  " rows imported , duplicates: " +duplicateParse.size() +" rows";
 
-            log.debug("=== End Import Tax Rates CSV: {} rows imported ===", newParse.size());
+            if (!duplicateParse.isEmpty()) {
+                message += " | Duplicate hsCodes: " + String.join(", ", duplicateParse);
+            }
+            log.debug("End Import Tax Rates CSV: {} rows imported", newParse.size());
 
             return MessageResponse.builder()
-                    .message("Success Import Tax Rates")
+                    .message(message)
                     .isSuccess(true)
                     .build();
         } catch (Exception e) {
-            log.error("Error Import Tax Rates CSV: {}", e.getMessage(), e);
+            log.error("Error Import Tax Rates CSV: {}", e.getMessage());
             return MessageResponse.builder()
                     .message("Error Import Tax Rates: " + e.getMessage())
                     .isSuccess(false)

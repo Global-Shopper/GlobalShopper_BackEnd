@@ -47,7 +47,7 @@ AND (COALESCE(:desc, '') = '' OR to_tsvector('simple', unaccent(description)) @@
             Pageable pageable
     );
 
-
+    boolean existsByHsCode(String hsCode);
 
 
 
