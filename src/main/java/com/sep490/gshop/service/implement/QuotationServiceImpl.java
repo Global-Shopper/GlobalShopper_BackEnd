@@ -3,10 +3,7 @@ package com.sep490.gshop.service.implement;
 import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.sep490.gshop.business.*;
-import com.sep490.gshop.common.enums.PurchaseRequestStatus;
-import com.sep490.gshop.common.enums.QuotationType;
-import com.sep490.gshop.common.enums.SubRequestStatus;
-import com.sep490.gshop.common.enums.TaxRegion;
+import com.sep490.gshop.common.enums.*;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.*;
 import com.sep490.gshop.entity.subclass.Fee;
@@ -201,10 +198,6 @@ public class QuotationServiceImpl implements QuotationService {
         dto.setExpiredDate(input.getExpiredDate());
         dto.setRegion(region.toString());
         dto.setCurrency(input.getCurrency());
-        PurchaseRequest purchaseRequest = purchaseRequestBusiness.findPurchaseRequestBySubRequestId(subRequestId);
-        SubRequest subRequest = subRequestBusiness.getById(subRequestId).get();
-        String quotationInfo = subRequest.getContactInfo().get(0).split(": ")[1];
-        //sendNoti(purchaseRequest.getCustomer().getId(),"Báo giá mới cho yêu cầu mua hàng ", "Bạn có báo giá mới cho yêu cầu mua hàng từ " + quotationInfo + ". Vui lòng kiểm tra.");
         return dto;
     }
 
@@ -255,6 +248,15 @@ public class QuotationServiceImpl implements QuotationService {
             subRequest.setRejectionReason(rejectQuotationRequest.getRejectionReason());
             SubRequest updatedSubRequest = subRequestBusiness.update(subRequest);
             updatePurchaseRequestStatus(subRequest.getId());
+            PurchaseRequest purchaseRequest =
+                    purchaseRequestBusiness.findPurchaseRequestBySubRequestId(subRequest.getId());
+            String purchaseInfo;
+            if (RequestType.OFFLINE.equals(purchaseRequest.getRequestType())) {
+                purchaseInfo = subRequest.getContactInfo().get(0).split(": ")[1];
+            } else {
+                purchaseInfo = subRequest.getEcommercePlatform();
+            }
+            sendNoti(purchaseRequest.getCustomer().getId(),"Yêu cầu của bạn đã bị từ chối", "Yêu cầu mua hàng từ " + purchaseInfo + " đã bị từ chối. Vui lòng kiểm tra.");
             log.debug("rejectQuotation() QuotationServiceImpl End | subRequestId: {}",
                     updatedSubRequest.getId());
             return MessageResponse.builder()
@@ -273,172 +275,181 @@ public class QuotationServiceImpl implements QuotationService {
     @Override
     @Transactional
     public OnlineQuotationDTO createOnlineQuotation(@Valid OnlineQuotationRequest request){
-        log.debug("createOnlineQuotation() - Start | subRequestId: {}", request.getSubRequestId());
+        try {
 
-        UUID subRequestId = UUID.fromString(request.getSubRequestId());
+            log.debug("createOnlineQuotation() - Start | subRequestId: {}", request.getSubRequestId());
 
-        // 1. Check SubRequest tồn tại
-        SubRequest sub = subRequestBusiness.getById(subRequestId)
-                .orElseThrow(() -> AppException.builder()
-                        .message("Không tìm thấy sub request")
-                        .code(404)
-                        .build());
+            UUID subRequestId = UUID.fromString(request.getSubRequestId());
 
-        // 2. Check chưa tồn tại OnlineQuotation cho subRequest
-        if (quotationBusiness.findBySubRequest(subRequestId).isPresent()) {
-            throw AppException.builder()
-                    .message("OnlineQuotation đã tồn tại cho subRequest này")
-                    .code(400)
-                    .build();
-        }
-
-        // 3. Validate số lượng details
-        int totalRequestItems = sub.getRequestItems().size();
-        if (request.getDetails().size() < totalRequestItems) {
-            throw AppException.builder()
-                    .message("Phải điền đủ thông tin cho tất cả request item")
-                    .code(400)
-                    .build();
-        } else if (request.getDetails().size() > totalRequestItems) {
-            throw AppException.builder()
-                    .message("Request items bị dư so với subRequest")
-                    .code(400)
-                    .build();
-        }
-
-        // 4. Tạo Quotation entity ONLINE
-        Quotation quotation = new Quotation();
-        quotation.setSubRequest(sub);
-        quotation.setNote(request.getNote());
-        quotation.setExpiredDate(request.getExpiredDate());
-        quotation.setQuotationType(QuotationType.ONLINE);
-
-        List<QuotationDetail> detailEntities = new ArrayList<>();
-
-        // 5. Map chi tiết sản phẩm
-        var serviceRate = businessManagerBusiness.getConfig().getServiceFee();
-        double totalItemsVNDPrice =  0;
-        for (OnlineQuotationDetailRequest d : request.getDetails()) {
-            RequestItem item = requestItemBusiness.getById(UUID.fromString(d.getRequestItemId()))
+            // 1. Check SubRequest tồn tại
+            SubRequest sub = subRequestBusiness.getById(subRequestId)
                     .orElseThrow(() -> AppException.builder()
-                            .message("Không tìm thấy request item: " + d.getRequestItemId())
+                            .message("Không tìm thấy sub request")
                             .code(404)
                             .build());
 
-            if (!item.getSubRequest().getId().equals(subRequestId)) {
+            // 2. Check chưa tồn tại OnlineQuotation cho subRequest
+            if (quotationBusiness.findBySubRequest(subRequestId).isPresent()) {
                 throw AppException.builder()
-                        .message("Request item không thuộc subRequest này")
+                        .message("OnlineQuotation đã tồn tại cho subRequest này")
                         .code(400)
                         .build();
             }
 
-            double serviceFee = serviceRate * d.getBasePrice();
-            double itemTotalBeforeExchange = (d.getBasePrice() + serviceFee) * item.getQuantity();
-            //
-            double itemTotalVND = itemTotalBeforeExchange;
-            double exchangeRate = 1.0;
+            // 3. Validate số lượng details
+            int totalRequestItems = sub.getRequestItems().size();
+            if (request.getDetails().size() < totalRequestItems) {
+                throw AppException.builder()
+                        .message("Phải điền đủ thông tin cho tất cả request item")
+                        .code(400)
+                        .build();
+            } else if (request.getDetails().size() > totalRequestItems) {
+                throw AppException.builder()
+                        .message("Request items bị dư so với subRequest")
+                        .code(400)
+                        .build();
+            }
+
+            // 4. Tạo Quotation entity ONLINE
+            Quotation quotation = new Quotation();
+            quotation.setSubRequest(sub);
+            quotation.setNote(request.getNote());
+            quotation.setExpiredDate(request.getExpiredDate());
+            quotation.setQuotationType(QuotationType.ONLINE);
+
+            List<QuotationDetail> detailEntities = new ArrayList<>();
+
+            // 5. Map chi tiết sản phẩm
+            var serviceRate = businessManagerBusiness.getConfig().getServiceFee();
+            double totalItemsVNDPrice =  0;
+            for (OnlineQuotationDetailRequest d : request.getDetails()) {
+                RequestItem item = requestItemBusiness.getById(UUID.fromString(d.getRequestItemId()))
+                        .orElseThrow(() -> AppException.builder()
+                                .message("Không tìm thấy request item: " + d.getRequestItemId())
+                                .code(404)
+                                .build());
+
+                if (!item.getSubRequest().getId().equals(subRequestId)) {
+                    throw AppException.builder()
+                            .message("Request item không thuộc subRequest này")
+                            .code(400)
+                            .build();
+                }
+
+                double serviceFee = serviceRate * d.getBasePrice();
+                double itemTotalBeforeExchange = (d.getBasePrice() + serviceFee) * item.getQuantity();
+                //
+                double itemTotalVND = itemTotalBeforeExchange;
+                double exchangeRate = 1.0;
+
+                if (request.getCurrency() != null && !"VND".equalsIgnoreCase(request.getCurrency())) {
+                    BigDecimal converted = calculationUtil.convertToVND(BigDecimal.valueOf(itemTotalBeforeExchange), request.getCurrency());
+                    itemTotalVND = converted.doubleValue();
+                    exchangeRate = converted.doubleValue() / itemTotalBeforeExchange;
+                }
+
+                QuotationDetail detail = new QuotationDetail();
+                detail.setQuotation(quotation);
+                detail.setRequestItem(item);
+                detail.setBasePrice(d.getBasePrice());
+                detail.setServiceFee(serviceFee);
+                detail.setExchangeRate(exchangeRate);
+                detail.setTotalVNDPrice(CalculationUtil.roundToNearestThousand(itemTotalVND));
+                detail.setServiceRate(serviceRate);
+                detailEntities.add(detail);
+                totalItemsVNDPrice += itemTotalVND;
+            }
+            quotation.setDetails(detailEntities);
+
+            // 6. Tính totalPriceEstimate từ totalPriceBeforeExchange (convert 1 lần)
+            double totalPriceEstimate = 0;
+            double shippingEstimate = request.getShippingEstimate();
 
             if (request.getCurrency() != null && !"VND".equalsIgnoreCase(request.getCurrency())) {
-                BigDecimal converted = calculationUtil.convertToVND(BigDecimal.valueOf(itemTotalBeforeExchange), request.getCurrency());
-                itemTotalVND = converted.doubleValue();
-                exchangeRate = converted.doubleValue() / itemTotalBeforeExchange;
+                BigDecimal convertedShip = calculationUtil.convertToVND(BigDecimal.valueOf(request.getShippingEstimate()), request.getCurrency());
+                shippingEstimate = convertedShip.doubleValue();
             }
 
-            QuotationDetail detail = new QuotationDetail();
-            detail.setQuotation(quotation);
-            detail.setRequestItem(item);
-            detail.setBasePrice(d.getBasePrice());
-            detail.setServiceFee(serviceFee);
-            detail.setExchangeRate(exchangeRate);
-            detail.setTotalVNDPrice(CalculationUtil.roundToNearestThousand(itemTotalVND));
-            detail.setServiceRate(serviceRate);
-            detailEntities.add(detail);
-            totalItemsVNDPrice += itemTotalVND;
-        }
-        quotation.setDetails(detailEntities);
-
-        // 6. Tính totalPriceEstimate từ totalPriceBeforeExchange (convert 1 lần)
-        double totalPriceEstimate = 0;
-        double shippingEstimate = request.getShippingEstimate();
-
-        if (request.getCurrency() != null && !"VND".equalsIgnoreCase(request.getCurrency())) {
-            BigDecimal convertedShip = calculationUtil.convertToVND(BigDecimal.valueOf(request.getShippingEstimate()), request.getCurrency());
-            shippingEstimate = convertedShip.doubleValue();
-        }
-
-        // = Tổng VNĐ cuối cùng =
-        double otherFeesVND = 0.0;
-        List<Fee> feeEntities =new ArrayList<>();
-        if (request.getFees() != null) {
-            for (FeeRequest fee : request.getFees()) {
-                double value = fee.getAmount() != null ? fee.getAmount() : 0.0;
-                String feeCurrency = request.getCurrency();
-                var feeToVND = new Fee();
-                if (feeCurrency != null && !"VND".equalsIgnoreCase(feeCurrency)) {
-                    BigDecimal converted = calculationUtil.convertToVND(BigDecimal.valueOf(value), feeCurrency);
-                    otherFeesVND += converted.doubleValue();
-                    feeToVND.setAmount(CalculationUtil.roundToNearestThousand(converted.doubleValue()));
-                    feeToVND.setCurrency("VND");
-                    feeToVND.setFeeName(fee.getFeeName());
-                    feeEntities.add(feeToVND);
-                } else {
-                    otherFeesVND += value;
+            // = Tổng VNĐ cuối cùng =
+            double otherFeesVND = 0.0;
+            List<Fee> feeEntities =new ArrayList<>();
+            if (request.getFees() != null) {
+                for (FeeRequest fee : request.getFees()) {
+                    double value = fee.getAmount() != null ? fee.getAmount() : 0.0;
+                    String feeCurrency = request.getCurrency();
+                    var feeToVND = new Fee();
+                    if (feeCurrency != null && !"VND".equalsIgnoreCase(feeCurrency)) {
+                        BigDecimal converted = calculationUtil.convertToVND(BigDecimal.valueOf(value), feeCurrency);
+                        otherFeesVND += converted.doubleValue();
+                        feeToVND.setAmount(CalculationUtil.roundToNearestThousand(converted.doubleValue()));
+                        feeToVND.setCurrency("VND");
+                        feeToVND.setFeeName(fee.getFeeName());
+                        feeEntities.add(feeToVND);
+                    } else {
+                        otherFeesVND += value;
+                    }
                 }
             }
+
+            totalPriceEstimate = totalItemsVNDPrice + otherFeesVND;
+
+            quotation.setShippingEstimate(shippingEstimate);
+            quotation.setTotalPriceEstimate(CalculationUtil.roundToNearestThousand(totalPriceEstimate));
+            quotation.setCurrency(request.getCurrency());
+
+    // lưu luôn danh sách object fees xuống DB
+            quotation.setFees(feeEntities);
+
+            // 7. Lưu quotation
+            quotationBusiness.create(quotation);
+
+            // 8. Update trạng thái subRequest
+            sub.setStatus(SubRequestStatus.QUOTED);
+            subRequestBusiness.update(sub);
+
+            // 9. Map trả về DTO (map thủ công phần details)
+            OnlineQuotationDTO dto = modelMapper.map(quotation, OnlineQuotationDTO.class);
+            dto.setSubRequestId(request.getSubRequestId());
+            dto.setQuotationType(QuotationType.ONLINE);
+            dto.setSubRequestStatus(sub.getStatus());
+            List<OnlineQuotationDetailDTO> detailDTOs = quotation.getDetails().stream()
+                    .map(detail -> {
+                        OnlineQuotationDetailDTO dDto = new OnlineQuotationDetailDTO();
+                        dDto.setRequestItemId(detail.getRequestItem() != null ? detail.getRequestItem().getId().toString() : null);
+                        dDto.setBasePrice(detail.getBasePrice());
+                        dDto.setServiceFee(detail.getServiceFee());
+                        dDto.setTotalVNPrice(CalculationUtil.roundToNearestThousand(detail.getTotalVNDPrice()));
+                        dDto.setServiceRate(detail.getServiceRate());
+                        dDto.setExchangeRate(detail.getExchangeRate());
+                        for (OnlineQuotationDetailRequest d : request.getDetails()) {
+                            RequestItem item = requestItemBusiness.getById(UUID.fromString(d.getRequestItemId()))
+                                    .orElseThrow(() -> AppException.builder()
+                                            .message("Không tìm thấy request item: " + d.getRequestItemId())
+                                            .code(404)
+                                            .build());
+                            dDto.setQuantity(item.getQuantity());
+                        }
+                        return dDto;
+                    })
+                    .toList();
+
+            dto.setDetails(detailDTOs);
+            PurchaseRequest purchaseRequest =
+                    purchaseRequestBusiness.findPurchaseRequestBySubRequestId(subRequestId);
+            purchaseRequest.setStatus(PurchaseRequestStatus.QUOTED);
+            purchaseRequest.getHistory().add(
+                    new PurchaseRequestHistory(purchaseRequest,"Yêu cầu đã được báo giá")
+            );
+            purchaseRequestBusiness.update(purchaseRequest);
+            SubRequest subRequest = subRequestBusiness.getById(subRequestId).get();
+            String quotationInfo = subRequest.getEcommercePlatform();
+            sendNoti(purchaseRequest.getCustomer().getId(),"Báo giá mới cho yêu cầu mua hàng ", "Bạn có báo giá mới cho yêu cầu mua hàng từ " + quotationInfo + ". Vui lòng kiểm tra.");
+            return dto;
         }
-
-        totalPriceEstimate = totalItemsVNDPrice + otherFeesVND;
-
-        quotation.setShippingEstimate(shippingEstimate);
-        quotation.setTotalPriceEstimate(CalculationUtil.roundToNearestThousand(totalPriceEstimate));
-        quotation.setCurrency(request.getCurrency());
-
-// lưu luôn danh sách object fees xuống DB
-        quotation.setFees(feeEntities);
-
-        // 7. Lưu quotation
-        quotationBusiness.create(quotation);
-
-        // 8. Update trạng thái subRequest
-        sub.setStatus(SubRequestStatus.QUOTED);
-        subRequestBusiness.update(sub);
-
-        // 9. Map trả về DTO (map thủ công phần details)
-        OnlineQuotationDTO dto = modelMapper.map(quotation, OnlineQuotationDTO.class);
-        dto.setSubRequestId(request.getSubRequestId());
-        dto.setQuotationType(QuotationType.ONLINE);
-        dto.setSubRequestStatus(sub.getStatus());
-        List<OnlineQuotationDetailDTO> detailDTOs = quotation.getDetails().stream()
-                .map(detail -> {
-                    OnlineQuotationDetailDTO dDto = new OnlineQuotationDetailDTO();
-                    dDto.setRequestItemId(detail.getRequestItem() != null ? detail.getRequestItem().getId().toString() : null);
-                    dDto.setBasePrice(detail.getBasePrice());
-                    dDto.setServiceFee(detail.getServiceFee());
-                    dDto.setTotalVNPrice(CalculationUtil.roundToNearestThousand(detail.getTotalVNDPrice()));
-                    dDto.setServiceRate(detail.getServiceRate());
-                    dDto.setExchangeRate(detail.getExchangeRate());
-                    for (OnlineQuotationDetailRequest d : request.getDetails()) {
-                        RequestItem item = requestItemBusiness.getById(UUID.fromString(d.getRequestItemId()))
-                                .orElseThrow(() -> AppException.builder()
-                                        .message("Không tìm thấy request item: " + d.getRequestItemId())
-                                        .code(404)
-                                        .build());
-                        dDto.setQuantity(item.getQuantity());
-                    }
-                    return dDto;
-                })
-                .toList();
-
-        dto.setDetails(detailDTOs);
-        PurchaseRequest purchaseRequest =
-                purchaseRequestBusiness.findPurchaseRequestBySubRequestId(subRequestId);
-        purchaseRequest.setStatus(PurchaseRequestStatus.QUOTED);
-        purchaseRequest.getHistory().add(
-                new PurchaseRequestHistory(purchaseRequest,"Yêu cầu đã được báo giá")
-        );
-        purchaseRequestBusiness.update(purchaseRequest);
-
-        return dto;
+        catch (Exception e) {
+            log.error("createOnlineQuotation() - Exception: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
 
@@ -621,10 +632,11 @@ public class QuotationServiceImpl implements QuotationService {
             dto.setSubRequestStatus(SubRequestStatus.QUOTED);
             dto.setRecipient(input.getRecipient());
             dto.setRegion(region.toString());
-
+            SubRequest subRequest = subRequestBusiness.getById(subRequestId).get();
+            String quotationInfo = subRequest.getContactInfo().get(0).split(": ")[1];
+            sendNoti(purchaseRequest.getCustomer().getId(),"Báo giá mới cho yêu cầu mua hàng ", "Bạn có báo giá mới cho yêu cầu mua hàng từ " + quotationInfo + ". Vui lòng kiểm tra.");
             log.debug("createQuotation() - End | subRequestId: {}", input.getSubRequestId());
             return dto;
-
         } catch (Exception e) {
             log.error("createQuotation() - Exception: {}", e.getMessage());
             throw AppException.builder()
@@ -760,9 +772,19 @@ public class QuotationServiceImpl implements QuotationService {
         }
     }
 
-    private String sendNoti(UUID id, String title, String body) throws FirebaseMessagingException {
-        BatchResponse response = sendNotiService.sendNotiToUser(id, title, body);
-        return "Successfully sent message: " + response.getSuccessCount() + " messages";
+    private String sendNoti(UUID id, String title, String body) {
+        try {
+            log.debug("sendNoti() QuotationServiceImpl Start | userId: {}, title: {}, body: {}", id, title, body);
+            BatchResponse response = sendNotiService.sendNotiToUser(id, title, body);
+            log.debug("sendNoti() QuotationServiceImpl End | userId: {}, response: {}", id, response);
+            return "Successfully sent message: " + response.getSuccessCount() + " messages";
+        } catch (FirebaseMessagingException ex) {
+            log.warn("sendNoti() QuotationServiceImpl FirebaseMessagingException | message: {}", ex.getMessage());
+            return "Failed to send message: " + ex.getMessage();
+        } catch (Exception e) {
+            log.error("sendNoti() QuotationServiceImpl Exception | message: {}", e.getMessage());
+            throw e;
+        }
     }
 
 }
