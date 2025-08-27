@@ -189,44 +189,59 @@ public class HsCodeServiceImpl implements HsCodeService {
 
 
 
-        @Override
-        public MessageResponse importHsCodeCSV(MultipartFile file) {
-            log.debug("Start Import HSCode CSV: {}", file.getOriginalFilename());
+    @Override
+    public MessageResponse importHsCodeCSV(MultipartFile file) {
+        log.debug("Start Import HSCode CSV: {}", file.getOriginalFilename());
 
-            try (
-                    BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));
-                    CSVParser csvParser = new CSVParser(br, CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim())
-            ) {
-                List<HsCode> newParse = new ArrayList<>();
+        try (
+                BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));
+                CSVParser csvParser = new CSVParser(br, CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim())
+        ) {
+            List<HsCode> newParse = new ArrayList<>();
+            List<String> duplicates = new ArrayList<>();
 
-                for (CSVRecord csvRecord : csvParser) {
-                    HsCodeDTO hsCode = HsCodeDTO.builder()
-                            .hsCode(csvRecord.get("hsCode"))
-                            .parentCode(csvRecord.get("parentCode"))
-                            .unit(csvRecord.get("unit"))
-                            .description(csvRecord.get("description"))
-                            .build();
+            for (CSVRecord csvRecord : csvParser) {
+                HsCodeDTO hsCode = HsCodeDTO.builder()
+                        .hsCode(csvRecord.get("hsCode"))
+                        .parentCode(csvRecord.get("parentCode"))
+                        .unit(csvRecord.get("unit"))
+                        .description(csvRecord.get("description"))
+                        .build();
 
-                    HsCode addHsCode = modelMapper.map(hsCode, HsCode.class);
+                HsCode addHsCode = modelMapper.map(hsCode, HsCode.class);
+
+                boolean exists = hsCodeBusiness.existByHsCode(addHsCode.getHsCode());
+                if (exists) {
+                    duplicates.add(addHsCode.getHsCode());
+                } else {
                     newParse.add(addHsCode);
                 }
-
-                hsCodeBusiness.saveAll(newParse);
-
-                log.debug("End Import HSCode CSV: {} rows imported", newParse.size());
-
-                return MessageResponse.builder()
-                        .message("Success Import HSCode")
-                        .isSuccess(true)
-                        .build();
-            } catch (Exception e) {
-                log.error("Error Import HSCode CSV: {}", e.getMessage());
-                return MessageResponse.builder()
-                        .message("Error Import HSCode: " + e.getMessage())
-                        .isSuccess(false)
-                        .build();
             }
+            if (!newParse.isEmpty()) {
+                hsCodeBusiness.saveAll(newParse);
+            }
+
+            log.debug("End Import HSCode CSV: {} rows imported, {} duplicates",
+                    newParse.size(), duplicates.size());
+
+            String message = "Imported: " + newParse.size() + " | Duplicates: " + duplicates.size();
+            if (!duplicates.isEmpty()) {
+                message += " | Duplicate hsCodes: " + String.join(", ", duplicates);
+            }
+
+            return MessageResponse.builder()
+                    .message(message)
+                    .isSuccess(true)
+                    .build();
+        } catch (Exception e) {
+            log.error("Error Import HSCode CSV: {}", e.getMessage());
+            return MessageResponse.builder()
+                    .message("Error Import HSCode: " + e.getMessage())
+                    .isSuccess(false)
+                    .build();
         }
+    }
+
 
 
 
