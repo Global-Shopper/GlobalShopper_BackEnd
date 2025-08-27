@@ -28,4 +28,5 @@ public class URLConstant {
     public static final String VARIANT = "variant";
     public static final String SUB_REQUEST = "sub-request";
     public static final String BUSINESS = "business-manager";
+    public static final String FCM = "fcm";
 }
