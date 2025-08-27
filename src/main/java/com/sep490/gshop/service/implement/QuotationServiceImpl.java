@@ -1,5 +1,7 @@
 package com.sep490.gshop.service.implement;
 
+import com.google.firebase.messaging.BatchResponse;
+import com.google.firebase.messaging.FirebaseMessagingException;
 import com.sep490.gshop.business.*;
 import com.sep490.gshop.common.enums.PurchaseRequestStatus;
 import com.sep490.gshop.common.enums.QuotationType;
@@ -35,6 +37,7 @@ import java.util.*;
 @Service
 public class QuotationServiceImpl implements QuotationService {
     private final PurchaseRequestBusiness purchaseRequestBusiness;
+    private final SendNotiService sendNotiService;
     private QuotationBusiness quotationBusiness;
     private SubRequestBusiness subRequestBusiness;
     private RequestItemBusiness requestItemBusiness;
@@ -48,7 +51,7 @@ public class QuotationServiceImpl implements QuotationService {
     @Autowired
     public QuotationServiceImpl(QuotationBusiness quotationBusiness, SubRequestBusiness subRequestBusiness, RequestItemBusiness requestItemBusiness,
                                 TaxRateBusiness taxRateBusiness, HsCodeBusiness hsCodeBusiness, ModelMapper modelMapper
-    , TaxRateService taxRateService, ExchangeRateService exchangeRateService, PurchaseRequestBusiness purchaseRequestBusiness, BusinessManagerBusiness businessManagerBusiness) {
+    , TaxRateService taxRateService, ExchangeRateService exchangeRateService, PurchaseRequestBusiness purchaseRequestBusiness, BusinessManagerBusiness businessManagerBusiness, SendNotiService sendNotiService) {
         this.quotationBusiness = quotationBusiness;
         this.subRequestBusiness = subRequestBusiness;
         this.requestItemBusiness = requestItemBusiness;
@@ -59,6 +62,7 @@ public class QuotationServiceImpl implements QuotationService {
         this.exchangeRateService = exchangeRateService;
         this.purchaseRequestBusiness = purchaseRequestBusiness;
         this.businessManagerBusiness = businessManagerBusiness;
+        this.sendNotiService = sendNotiService;
     }
     @PostConstruct
     public void init() {
@@ -197,6 +201,10 @@ public class QuotationServiceImpl implements QuotationService {
         dto.setExpiredDate(input.getExpiredDate());
         dto.setRegion(region.toString());
         dto.setCurrency(input.getCurrency());
+        PurchaseRequest purchaseRequest = purchaseRequestBusiness.findPurchaseRequestBySubRequestId(subRequestId);
+        SubRequest subRequest = subRequestBusiness.getById(subRequestId).get();
+        String quotationInfo = subRequest.getContactInfo().get(0).split(": ")[1];
+        //sendNoti(purchaseRequest.getCustomer().getId(),"Báo giá mới cho yêu cầu mua hàng ", "Bạn có báo giá mới cho yêu cầu mua hàng từ " + quotationInfo + ". Vui lòng kiểm tra.");
         return dto;
     }
 
@@ -264,7 +272,7 @@ public class QuotationServiceImpl implements QuotationService {
 
     @Override
     @Transactional
-    public OnlineQuotationDTO createOnlineQuotation(@Valid OnlineQuotationRequest request) {
+    public OnlineQuotationDTO createOnlineQuotation(@Valid OnlineQuotationRequest request){
         log.debug("createOnlineQuotation() - Start | subRequestId: {}", request.getSubRequestId());
 
         UUID subRequestId = UUID.fromString(request.getSubRequestId());
@@ -430,7 +438,6 @@ public class QuotationServiceImpl implements QuotationService {
         );
         purchaseRequestBusiness.update(purchaseRequest);
 
-        log.debug("createOnlineQuotation() - End | subRequestId: {}", request.getSubRequestId());
         return dto;
     }
 
@@ -753,5 +760,9 @@ public class QuotationServiceImpl implements QuotationService {
         }
     }
 
+    private String sendNoti(UUID id, String title, String body) throws FirebaseMessagingException {
+        BatchResponse response = sendNotiService.sendNotiToUser(id, title, body);
+        return "Successfully sent message: " + response.getSuccessCount() + " messages";
+    }
 
 }
