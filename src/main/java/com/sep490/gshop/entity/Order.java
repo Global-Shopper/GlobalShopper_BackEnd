@@ -64,7 +64,7 @@ public class Order extends BaseEntity {
     private List<OrderHistory> history = new ArrayList<>();
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @OrderBy("eventTime DESC")
+    @OrderBy("createdAt DESC")
     private List<ShipmentTrackingEvent> shipmentTrackingEvents = new ArrayList<>();
 
 }
