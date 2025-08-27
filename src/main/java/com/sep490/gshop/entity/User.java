@@ -8,6 +8,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "users",
@@ -36,6 +38,9 @@ public class User extends BaseEntity {
 
     @Column(columnDefinition = "TEXT")
     private String avatar;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<FCMToken> tokens;
 
     private boolean isActive = true;
 
