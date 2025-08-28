@@ -7,11 +7,12 @@ import com.sep490.gshop.entity.FCMToken;
 import com.sep490.gshop.entity.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -50,18 +51,19 @@ public class SendNotiService {
         return FirebaseMessaging.getInstance().sendEachForMulticast(message);
     }
 
-    public boolean sendNotiToUser(UUID id, String title, String body) {
+    @Async
+    public CompletableFuture<Boolean> sendNotiToUser(UUID id, String title, String body) {
         try {
             User user = userBusiness.getById(id).orElseThrow(() -> new AppException(404, "Không tìm thấy người dùng"));
             if (user.getTokens() == null || user.getTokens().isEmpty()) {
-                return true;
+                return CompletableFuture.completedFuture(true);
             }
             List<String> tokens = user.getTokens().stream().filter(token -> token != null && token.getIsActive()).map(FCMToken::getToken).toList();
             sendNotificationToTokens(tokens, title, body);
-            return true;
+            return CompletableFuture.completedFuture(true);
         } catch (Exception e) {
             log.error("Error sending notification to user {}: {}", id, e.getMessage());
-            return false;
+            return CompletableFuture.completedFuture(false);
         }
     }
 }
