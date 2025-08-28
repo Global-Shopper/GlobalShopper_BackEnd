@@ -35,4 +35,18 @@ public class FCMServiceImpl implements FCMService {
             throw e;
         }
     }
+
+    @Override
+    public MessageResponse deleteToken(FCMTokenRequest request) {
+        try {
+            log.debug("deleteToken() FCMController Start | request: {}", request);
+            UUID customerId = AuthUtils.getCurrentUserId();
+            MessageResponse response = fcmBusiness.deleteToken(request, customerId);
+            log.debug("deleteToken() End | response: {}", response);
+            return response;
+        } catch (Exception e) {
+            log.error("Error in deleteToken() FCMServiceImpl: {}", e.getMessage());
+            throw e;
+        }
+    }
 }
