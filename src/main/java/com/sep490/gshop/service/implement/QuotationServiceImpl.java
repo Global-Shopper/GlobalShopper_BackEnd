@@ -14,6 +14,7 @@ import com.sep490.gshop.payload.request.quotation.*;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.PurchaseRequestModel;
 import com.sep490.gshop.payload.response.TaxCalculationResult;
+import com.sep490.gshop.service.EmailService;
 import com.sep490.gshop.service.ExchangeRateService;
 import com.sep490.gshop.service.QuotationService;
 import com.sep490.gshop.service.TaxRateService;
@@ -26,6 +27,7 @@ import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.context.Context;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -45,10 +47,13 @@ public class QuotationServiceImpl implements QuotationService {
     private ExchangeRateService exchangeRateService;
     private CalculationUtil calculationUtil;
     private BusinessManagerBusiness businessManagerBusiness;
+    private EmailService emailService;
+
     @Autowired
     public QuotationServiceImpl(QuotationBusiness quotationBusiness, SubRequestBusiness subRequestBusiness, RequestItemBusiness requestItemBusiness,
                                 TaxRateBusiness taxRateBusiness, HsCodeBusiness hsCodeBusiness, ModelMapper modelMapper
-    , TaxRateService taxRateService, ExchangeRateService exchangeRateService, PurchaseRequestBusiness purchaseRequestBusiness, BusinessManagerBusiness businessManagerBusiness, SendNotiService sendNotiService) {
+    , TaxRateService taxRateService, ExchangeRateService exchangeRateService, PurchaseRequestBusiness purchaseRequestBusiness, BusinessManagerBusiness businessManagerBusiness, SendNotiService sendNotiService
+    , EmailService emailService) {
         this.quotationBusiness = quotationBusiness;
         this.subRequestBusiness = subRequestBusiness;
         this.requestItemBusiness = requestItemBusiness;
@@ -60,6 +65,7 @@ public class QuotationServiceImpl implements QuotationService {
         this.purchaseRequestBusiness = purchaseRequestBusiness;
         this.businessManagerBusiness = businessManagerBusiness;
         this.sendNotiService = sendNotiService;
+        this.emailService = emailService;
     }
     @PostConstruct
     public void init() {
@@ -257,6 +263,21 @@ public class QuotationServiceImpl implements QuotationService {
                 purchaseInfo = subRequest.getEcommercePlatform();
             }
             sendNoti(purchaseRequest.getCustomer().getId(),"Yêu cầu của bạn đã bị từ chối", "Yêu cầu mua hàng từ " + purchaseInfo + " đã bị từ chối. Vui lòng kiểm tra.");
+
+
+            String subject = "Yêu cầu mua hàng đã bị từ chối";
+            Context context = new Context();
+            context.setVariable("name", purchaseRequest.getCustomer().getName());
+            context.setVariable("reason", rejectQuotationRequest.getRejectionReason());
+
+            emailService.sendEmailTemplate(
+                    purchaseRequest.getCustomer().getEmail(),
+                    subject,
+                    "Đơn hàng từ Global Shopper đã bị từ chối",
+                    "reject-quotation-mail.html",
+                    context
+            );
+
             log.debug("rejectQuotation() QuotationServiceImpl End | subRequestId: {}",
                     updatedSubRequest.getId());
             return MessageResponse.builder()
@@ -271,6 +292,7 @@ public class QuotationServiceImpl implements QuotationService {
                     .build();
         }
     }
+
 
     @Override
     @Transactional
@@ -361,7 +383,6 @@ public class QuotationServiceImpl implements QuotationService {
             }
             quotation.setDetails(detailEntities);
 
-            // 6. Tính totalPriceEstimate từ totalPriceBeforeExchange (convert 1 lần)
             double totalPriceEstimate = 0;
             double shippingEstimate = request.getShippingEstimate();
 
@@ -369,8 +390,6 @@ public class QuotationServiceImpl implements QuotationService {
                 BigDecimal convertedShip = calculationUtil.convertToVND(BigDecimal.valueOf(request.getShippingEstimate()), request.getCurrency());
                 shippingEstimate = convertedShip.doubleValue();
             }
-
-            // = Tổng VNĐ cuối cùng =
             double otherFeesVND = 0.0;
             List<Fee> feeEntities =new ArrayList<>();
             if (request.getFees() != null) {
@@ -390,24 +409,14 @@ public class QuotationServiceImpl implements QuotationService {
                     }
                 }
             }
-
             totalPriceEstimate = totalItemsVNDPrice + otherFeesVND;
-
             quotation.setShippingEstimate(shippingEstimate);
             quotation.setTotalPriceEstimate(CalculationUtil.roundToNearestThousand(totalPriceEstimate));
             quotation.setCurrency(request.getCurrency());
-
-    // lưu luôn danh sách object fees xuống DB
             quotation.setFees(feeEntities);
-
-            // 7. Lưu quotation
             quotationBusiness.create(quotation);
-
-            // 8. Update trạng thái subRequest
             sub.setStatus(SubRequestStatus.QUOTED);
             subRequestBusiness.update(sub);
-
-            // 9. Map trả về DTO (map thủ công phần details)
             OnlineQuotationDTO dto = modelMapper.map(quotation, OnlineQuotationDTO.class);
             dto.setSubRequestId(request.getSubRequestId());
             dto.setQuotationType(QuotationType.ONLINE);
@@ -432,7 +441,6 @@ public class QuotationServiceImpl implements QuotationService {
                         return dDto;
                     })
                     .toList();
-
             dto.setDetails(detailDTOs);
             PurchaseRequest purchaseRequest =
                     purchaseRequestBusiness.findPurchaseRequestBySubRequestId(subRequestId);
@@ -444,6 +452,20 @@ public class QuotationServiceImpl implements QuotationService {
             SubRequest subRequest = subRequestBusiness.getById(subRequestId).get();
             String quotationInfo = subRequest.getEcommercePlatform();
             sendNoti(purchaseRequest.getCustomer().getId(),"Báo giá mới cho yêu cầu mua hàng ", "Bạn có báo giá mới cho yêu cầu mua hàng từ " + quotationInfo + ". Vui lòng kiểm tra.");
+
+            String subject = "Báo giá mới cho yêu cầu mua hàng";
+            Context context = new Context();
+            context.setVariable("name", purchaseRequest.getCustomer().getName());
+            context.setVariable("totalPrice", CalculationUtil.roundToNearestThousand(quotation.getTotalPriceEstimate()) + " VND");
+            String quotationUrl = "https://gshop.io.vn/account-center/purchase-request/" + purchaseRequest.getId();
+            context.setVariable("quotationUrl", quotationUrl);
+
+            emailService.sendEmailTemplate(
+                    purchaseRequest.getCustomer().getEmail(),
+                    subject,
+                    "Bạn có báo giá mới từ Global Shopper",
+                    "online-quotation-mail.html",
+                    context);
             return dto;
         }
         catch (Exception e) {
@@ -635,6 +657,21 @@ public class QuotationServiceImpl implements QuotationService {
             SubRequest subRequest = subRequestBusiness.getById(subRequestId).get();
             String quotationInfo = subRequest.getContactInfo().get(0).split(": ")[1];
             sendNoti(purchaseRequest.getCustomer().getId(),"Báo giá mới cho yêu cầu mua hàng ", "Bạn có báo giá mới cho yêu cầu mua hàng từ " + quotationInfo + ". Vui lòng kiểm tra.");
+
+            String subject = "Báo giá mới cho yêu cầu mua hàng";
+            Context context = new Context();
+            context.setVariable("name", purchaseRequest.getCustomer().getName());
+            context.setVariable("totalPrice", CalculationUtil.roundToNearestThousand(quotation.getTotalPriceEstimate()) + " VND");
+            String quotationUrl = "https://gshop.io.vn/account-center/purchase-request/" + purchaseRequest.getId();
+            context.setVariable("quotationUrl", quotationUrl);
+
+            emailService.sendEmailTemplate(
+                    purchaseRequest.getCustomer().getEmail(),
+                    subject,
+                    "Bạn có báo giá mới từ Global Shopper",
+                    "online-quotation-mail.html",
+                    context);
+
             log.debug("createQuotation() - End | subRequestId: {}", input.getSubRequestId());
             return dto;
         } catch (Exception e) {
