@@ -63,95 +63,117 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
         this.emailService = emailService;
     }
 
-
     @Override
     public PurchaseRequestResponse<List<RequestItemDTO>> createOnlinePurchaseRequest(OnlineRequest onlineRequest) {
         try {
             log.debug("createPurchaseRequest() PurchaseRequestServiceImpl start | request : {}", onlineRequest);
+
+            // 1. Lấy Shipping Address
             ShippingAddress shippingAddress = shippingAddressBusiness.getById(UUID.fromString(onlineRequest.getShippingAddressId()))
                     .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND.value(), "Không tìm thấy địa chỉ nhận hàng"));
-            User user = userBusiness.getById(AuthUtils.getCurrentUserId()).orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND.value(), "Không tìm thấy người dùng hiện tại"));
 
-            if (user instanceof Customer customer) {
-                PurchaseRequest purchaseRequest = PurchaseRequest.builder()
-                        .shippingAddress(new AddressSnapshot(shippingAddress))
-                        .customer(customer)
-                        .status(PurchaseRequestStatus.SENT)
-                        .build();
-                purchaseRequest.setAdmin(null);
-                purchaseRequest.setExpiredAt(System.currentTimeMillis() + 24 * 60 * 60 * 1000);
+            // 2. Lấy current user
+            User user = userBusiness.getById(AuthUtils.getCurrentUserId())
+                    .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND.value(), "Không tìm thấy người dùng hiện tại"));
 
-                List<RequestItem> allItems = new ArrayList<>();
-                Map<String, List<ItemRequestModel>> groupedByPlatform = onlineRequest.getRequestItems().stream()
-                        .collect(Collectors.groupingBy(item -> {
-                            String p = item.getEcommercePlatform();
-                            return (p == null || p.isBlank()) ? "Unknown" : p;
-                        }));
-                for (Map.Entry<String, List<ItemRequestModel>> entry : groupedByPlatform.entrySet()) {
-                    String platform = entry.getKey();
-                    List<ItemRequestModel> items = entry.getValue();
-                    if (platform != null && items.size() == 1) {
-                        SubRequest subRequest = SubRequest.builder()
-                                .ecommercePlatform(platform)
-                                .seller(items.get(0).getSeller()).status(SubRequestStatus.PENDING)
-                                .build();
-                        //Có 1 sản phẩm 1 platform -> lên cho ae con subRequest ngay
-                        RequestItem requestItem = RequestItem.builder()
-                                .productName(items.get(0).getProductName())
-                                .purchaseRequest(purchaseRequest)
-                                .productURL(items.get(0).getProductURL())
-                                .quantity(items.get(0).getQuantity())
-                                .description(items.get(0).getDescription())
-                                .variants(items.get(0).getVariants())
-                                .images(items.get(0).getImages())
-                                .ecommercePlatform(platform)
-                                .subRequest(subRequest)
-                                .build();
-                        allItems.add(requestItem);
-                    } else {
-                        //Platform null hoặc nhiều sản phẩm -> chỉ group, không tạo subRequest
-                        for (ItemRequestModel model : items) {
-                            RequestItem requestItem = RequestItem.builder()
-                                    .productName(model.getProductName())
-                                    .purchaseRequest(purchaseRequest)
-                                    .productURL(model.getProductURL())
-                                    .quantity(model.getQuantity())
-                                    .description(model.getDescription())
-                                    .variants(model.getVariants())
-                                    .images(model.getImages())
-                                    .ecommercePlatform(platform)
-                                    .build();
-                            allItems.add(requestItem);
-                        }
-                    }
-                }
-                for(RequestItem item : allItems) {
-                    if(item.getEcommercePlatform().equals("Unknown")) {
-                        item.setEcommercePlatform(null);
-                    }
-                }
-                purchaseRequest.setRequestItems(allItems);
-                purchaseRequest.setRequestType(RequestType.ONLINE);
-                PurchaseRequestHistory history = new PurchaseRequestHistory(purchaseRequest,"Yêu cầu đã được tạo");
-                purchaseRequest.setHistory(List.of(history));
-
-                purchaseRequest = purchaseRequestBusiness.create(purchaseRequest);
-
-                PurchaseRequestResponse<List<RequestItemDTO>> response = modelMapper.map(purchaseRequest, PurchaseRequestResponse.class);
-                List<RequestItemDTO> data = purchaseRequest.getRequestItems().stream()
-                        .map(item -> modelMapper.map(item, RequestItemDTO.class))
-                        .toList();
-                response.setData(data);
-                response.setStatus(PurchaseRequestStatus.SENT.toString());
-                log.debug("createPurchaseRequest() PurchaseRequestServiceImpl end | response : {}", response);
-                return response;
-            } else {
+            if (!(user instanceof Customer customer)) {
                 throw new AppException(HttpStatus.BAD_REQUEST.value(), "Người dùng hiện tại không phải là khách hàng");
             }
+
+            // 3. Tạo PurchaseRequest
+            PurchaseRequest purchaseRequest = PurchaseRequest.builder()
+                    .shippingAddress(new AddressSnapshot(shippingAddress))
+                    .customer(customer)
+                    .status(PurchaseRequestStatus.SENT)
+                    .requestType(RequestType.ONLINE)
+                    .expiredAt(System.currentTimeMillis() + 24 * 60 * 60 * 1000) // 24h
+                    .build();
+            purchaseRequest.setAdmin(null);
+
+            List<RequestItem> items = onlineRequest.getRequestItems().stream()
+                    .map(x -> modelMapper.map(x, RequestItem.class))
+                    .toList();
+
+            List<SubRequest> subRequests = buildSubRequests(items, purchaseRequest);
+
+            // 6. Gom tất cả RequestItem từ các SubRequest
+            List<RequestItem> allItems = new ArrayList<>(subRequests.stream()
+                    .flatMap(sr -> sr.getRequestItems().stream())
+                    .toList());
+            for (RequestItem item : items) {
+                if (!allItems.contains(item)) {
+                    allItems.add(item);
+                }
+            }
+
+            purchaseRequest.setRequestItems(allItems);
+
+            PurchaseRequestHistory history = new PurchaseRequestHistory(purchaseRequest, "Yêu cầu đã được tạo");
+            purchaseRequest.setHistory(List.of(history));
+
+            purchaseRequest = purchaseRequestBusiness.create(purchaseRequest);
+            PurchaseRequestResponse<List<RequestItemDTO>> response = modelMapper.map(purchaseRequest, PurchaseRequestResponse.class);
+            List<RequestItemDTO> data = purchaseRequest.getRequestItems().stream()
+                    .map(item -> modelMapper.map(item, RequestItemDTO.class))
+                    .toList();
+            response.setData(data);
+            response.setStatus(PurchaseRequestStatus.SENT.toString());
+
+            log.debug("createPurchaseRequest() PurchaseRequestServiceImpl end | response : {}", response);
+            return response;
+
         } catch (Exception e) {
-            log.error("createPurchaseRequest() PurchaseRequestServiceImpl error | message : {}", e.getMessage());
+            log.error("createPurchaseRequest() PurchaseRequestServiceImpl error | message : {}", e.getMessage(), e);
             throw e;
         }
+    }
+
+    public record SellerPlatformKey(String platform, String seller) {}
+    private List<SubRequest> buildSubRequests(List<RequestItem> items, PurchaseRequest purchaseRequest) {
+        Map<SellerPlatformKey, List<RequestItem>> grouped = items.stream()
+                .collect(Collectors.groupingBy(item -> {
+                    String platform = (item.getEcommercePlatform() == null || item.getEcommercePlatform().isBlank()) ? null : item.getEcommercePlatform();
+                    String seller = (item.getSeller() == null || item.getSeller().isBlank())
+                            ? null
+                            : item.getSeller();
+
+                    return new SellerPlatformKey(platform, seller);
+                }));
+
+        List<SubRequest> subRequests = new ArrayList<>();
+        for (Map.Entry<SellerPlatformKey, List<RequestItem>> entry : grouped.entrySet()) {
+            SellerPlatformKey key = entry.getKey();
+            String platform = key.platform();
+            String seller = key.seller();
+
+            if (seller == null) {
+
+                for (RequestItem item : entry.getValue()) {
+                    item.setPurchaseRequest(purchaseRequest);
+                    item.setEcommercePlatform(platform);
+                    item.setSeller(null);
+                    item.setSubRequest(null);
+                }
+            } else {
+                SubRequest subRequest = SubRequest.builder()
+                        .ecommercePlatform(platform)
+                        .seller(seller)
+                        .status(SubRequestStatus.PENDING)
+                        .build();
+
+                for (RequestItem item : entry.getValue()) {
+                    item.setPurchaseRequest(purchaseRequest);
+                    item.setEcommercePlatform(platform);
+                    item.setSeller(seller);
+                    item.setSubRequest(subRequest);
+                }
+
+                subRequest.setRequestItems(entry.getValue());
+                subRequests.add(subRequest);
+            }
+        }
+
+        return subRequests;
     }
 
     @Override
@@ -661,7 +683,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
             context.setVariable("name", customer.getName());
             context.setVariable("email", customer.getEmail());
             context.setVariable("editUrl", editUrl);
-
+            context.setVariable("correctionNote", correctionNote);
             emailService.sendEmailTemplate(
                     customer.getEmail(),
                     "Yêu cầu bổ sung thông tin đơn hàng",

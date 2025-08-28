@@ -1,6 +1,7 @@
 package com.sep490.gshop.controller;
 
 import com.sep490.gshop.common.constants.URLConstant;
+import com.sep490.gshop.common.enums.TransactionType;
 import com.sep490.gshop.payload.dto.TransactionDTO;
 import com.sep490.gshop.service.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -60,4 +61,27 @@ public class TransactionController {
         log.info("GET /transactions/between-dates - total transactions: {}", transactions.getTotalElements());
         return ResponseEntity.ok(transactions);
     }
+
+    @GetMapping("/filter")
+    @Operation(summary = "Lấy danh sách giao dịch theo khoảng thời gian, loại giao dịch (phân trang & sắp xếp)")
+    @PreAuthorize("hasRole('CUSTOMER') or hasRole('BUSINESS_MANAGER') or hasRole('ADMIN')")
+
+    public ResponseEntity<Page<TransactionDTO>> getTransactions(
+            @RequestParam long from,
+            @RequestParam long to,
+            @RequestParam(required = false) TransactionType type,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @RequestParam(value = "direction", defaultValue = "DESC") Sort.Direction direction) {
+
+        log.info("GET /api/transactions/filter - Bắt đầu lấy giao dịch: from={}, to={}, type={}, page={}, size={}, direction={}",
+                from, to, type, page, size, direction);
+
+        Page<TransactionDTO> transactions = transactionService.getByCurrentUserIsNull(from, to, type, page, size, direction);
+
+        log.info("GET /api/transactions/filter - Kết thúc, tổng số giao dịch: {}", transactions.getTotalElements());
+
+        return ResponseEntity.ok(transactions);
+    }
+
 }
