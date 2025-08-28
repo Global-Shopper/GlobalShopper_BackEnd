@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8" />
-  <title>Yêu cầu bổ sung thông tin đơn hàng - Global Shopper</title>
+  <title>Đơn hàng bị từ chối - Global Shopper</title>
   <style>
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
@@ -23,8 +23,13 @@
     .header {
       display: flex;
       align-items: center;
-      justify-content: space-evenly;
-      margin-bottom: 32px;
+      justify-content: center;
+      margin-bottom: 28px;
+    }
+    .header-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
     .logo img {
       width: 68px;
@@ -32,12 +37,9 @@
       object-fit: contain;
     }
     .title {
-      font-size: 2.3rem;
+      font-size: 2rem;
       font-weight: bold;
-      color: #1976d2;
-      letter-spacing: 1px;
-      line-height: 1;
-      margin-right: 40px;
+      color: #d32f2f;
     }
     .greeting {
       font-size: 1.25rem;
@@ -45,30 +47,21 @@
       font-weight: 500;
     }
     .content {
-      font-size: 1.13rem;
-      margin-bottom: 24px;
+      font-size: 1.1rem;
+      margin-bottom: 18px;
       line-height: 1.5;
     }
-    .button-container {
-      text-align: center;
-      margin-bottom: 32px;
-    }
-    .action-button {
-      background-color: #1976d2;
-      color: white !important;
-      font-size: 1.2rem;
-      font-weight: bold;
-      padding: 14px 36px;
-      border-radius: 10px;
-      text-decoration: none;
-      display: inline-block;
-      box-shadow: 0 4px 12px rgba(25, 118, 210, 0.4);
-      transition: background-color 0.3s ease;
-    }
-    .action-button:hover {
-      background-color: #145ea8;
+    .reason-box {
+      background: #ffebee;
+      border-left: 4px solid #c62828;
+      padding: 14px;
+      margin: 16px 0;
+      border-radius: 8px;
+      font-style: italic;
+      color: #b71c1c;
     }
     .footer {
+      margin-top: 36px;
       font-size: 1rem;
       color: #888;
       text-align: center;
@@ -86,40 +79,42 @@
     }
     @media (max-width: 600px) {
       .container { padding: 18px 8px 16px 8px; }
-      .header { flex-direction: column; }
-      .logo { margin-right: 0; margin-bottom: 10px; }
-      .title { font-size: 1.6rem;}
-      .action-button { font-size: 1rem; padding: 12px 28px; }
+      .title { font-size: 1.5rem; }
+      .logo img { width: 52px; height: 52px; }
     }
   </style>
 </head>
 <body>
 <div class="container">
+  <!-- Header with logo -->
   <div class="header">
-    <div class="logo">
-      <img src="https://res.cloudinary.com/gshop/image/upload/v1752470184/IMG_2490_ydnotw.jpg" alt="Global Shopper Logo" />
+    <div class="header-container">
+      <div class="logo">
+        <img src="https://res.cloudinary.com/gshop/image/upload/v1752470184/IMG_2490_ydnotw.jpg" alt="Global Shopper Logo" />
+      </div>
+      <div class="title">Yêu cầu mua hàng bị từ chối</div>
     </div>
-    <div class="title">Yêu cầu bổ sung thông tin đơn hàng</div>
   </div>
+
+  <!-- Greeting -->
   <div class="greeting">
     Xin chào <span th:text="${name}">Khách hàng</span>,
   </div>
+
+  <!-- Main content -->
   <div class="content">
-    Chúng tôi vừa gửi một yêu cầu bổ sung thông tin liên quan đến đơn hàng của bạn tại <b>Global Shopper</b>.<br/>
-    Nội dung cần chỉnh sửa bao gồm:<br/>
-    <div style="margin:12px 0; padding:12px; background:#f9fbe7; border-left:4px solid #fdd835; font-style:italic;">
-      <span th:text="${correctionNote}">Ví dụ: Vui lòng bổ sung link sản phẩm rõ ràng hơn</span>
-    </div>
-    Vui lòng nhấn nút bên dưới để xem chi tiết và cập nhật thông tin cần thiết.
+    Rất tiếc, yêu cầu mua hàng từ <b>Global Shopper</b>. của bạn đã bị từ chối.
   </div>
-  <div class="button-container">
-    <a th:href="${editUrl}" class="action-button" target="_blank" rel="noopener noreferrer">
-      Bấm để bổ sung thông tin đơn hàng
-    </a>
+  <div class="content">Lý do từ chối:</div>
+  <div class="reason-box" th:text="${reason}">
+    Ví dụ: Sản phẩm không khả dụng hoặc thông tin chưa chính xác.
   </div>
+
   <div class="content">
-    Nếu bạn không nhận được yêu cầu này, hoặc không có thay đổi gì, vui lòng bỏ qua email này hoặc liên hệ bộ phận hỗ trợ của chúng tôi.
+    Nếu bạn có thắc mắc, vui lòng liên hệ bộ phận hỗ trợ của chúng tôi để được giải đáp.
   </div>
+
+  <!-- Footer -->
   <div class="footer">
     <div class="warning">Đây là email tự động, vui lòng không trả lời.</div>
     <div style="margin-top:10px; font-size:0.95rem; color:#444;">
