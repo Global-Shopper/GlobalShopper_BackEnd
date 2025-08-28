@@ -116,7 +116,7 @@ public class ShippingServiceImpl implements ShippingService {
             OrderHistory orderHistory = new OrderHistory(order, order.getStatus().getDescription());
             order.getHistory().add(orderHistory);
             orderBusiness.update(order);
-            sendNotiService.sendNotiToUser(order.getCustomer().getId(), "Cập nhật trạng thái đơn hàng", event.getEventDescription());
+            sendNotiService.sendNotiToTokens(order.getCustomer().getFCMTokenList(), "Cập nhật trạng thái đơn hàng", event.getEventDescription());
             log.debug("handleFedexWebhook() ShippingServiceImpl End | trackingNumber: {}", trackingNumber);
             return new MessageResponse("Order status updated successfully for tracking number: " + trackingNumber, true);
         } catch (Exception e) {

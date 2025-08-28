@@ -66,4 +66,25 @@ public class SendNotiService {
             return CompletableFuture.completedFuture(false);
         }
     }
+
+    @Async
+    public CompletableFuture<Boolean> sendNotiToTokens(List<String> tokens, String title, String body) {
+        try {
+            if (tokens == null || tokens.isEmpty()) {
+                return CompletableFuture.completedFuture(true);
+            }
+            MulticastMessage message = MulticastMessage.builder()
+                    .addAllTokens(tokens)
+                    .setNotification(Notification.builder()
+                            .setTitle(title)
+                            .setBody(body)
+                            .build())
+                    .build();
+            FirebaseMessaging.getInstance().sendEachForMulticast(message);
+            return CompletableFuture.completedFuture(true);
+        } catch (Exception e) {
+            log.error("Error sending notification to tokens: {}", e.getMessage());
+            return CompletableFuture.completedFuture(false);
+        }
+    }
 }
