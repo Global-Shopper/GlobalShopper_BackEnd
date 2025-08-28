@@ -1,6 +1,7 @@
 package com.sep490.gshop.business.implement;
 
 import com.sep490.gshop.business.TransactionBusiness;
+import com.sep490.gshop.common.enums.TransactionType;
 import com.sep490.gshop.entity.Transaction;
 import com.sep490.gshop.repository.TransactionRepository;
 import org.springframework.data.domain.Page;
@@ -16,8 +17,13 @@ public class TransactionBusinessImpl extends BaseBusinessImpl<Transaction, Trans
     }
 
     @Override
-    public Page<Transaction> findTransactionsByCustomerId(UUID customerId, Pageable pageable) {
+    public Page<Transaction> findTransactionsByCustomerIdPageable(UUID customerId, Pageable pageable) {
         return repository.findAllByCustomerId(customerId, pageable);
+    }
+
+    @Override
+    public Page<Transaction> findTransactionsByCustomerId(UUID customerId, long from, long to, TransactionType type, Pageable pageable) {
+        return repository.findAllByCustomerIdAndCreatedAtBetweenAndType(customerId, from, to, type, pageable);
     }
 
     @Override
@@ -43,5 +49,10 @@ public class TransactionBusinessImpl extends BaseBusinessImpl<Transaction, Trans
     @Override
     public Transaction findByCustomerAndReferenceCode(UUID customerId, String referenceCode) {
         return repository.findByCustomerIdAndReferenceCode(customerId, referenceCode);
+    }
+
+    @Override
+    public Page<Transaction> findAllBetweenDatesAndFilterStatus(TransactionType type, Long startDate, Long endDate, Pageable pageable) {
+        return repository.findAllByTypeAndCreatedAtBetween(type, startDate, endDate, pageable);
     }
 }

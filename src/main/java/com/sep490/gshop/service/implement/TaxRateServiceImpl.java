@@ -231,6 +231,8 @@ public class TaxRateServiceImpl implements TaxRateService {
             List<String> duplicateParse = new ArrayList<>();
             for (CSVRecord csvRecord : csvParser) {
                 TaxRate tax = new TaxRate();
+
+
                 tax.setTaxName(csvRecord.get("id"));
                 if(csvRecord.get("id")==null) {
                     tax.setId(UUID.randomUUID());
@@ -247,9 +249,9 @@ public class TaxRateServiceImpl implements TaxRateService {
                     tax.setHsCode(hsCode);
                 }
                 tax.setTaxName(csvRecord.get("taxName"));
-                tax.setRate(Double.parseDouble(csvRecord.get("rate")));
+                double taxParse = Double.parseDouble(csvRecord.get("rate"));
                 boolean exists = taxRateBusiness.existsByHsCodeAndRegionAndTaxType(tax.getHsCode(), tax.getRegion(), tax.getTaxType());
-                if(exists) {
+                if(exists && tax.getRate().equals(taxParse)) {
                     duplicateParse.add(tax.getHsCode().getHsCode());
                 }else {
                     newParse.add(tax);
