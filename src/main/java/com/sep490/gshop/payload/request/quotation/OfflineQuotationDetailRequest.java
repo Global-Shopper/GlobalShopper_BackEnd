@@ -21,7 +21,8 @@ public class OfflineQuotationDetailRequest {
     private String hsCodeId;
 
 
-    @DecimalMin(value = "0.0", inclusive = false, message = "basePrice phải lớn hơn 0")
+    @DecimalMin(value = "0.1", inclusive = false, message = "basePrice phải lớn hơn 0")
+    @Positive(message = "basePrice phải lớn hơn 0")
     private double basePrice;
 
     @Size(max = 500, message = "Note không được vượt quá 500 ký tự")

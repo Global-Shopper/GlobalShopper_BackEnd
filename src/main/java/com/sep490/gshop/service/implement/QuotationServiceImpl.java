@@ -776,6 +776,7 @@ public class QuotationServiceImpl implements QuotationService {
         try {
             log.debug("sendNoti() QuotationServiceImpl Start | userId: {}, title: {}, body: {}", id, title, body);
             boolean response = sendNotiService.sendNotiToUser(id, title, body);
+
             log.debug("sendNoti() QuotationServiceImpl End | userId: {}, response: {}", id, response);
             return true;
         } catch (Exception e) {

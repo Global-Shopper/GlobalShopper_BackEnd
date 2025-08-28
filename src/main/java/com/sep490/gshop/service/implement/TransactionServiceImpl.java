@@ -2,6 +2,9 @@ package com.sep490.gshop.service.implement;
 
 import com.sep490.gshop.business.CustomerBusiness;
 import com.sep490.gshop.business.TransactionBusiness;
+import com.sep490.gshop.business.UserBusiness;
+import com.sep490.gshop.common.enums.TransactionType;
+import com.sep490.gshop.common.enums.UserRole;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.Transaction;
 import com.sep490.gshop.payload.dto.TransactionDTO;
@@ -24,15 +27,18 @@ public class TransactionServiceImpl implements TransactionService {
     private TransactionBusiness transactionBusiness;
     private CustomerBusiness customerBusiness;
     private ModelMapper modelMapper;
+    private UserBusiness userBusiness;
     @Autowired
     public TransactionServiceImpl(
             TransactionBusiness transactionBusiness,
             CustomerBusiness customerBusiness,
-            ModelMapper modelMapper
+            ModelMapper modelMapper,
+            UserBusiness userBusiness
     ){
         this.transactionBusiness = transactionBusiness;
         this.customerBusiness = customerBusiness;
         this.modelMapper = modelMapper;
+        this.userBusiness = userBusiness;
     }
     @Override
     public Page<TransactionDTO> getAll(int page, int size, Sort.Direction direction) {
@@ -67,7 +73,7 @@ public class TransactionServiceImpl implements TransactionService {
 
             Sort sort = Sort.by(direction, "createdAt");
             Pageable pageable = PageRequest.of(page, size, sort);
-            var transactions = transactionBusiness.findTransactionsByCustomerId(customerId, pageable);
+            var transactions = transactionBusiness.findTransactionsByCustomerIdPageable(customerId, pageable);
 
             log.debug("getByCurrentUser() End | customerId: {}, total transactions: {}", customerId, transactions.getTotalElements());
             return transactions.map(transaction -> modelMapper.map(transaction, TransactionDTO.class)) ;
@@ -92,5 +98,45 @@ public class TransactionServiceImpl implements TransactionService {
         }
     }
 
+    @Override
+    public Page<TransactionDTO> getByCurrentUserIsNull(
+            long from, long to, TransactionType type,
+            int page, int size, Sort.Direction direction) {
+
+        log.debug("Start getByCurrenUserIsNull: from={}, to={}, type={}, page={}, size={}, direction={}",
+                from, to, type, page, size, direction);
+
+        try {
+            var userId = AuthUtils.getCurrentUserId();
+            if (userId == null) {
+                throw AppException.builder()
+                        .message("Bạn cần đăng nhập để tiếp tục")
+                        .code(403)
+                        .build();
+            }
+
+            var currentUser = userBusiness.getByUserId(userId);
+            Sort sort = Sort.by(direction, "createdAt");
+            Pageable pageable = PageRequest.of(page, size, sort);
+
+            Page<TransactionDTO> transactionDTOs;
+            if (currentUser.getRole().equals(UserRole.CUSTOMER)) {
+                var transactions = transactionBusiness.findTransactionsByCustomerId(
+                        currentUser.getId(), from, to, type, pageable);
+                transactionDTOs = transactions.map(tx -> modelMapper.map(tx, TransactionDTO.class));
+            } else {
+                var transactions = transactionBusiness.findAllBetweenDatesAndFilterStatus(
+                        type, from, to, pageable);
+                transactionDTOs = transactions.map(tx -> modelMapper.map(tx, TransactionDTO.class));
+            }
+
+            log.debug("End getByCurrenUserIsNull: {} transactions found", transactionDTOs.getTotalElements());
+            return transactionDTOs;
+
+        } catch (AppException e) {
+            log.error("AppException in getByCurrenUserIsNull: {}", e.getMessage());
+            throw e;
+        }
+    }
 
 }
