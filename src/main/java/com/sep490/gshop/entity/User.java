@@ -46,4 +46,8 @@ public class User extends BaseEntity {
 
     private boolean isEmailVerified = false;
 
+    public List<String> getFCMTokenList() {
+        return tokens.stream().filter(FCMToken::getIsActive).map(FCMToken::getToken).toList();
+    }
+
 }
