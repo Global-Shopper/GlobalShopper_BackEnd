@@ -38,6 +38,15 @@ public class FCMController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/delete-token")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<MessageResponse> deleteToken(@RequestBody FCMTokenRequest request) {
+        log.info("deleteToken() FCMController Start | request: {}", request);
+        MessageResponse response = fcmService.deleteToken(request);
+        log.info("deleteToken() End | response: {}", response);
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/test")
     public ResponseEntity<String> test() throws FirebaseMessagingException {
         log.info("test() FCMController Start");

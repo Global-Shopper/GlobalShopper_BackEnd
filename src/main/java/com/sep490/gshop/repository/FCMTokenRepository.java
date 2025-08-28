@@ -8,4 +8,5 @@ import java.util.UUID;
 
 @Repository
 public interface FCMTokenRepository extends JpaRepository<FCMToken, UUID> {
+    FCMToken findByTokenAndUserId(String token, UUID userId);
 }
