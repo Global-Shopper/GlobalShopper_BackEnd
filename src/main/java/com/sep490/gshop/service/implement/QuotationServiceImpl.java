@@ -772,18 +772,15 @@ public class QuotationServiceImpl implements QuotationService {
         }
     }
 
-    private String sendNoti(UUID id, String title, String body) {
+    private boolean sendNoti(UUID id, String title, String body) {
         try {
             log.debug("sendNoti() QuotationServiceImpl Start | userId: {}, title: {}, body: {}", id, title, body);
-            BatchResponse response = sendNotiService.sendNotiToUser(id, title, body);
+            boolean response = sendNotiService.sendNotiToUser(id, title, body);
             log.debug("sendNoti() QuotationServiceImpl End | userId: {}, response: {}", id, response);
-            return "Successfully sent message: " + response.getSuccessCount() + " messages";
-        } catch (FirebaseMessagingException ex) {
-            log.warn("sendNoti() QuotationServiceImpl FirebaseMessagingException | message: {}", ex.getMessage());
-            return "Failed to send message: " + ex.getMessage();
+            return true;
         } catch (Exception e) {
             log.error("sendNoti() QuotationServiceImpl Exception | message: {}", e.getMessage());
-            throw e;
+            return false;
         }
     }
 
