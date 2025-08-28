@@ -1,7 +1,5 @@
 package com.sep490.gshop.service.implement;
 
-import com.google.firebase.messaging.BatchResponse;
-import com.google.firebase.messaging.FirebaseMessagingException;
 import com.sep490.gshop.business.*;
 import com.sep490.gshop.common.enums.*;
 import com.sep490.gshop.config.handler.AppException;
@@ -31,23 +29,24 @@ import org.thymeleaf.context.Context;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 @Log4j2
 @Service
 public class QuotationServiceImpl implements QuotationService {
     private final PurchaseRequestBusiness purchaseRequestBusiness;
     private final SendNotiService sendNotiService;
-    private QuotationBusiness quotationBusiness;
-    private SubRequestBusiness subRequestBusiness;
-    private RequestItemBusiness requestItemBusiness;
-    private TaxRateBusiness taxRateBusiness;
-    private HsCodeBusiness hsCodeBusiness;
-    private ModelMapper modelMapper;
-    private TaxRateService taxRateService;
-    private ExchangeRateService exchangeRateService;
+    private final QuotationBusiness quotationBusiness;
+    private final SubRequestBusiness subRequestBusiness;
+    private final RequestItemBusiness requestItemBusiness;
+    private final TaxRateBusiness taxRateBusiness;
+    private final HsCodeBusiness hsCodeBusiness;
+    private final ModelMapper modelMapper;
+    private final TaxRateService taxRateService;
+    private final ExchangeRateService exchangeRateService;
     private CalculationUtil calculationUtil;
-    private BusinessManagerBusiness businessManagerBusiness;
-    private EmailService emailService;
+    private final BusinessManagerBusiness businessManagerBusiness;
+    private final EmailService emailService;
 
     @Autowired
     public QuotationServiceImpl(QuotationBusiness quotationBusiness, SubRequestBusiness subRequestBusiness, RequestItemBusiness requestItemBusiness,
@@ -262,7 +261,7 @@ public class QuotationServiceImpl implements QuotationService {
             } else {
                 purchaseInfo = subRequest.getEcommercePlatform();
             }
-            sendNoti(purchaseRequest.getCustomer().getId(),"Yêu cầu của bạn đã bị từ chối", "Yêu cầu mua hàng từ " + purchaseInfo + " đã bị từ chối. Vui lòng kiểm tra.");
+            sendNotification(purchaseRequest.getCustomer().getId(),"Yêu cầu của bạn đã bị từ chối", "Yêu cầu mua hàng từ " + purchaseInfo + " đã bị từ chối. Vui lòng kiểm tra.");
 
 
             String subject = "Yêu cầu mua hàng đã bị từ chối";
@@ -451,7 +450,7 @@ public class QuotationServiceImpl implements QuotationService {
             purchaseRequestBusiness.update(purchaseRequest);
             SubRequest subRequest = subRequestBusiness.getById(subRequestId).get();
             String quotationInfo = subRequest.getEcommercePlatform();
-            sendNoti(purchaseRequest.getCustomer().getId(),"Báo giá mới cho yêu cầu mua hàng ", "Bạn có báo giá mới cho yêu cầu mua hàng từ " + quotationInfo + ". Vui lòng kiểm tra.");
+            sendNotification(purchaseRequest.getCustomer().getId(),"Báo giá mới cho yêu cầu mua hàng ", "Bạn có báo giá mới cho yêu cầu mua hàng từ " + quotationInfo + ". Vui lòng kiểm tra.");
 
             String subject = "Báo giá mới cho yêu cầu mua hàng";
             Context context = new Context();
@@ -656,7 +655,7 @@ public class QuotationServiceImpl implements QuotationService {
             dto.setRegion(region.toString());
             SubRequest subRequest = subRequestBusiness.getById(subRequestId).get();
             String quotationInfo = subRequest.getContactInfo().get(0).split(": ")[1];
-            sendNoti(purchaseRequest.getCustomer().getId(),"Báo giá mới cho yêu cầu mua hàng ", "Bạn có báo giá mới cho yêu cầu mua hàng từ " + quotationInfo + ". Vui lòng kiểm tra.");
+            sendNotification(purchaseRequest.getCustomer().getId(),"Báo giá mới cho yêu cầu mua hàng ", "Bạn có báo giá mới cho yêu cầu mua hàng từ " + quotationInfo + ". Vui lòng kiểm tra.");
 
             String subject = "Báo giá mới cho yêu cầu mua hàng";
             Context context = new Context();
@@ -809,16 +808,13 @@ public class QuotationServiceImpl implements QuotationService {
         }
     }
 
-    private boolean sendNoti(UUID id, String title, String body) {
+    private void sendNotification(UUID id, String title, String body) {
         try {
             log.debug("sendNoti() QuotationServiceImpl Start | userId: {}, title: {}, body: {}", id, title, body);
-            boolean response = sendNotiService.sendNotiToUser(id, title, body);
-
+            CompletableFuture<Boolean> response = sendNotiService.sendNotiToUser(id, title, body);
             log.debug("sendNoti() QuotationServiceImpl End | userId: {}, response: {}", id, response);
-            return true;
         } catch (Exception e) {
             log.error("sendNoti() QuotationServiceImpl Exception | message: {}", e.getMessage());
-            return false;
         }
     }
 
