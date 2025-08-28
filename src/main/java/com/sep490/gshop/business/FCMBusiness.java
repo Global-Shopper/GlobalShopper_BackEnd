@@ -9,4 +9,6 @@ import java.util.UUID;
 public interface FCMBusiness extends BaseBusiness<FCMToken> {
 
     MessageResponse saveToken(FCMTokenRequest request, UUID customerId);
+
+    MessageResponse deleteToken(FCMTokenRequest request, UUID customerId);
 }

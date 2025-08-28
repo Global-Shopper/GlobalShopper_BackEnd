@@ -5,4 +5,6 @@ import com.sep490.gshop.payload.response.MessageResponse;
 
 public interface FCMService {
     MessageResponse saveToken(FCMTokenRequest request);
+
+    MessageResponse deleteToken(FCMTokenRequest request);
 }

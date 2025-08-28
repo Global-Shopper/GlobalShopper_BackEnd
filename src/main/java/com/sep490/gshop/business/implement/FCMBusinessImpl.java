@@ -34,5 +34,10 @@ public class FCMBusinessImpl extends BaseBusinessImpl<FCMToken, FCMTokenReposito
         return new MessageResponse("Lưu token thành công",true);
     }
 
-
+    @Override
+    public MessageResponse deleteToken(FCMTokenRequest request, UUID customerId) {
+        FCMToken fcmToken = repository.findByTokenAndUserId(request.getToken(),customerId);
+        repository.delete(fcmToken);
+        return new MessageResponse("Xóa token thành công",true);
+    }
 }
