@@ -44,6 +44,7 @@ public class QuotationServiceImpl implements QuotationService {
     private final ModelMapper modelMapper;
     private final TaxRateService taxRateService;
     private final ExchangeRateService exchangeRateService;
+    private final UserBusiness userBusiness;
     private CalculationUtil calculationUtil;
     private final BusinessManagerBusiness businessManagerBusiness;
     private final EmailService emailService;
@@ -52,7 +53,7 @@ public class QuotationServiceImpl implements QuotationService {
     public QuotationServiceImpl(QuotationBusiness quotationBusiness, SubRequestBusiness subRequestBusiness, RequestItemBusiness requestItemBusiness,
                                 TaxRateBusiness taxRateBusiness, HsCodeBusiness hsCodeBusiness, ModelMapper modelMapper
     , TaxRateService taxRateService, ExchangeRateService exchangeRateService, PurchaseRequestBusiness purchaseRequestBusiness, BusinessManagerBusiness businessManagerBusiness, SendNotiService sendNotiService
-    , EmailService emailService) {
+    , EmailService emailService, UserBusiness userBusiness) {
         this.quotationBusiness = quotationBusiness;
         this.subRequestBusiness = subRequestBusiness;
         this.requestItemBusiness = requestItemBusiness;
@@ -65,6 +66,7 @@ public class QuotationServiceImpl implements QuotationService {
         this.businessManagerBusiness = businessManagerBusiness;
         this.sendNotiService = sendNotiService;
         this.emailService = emailService;
+        this.userBusiness = userBusiness;
     }
     @PostConstruct
     public void init() {
@@ -811,7 +813,8 @@ public class QuotationServiceImpl implements QuotationService {
     private void sendNotification(UUID id, String title, String body) {
         try {
             log.debug("sendNoti() QuotationServiceImpl Start | userId: {}, title: {}, body: {}", id, title, body);
-            CompletableFuture<Boolean> response = sendNotiService.sendNotiToUser(id, title, body);
+            User user = userBusiness.getById(id).orElseThrow(() -> new AppException(404, "Không tìm thấy người dùng với id: " + id));
+            CompletableFuture<Boolean> response = sendNotiService.sendNotiToTokens(user.getFCMTokenList(), title, body);
             log.debug("sendNoti() QuotationServiceImpl End | userId: {}, response: {}", id, response);
         } catch (Exception e) {
             log.error("sendNoti() QuotationServiceImpl Exception | message: {}", e.getMessage());
