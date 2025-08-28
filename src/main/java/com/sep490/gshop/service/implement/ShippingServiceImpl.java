@@ -4,6 +4,7 @@ import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.sep490.gshop.business.OrderBusiness;
 import com.sep490.gshop.common.enums.DeliveryCode;
+import com.sep490.gshop.common.enums.OrderStatus;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.Order;
 import com.sep490.gshop.entity.OrderHistory;
@@ -104,15 +105,21 @@ public class ShippingServiceImpl implements ShippingService {
             ShipmentTrackingEvent event = shippingTPS.webhookToShipmentTrackingEvent(request, trackingNumber);
             event.setOrder(order);
             order.getShipmentTrackingEvents().add(event);
+            OrderStatus newStatus = switch (event.getShipmentStatus()) {
+                case CREATED -> OrderStatus.PURCHASED;
+                case PICKED_UP, IN_TRANSIT -> OrderStatus.IN_TRANSIT;
+                case ARRIVED_IN_DESTINATION -> OrderStatus.ARRIVED_IN_DESTINATION;
+                case DELIVERED -> OrderStatus.DELIVERED;
+                case EXCEPTION -> OrderStatus.CANCELLED;
+            };
+            order.setStatus(newStatus);
+            OrderHistory orderHistory = new OrderHistory(order, order.getStatus().getDescription());
+            order.getHistory().add(orderHistory);
             orderBusiness.update(order);
-            BatchResponse response = sendNotiService.sendNotiToUser(order.getCustomer().getId(), "Cập nhật trạng thái đơn hàng", event.getEventDescription());
+            sendNotiService.sendNotiToUser(order.getCustomer().getId(), "Cập nhật trạng thái đơn hàng", event.getEventDescription());
             log.debug("handleFedexWebhook() ShippingServiceImpl End | trackingNumber: {}", trackingNumber);
             return new MessageResponse("Order status updated successfully for tracking number: " + trackingNumber, true);
-        } catch (FirebaseMessagingException e) {
-            log.error("FirebaseMessagingException handling FedEx webhook for tracking number: {} | Error: {}", trackingNumber, e.getMessage());
-            throw new AppException(500, "Lỗi gửi thông báo: " + e.getMessage());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error handling FedEx webhook for tracking number: {} | Error: {}", trackingNumber, e.getMessage());
             throw e;
         }

@@ -5,6 +5,7 @@ import com.sep490.gshop.business.UserBusiness;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.FCMToken;
 import com.sep490.gshop.entity.User;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class SendNotiService {
 
@@ -48,12 +50,18 @@ public class SendNotiService {
         return FirebaseMessaging.getInstance().sendEachForMulticast(message);
     }
 
-    public BatchResponse sendNotiToUser(UUID id, String title, String body) throws FirebaseMessagingException {
-        User user = userBusiness.getById(id).orElseThrow(() -> new AppException(404, "Không tìm thấy người dùng"));
-        if (user.getTokens() == null || user.getTokens().isEmpty()) {
-            return null;
+    public boolean sendNotiToUser(UUID id, String title, String body) {
+        try {
+            User user = userBusiness.getById(id).orElseThrow(() -> new AppException(404, "Không tìm thấy người dùng"));
+            if (user.getTokens() == null || user.getTokens().isEmpty()) {
+                return true;
+            }
+            List<String> tokens = user.getTokens().stream().filter(token -> token != null && token.getIsActive()).map(FCMToken::getToken).toList();
+            sendNotificationToTokens(tokens, title, body);
+            return true;
+        } catch (Exception e) {
+            log.error("Error sending notification to user {}: {}", id, e.getMessage());
+            return false;
         }
-        List<String> tokens = user.getTokens().stream().filter(token -> token != null && token.getIsActive()).map(FCMToken::getToken).toList();
-        return sendNotificationToTokens(tokens, title, body);
     }
 }
