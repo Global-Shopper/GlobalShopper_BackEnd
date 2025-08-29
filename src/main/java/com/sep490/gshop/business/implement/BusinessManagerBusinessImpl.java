@@ -105,6 +105,8 @@ public class BusinessManagerBusinessImpl implements BusinessManagerBusiness {
         refundTicketDetail.setDashBoardName("RefundTicket");
         refundTicketDetail.setStatusList(refundStatusList);
         refundTicketDetail.setTotal(totalRef);
+
+
         prDashBoard.addDashBoardDetail(refundTicketDetail);
         //Dashboard for WithdrawTicket
         DashBoardDetail withdrawTicketDetail = new DashBoardDetail();
