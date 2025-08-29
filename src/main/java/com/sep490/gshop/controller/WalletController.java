@@ -153,9 +153,9 @@ public class WalletController {
         }
     }
 
-    @PostMapping("/{withdrawTicketId}/process")
+    @PostMapping("/{withdrawTicketId}/process-new-phase")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Xử lý rút tiền bởi role admin")
+    @Operation(summary = "Xử lý rút tiền bởi role admin theo hướng mới")
     public ResponseEntity<MessageWithBankInformationResponse> processWithdrawNewPhase(
             @PathVariable UUID withdrawTicketId,
             @RequestParam boolean isApproved,
