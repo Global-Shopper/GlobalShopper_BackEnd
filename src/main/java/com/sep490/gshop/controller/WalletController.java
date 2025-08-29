@@ -153,6 +153,24 @@ public class WalletController {
         }
     }
 
+    @PostMapping("/{withdrawTicketId}/process")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Xử lý rút tiền bởi role admin")
+    public ResponseEntity<MessageWithBankInformationResponse> processWithdrawNewPhase(
+            @PathVariable UUID withdrawTicketId,
+            @RequestParam boolean isApproved,
+            @RequestParam(required = false) String reason) {
+        log.info("POST /api/withdraw-requests/{}/process | isApproved: {}, reason: {}", withdrawTicketId, isApproved, reason);
+        try {
+            MessageWithBankInformationResponse response = walletService.processWithdrawRequest(withdrawTicketId, isApproved, reason);
+            log.info("processWithdraw() End | isSuccess: {}, message: {}", response.isSuccess(), response.getMessage());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("processWithdraw() Exception | message: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     @PostMapping(value = "/{withdrawTicketId}/upload-bill", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Upload hóa đơn chuyển khoản cho yêu cầu rút tiền bởi admin")

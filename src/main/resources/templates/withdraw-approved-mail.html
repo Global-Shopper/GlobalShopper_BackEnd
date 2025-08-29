@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <title>Yêu cầu rút tiền đã được chấp nhận - Global Shopper</title>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4faff; margin: 0; padding: 0; }
+    .container {
+      max-width: 540px; background: #fff; margin: 48px auto 0 auto; border-radius: 18px;
+      padding: 42px 38px 32px 38px; box-shadow: 0 10px 32px rgba(33, 150, 243, 0.10);
+      border: 2.5px solid #e3f2fd; color: #222;
+    }
+    .header { display: flex; align-items: center; justify-content: center; margin-bottom: 32px; }
+    .header-container { display: flex; align-items: center; gap: 8px; }
+    .logo img { width: 68px; height: 68px; object-fit: contain; margin-right: 10px; }
+    .title { font-size: 2.1rem; font-weight: bold; color: #1976d2; }
+    .greeting { font-size: 1.25rem; margin-bottom: 12px; font-weight: 500; }
+    .content { font-size: 1.13rem; margin-bottom: 10px; line-height: 1.6; }
+    .info-box {
+      font-size: 1.2rem; font-weight: bold; color: #1565c0; margin: 18px 0;
+      background: #e3f2fd; padding: 16px; border-radius: 12px; border: 2px dashed #1976d2;
+    }
+    .footer { margin-top: 36px; font-size: 1.05rem; color: #888; text-align: center;
+      border-top: 1.5px solid #e3f2fd; padding-top: 16px; }
+    .footer .warning { color: #8e24aa; font-weight: bold; margin-bottom: 6px; }
+    .footer .brand { color: #222; font-weight: bold; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-container">
+      <div class="logo">
+        <img src="https://res.cloudinary.com/gshop/image/upload/v1752470184/IMG_2490_ydnotw.jpg" alt="Global Shopper Logo" />
+      </div>
+      <div class="title">Yêu cầu rút tiền đã được chấp nhận</div>
+    </div>
+  </div>
+  <div class="greeting">
+    Xin chào <span th:text="${name}">Khách hàng</span>,
+  </div>
+  <div class="content">
+    Yêu cầu rút tiền của bạn với số tiền <b th:text="${amount}">[AMOUNT]</b> đã được <b>chấp nhận</b>.
+    Hệ thống sẽ xử lý giao dịch và phản hồi đến bạn trong thời gian sớm nhất.
+  </div>
+  <div class="footer">
+    <div class="warning">Đây là email tự động, vui lòng không trả lời.</div>
+    <div style="margin-top:10px; font-size:0.95rem; color:#444;">
+      Liên hệ hỗ trợ:
+      <a href="mailto:sep490gshop@gmail.com" style="color:#1976d2;">sep490gshop@gmail.com</a> |
+      <a href="tel:0866954481" style="color:#1976d2;">0866 954 481</a>
+    </div>
+    <div>Cảm ơn bạn đã sử dụng dịch vụ của <span class="brand">Global Shopper</span>.</div>
+  </div>
+</div>
+</body>
+</html>
