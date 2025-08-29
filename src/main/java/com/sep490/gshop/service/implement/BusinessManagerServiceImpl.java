@@ -185,7 +185,7 @@ public class BusinessManagerServiceImpl implements BusinessManagerService {
         for (int i = 0; i < revenues.size(); i++) {
             MonthlyRevenue r = revenues.get(i);
             Row row = sheetRevenue.createRow(i + 1);
-            row.createCell(0).setCellValue(r.getMonth());
+            row.createCell(0).setCellValue("T"+r.getMonth());
             row.createCell(1).setCellValue(r.getTotal());
             row.createCell(2).setCellValue(r.getOnline());
             row.createCell(3).setCellValue(r.getOffline());
@@ -248,7 +248,6 @@ public class BusinessManagerServiceImpl implements BusinessManagerService {
 
         chart2.plot(barData);
         chart2.getOrAddLegend().setPosition(LegendPosition.RIGHT);
-//========================================
         List<MonthlyDashboard> dashboards = getDashboardByYear(year);
         XSSFSheet sheetDashBoard = workbook.createSheet("Dashboard " + year);
         int row = 0;
@@ -300,23 +299,32 @@ public class BusinessManagerServiceImpl implements BusinessManagerService {
                                          String blockTitle,
                                          List<MonthlyDashboard> dashboards,
                                          String blockName) {
-        Map<String, double[]> statusSeries = new LinkedHashMap<>();
+        Map<String, Double[]> statusSeries = new LinkedHashMap<>();
+
+        // --- Thu thập dữ liệu ---
         for (MonthlyDashboard m : dashboards) {
             for (DashBoardDetail d : m.getDashboard().getDashBoardList()) {
                 if (blockName.equals(d.getDashBoardName())) {
                     for (PRStatus st : d.getStatusList()) {
-                        statusSeries.computeIfAbsent(st.getStatus(), k -> new double[12]);
-                        statusSeries.get(st.getStatus())[m.getMonth() - 1] = st.getCount();
+                        statusSeries.computeIfAbsent(st.getStatus(), k -> new Double[12]);
+                        statusSeries.get(st.getStatus())[m.getMonth() - 1] =
+                                (st.getCount().doubleValue() == 0 ? null : st.getCount().doubleValue());
                     }
                 }
             }
+        }
+        if (statusSeries.isEmpty()) {
+            statusSeries.put("No Data", new Double[12]);
         }
 
         // --- Title ---
         Row titleRow = sheet.createRow(startRow);
         Cell titleCell = titleRow.createCell(0);
         titleCell.setCellValue(blockTitle);
-        sheet.addMergedRegion(new CellRangeAddress(startRow, startRow, 0, statusSeries.size()));
+
+        if (statusSeries.size() > 1) {
+            sheet.addMergedRegion(new CellRangeAddress(startRow, startRow, 0, statusSeries.size() - 1));
+        }
 
         // --- Header ---
         int pivotStartRow = startRow + 1;
@@ -333,8 +341,14 @@ public class BusinessManagerServiceImpl implements BusinessManagerService {
             Row r = sheet.createRow(pivotStartRow + month);
             r.createCell(0).setCellValue("T" + month);
             col = 1;
-            for (double[] values : statusSeries.values()) {
-                r.createCell(col++).setCellValue(values[month - 1]);
+            for (Double[] values : statusSeries.values()) {
+                Cell c = r.createCell(col++);
+                Double val = values[month - 1];
+                if (val == null) {
+                    c.setCellValue(0);
+                } else {
+                    c.setCellValue(val);
+                }
             }
         }
 
@@ -345,25 +359,27 @@ public class BusinessManagerServiceImpl implements BusinessManagerService {
         totalHeader.createCell(1).setCellValue("Total");
 
         int totalRow = totalStartRow + 1;
-        Map<String, Integer> totalByStatus = new LinkedHashMap<>();
-        for (Map.Entry<String, double[]> e : statusSeries.entrySet()) {
-            int total = (int) Arrays.stream(e.getValue()).sum();
-            totalByStatus.put(e.getKey(), total);
-
+        for (Map.Entry<String, Double[]> e : statusSeries.entrySet()) {
+            double total = Arrays.stream(e.getValue())
+                    .filter(Objects::nonNull)
+                    .mapToDouble(Double::doubleValue)
+                    .sum();
             Row r = sheet.createRow(totalRow++);
             r.createCell(0).setCellValue(e.getKey());
             r.createCell(1).setCellValue(total);
         }
 
+        // === Chart code ===
+
         XDDFDataSource<String> months = XDDFDataSourcesFactory.fromStringCellRange(sheet,
                 new CellRangeAddress(pivotStartRow + 1, pivotStartRow + 12, 0, 0));
 
         // Layout config
-        int chartHeight = 15; // số hàng chiếm cho 1 chart
-        int chartWidth = 8;   // số cột chiếm cho 1 chart
-        int vGap = 2;         // khoảng cách dọc
-        int hGap = 2;         // khoảng cách ngang
-        int chartStartRow = startRow + 1; // vị trí bắt đầu
+        int chartHeight = 15;
+        int chartWidth = 8;
+        int vGap = 2;
+        int hGap = 2;
+        int chartStartRow = startRow + 1;
         int chartStartCol = 10;
 
         XSSFDrawing drawing = sheet.createDrawingPatriarch();
@@ -419,7 +435,7 @@ public class BusinessManagerServiceImpl implements BusinessManagerService {
 
         XSSFChart pieChart = drawing.createChart(
                 createAnchor(1, 0, chartStartRow, chartStartCol, chartHeight, chartWidth, vGap, hGap));
-        pieChart.setTitleText("                                                     "+ blockTitle + " - Pie Chart");
+        pieChart.setTitleText(blockTitle + " - Pie Chart");
         XDDFChartData pieData = pieChart.createData(ChartTypes.PIE, null, null);
         pieData.addSeries(pieCats, pieVals);
         pieChart.plot(pieData);
@@ -433,27 +449,17 @@ public class BusinessManagerServiceImpl implements BusinessManagerService {
         doughChart.getOrAddLegend().setPosition(LegendPosition.RIGHT);
         XDDFDoughnutChartData doughData = (XDDFDoughnutChartData) doughChart.createData(ChartTypes.DOUGHNUT, null, null);
         doughData.setVaryColors(true);
-        doughData.setHoleSize(50); // độ rỗng (10–90)
-        XDDFChartData.Series series = doughData.addSeries(pieCats, pieVals);
+        doughData.setHoleSize(50);
+        doughData.addSeries(pieCats, pieVals);
         doughChart.plot(doughData);
-        if (doughChart.getCTChart().getAutoTitleDeleted() == null) {
-            doughChart.getCTChart().addNewAutoTitleDeleted();
-        }
-        doughChart.getCTChart().getAutoTitleDeleted().setVal(false);
 
-
+        // --- Auto size ---
         int lastColIndex = statusSeries.size();
         for (int i = 0; i <= lastColIndex; i++) {
             sheet.autoSizeColumn(i);
         }
-
-        sheet.autoSizeColumn(0);
-        sheet.autoSizeColumn(1);
-
         return totalRow + 15;
     }
-
-
 
     private XSSFClientAnchor createAnchor(int chartRow, int chartCol,
                                           int startRow, int startCol,
@@ -465,6 +471,4 @@ public class BusinessManagerServiceImpl implements BusinessManagerService {
         int row2 = row1 + chartHeight;
         return new XSSFClientAnchor(0, 0, 0, 0, col1, row1, col2, row2);
     }
-
-
 }
