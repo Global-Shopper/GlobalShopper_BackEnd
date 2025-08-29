@@ -14,6 +14,7 @@ import com.sep490.gshop.payload.request.WalletRequest;
 import com.sep490.gshop.payload.request.WithdrawRequest;
 import com.sep490.gshop.payload.response.*;
 import com.sep490.gshop.service.CloudinaryService;
+import com.sep490.gshop.service.EmailService;
 import com.sep490.gshop.service.WalletService;
 import com.sep490.gshop.utils.AuthUtils;
 import com.sep490.gshop.utils.FileUploadUtil;
@@ -28,6 +29,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.thymeleaf.context.Context;
 
 import java.text.DecimalFormat;
 import java.util.*;
@@ -46,6 +48,7 @@ public class WalletServiceImpl implements WalletService {
     private WithdrawTicketBusiness withdrawTicketBusiness;
     private CloudinaryService cloudinaryService;
     private TransactionBusiness transactionBusiness;
+    private EmailService emailService;
     @Autowired
     public WalletServiceImpl(WalletBusiness walletBusiness,
                              CustomerBusiness customerBusiness,
@@ -55,7 +58,9 @@ public class WalletServiceImpl implements WalletService {
                              UserBusiness userBusiness,
                              WithdrawTicketBusiness withdrawTicketBusiness,
                              CloudinaryService cloudinaryService,
-                             TransactionBusiness transactionBusiness, OrderBusiness orderBusiness) {
+                             TransactionBusiness transactionBusiness,
+                             OrderBusiness orderBusiness,
+                             EmailService emailService) {
         this.walletBusiness = walletBusiness;
         this.customerBusiness = customerBusiness;
         this.modelMapper = modelMapper;
@@ -66,6 +71,7 @@ public class WalletServiceImpl implements WalletService {
         this.cloudinaryService = cloudinaryService;
         this.transactionBusiness = transactionBusiness;
         this.orderBusiness = orderBusiness;
+        this.emailService = emailService;
     }
 
     @Override
@@ -354,6 +360,87 @@ public class WalletServiceImpl implements WalletService {
                     .build();
         }
     }
+
+    @Override
+    public MessageWithBankInformationResponse processWithdrawRequestNewPhase(UUID withdrawTicketId, boolean isApproved, String denyReason) {
+        log.debug("processWithdrawRequest() Start | withdrawTicketId: {}", withdrawTicketId);
+        try {
+            WithdrawTicket withdrawTicket = withdrawTicketBusiness.getById(withdrawTicketId)
+                    .orElseThrow(() -> new AppException(404, "Không tìm thấy yêu cầu rút tiền"));
+
+            if (withdrawTicket.getStatus() != WithdrawStatus.PENDING) {
+                return MessageWithBankInformationResponse.builder()
+                        .isSuccess(false)
+                        .message("Yêu cầu này đã được xử lý trước đó")
+                        .build();
+            }
+
+            if (isApproved) {
+                withdrawTicket.setStatus(WithdrawStatus.APPROVED);
+                withdrawTicketBusiness.update(withdrawTicket);
+
+                String subject = "Yêu cầu rút tiền đã được chấp nhận";
+                Context context = new Context();
+                context.setVariable("name", withdrawTicket.getWallet().getCustomer().getName());
+                context.setVariable("amount", withdrawTicket.getAmount() + " VND");
+                emailService.sendEmailTemplate(
+                        withdrawTicket.getWallet().getCustomer().getEmail(),
+                        subject,
+                        "Yêu cầu rút tiền của bạn đã được chấp nhận",
+                        "withdraw-approved-mail.html",
+                        context
+                );
+
+                log.debug("processWithdrawRequest() Rút tiền được chấp nhận | withdrawTicketId: {}", withdrawTicketId);
+                return MessageWithBankInformationResponse.builder()
+                        .isSuccess(true)
+                        .message("Yêu cầu rút tiền đã được chấp nhận và đang trong quá trình xử lý")
+                        .accountHolderName(withdrawTicket.getBankAccount().getAccountHolderName())
+                        .bankAccountNumber(withdrawTicket.getBankAccount().getBankAccountNumber())
+                        .providerName(withdrawTicket.getBankAccount().getProviderName())
+                        .build();
+
+            } else {
+                if (denyReason == null || denyReason.trim().isEmpty()) {
+                    return MessageWithBankInformationResponse.builder()
+                            .isSuccess(false)
+                            .message("Bạn phải cung cấp lý do từ chối yêu cầu của khách hàng")
+                            .build();
+                }
+                withdrawTicket.setDenyReason(denyReason.trim());
+                withdrawTicket.setStatus(WithdrawStatus.REJECTED);
+                withdrawTicketBusiness.update(withdrawTicket);
+
+                String subject = "Yêu cầu rút tiền bị từ chối";
+                Context context = new Context();
+                context.setVariable("name", withdrawTicket.getWallet().getCustomer().getName());
+                context.setVariable("amount", withdrawTicket.getAmount() + " VND");
+                context.setVariable("denyReason", denyReason.trim());
+
+                emailService.sendEmailTemplate(
+                        withdrawTicket.getWallet().getCustomer().getEmail(),
+                        subject,
+                        "Yêu cầu rút tiền của bạn đã bị từ chối",
+                        "withdraw-rejected-mail.html",
+                        context
+                );
+
+                log.debug("processWithdrawRequest() Rút tiền bị từ chối | withdrawTicketId: {}", withdrawTicketId);
+                return MessageWithBankInformationResponse.builder()
+                        .isSuccess(true)
+                        .message("Yêu cầu rút tiền đã bị từ chối với lý do: " + denyReason.trim())
+                        .build();
+            }
+
+        } catch (Exception e) {
+            log.error("processWithdrawRequest() Unexpected Exception | message: {}", e.getMessage());
+            return MessageWithBankInformationResponse.builder()
+                    .isSuccess(false)
+                    .message("Lỗi trong quá trình xử lý yêu cầu rút tiền")
+                    .build();
+        }
+    }
+
 
     @Override
     public MessageResponse uploadTransferBill(UUID withdrawTicketId, MultipartFile multipartFile) {
