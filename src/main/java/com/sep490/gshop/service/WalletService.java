@@ -24,6 +24,9 @@ public interface WalletService {
     WalletDTO getWalletByCurrent();
     List<WithdrawTicketDTO> getWithdrawTicketsWithPendingStatus();
     MessageWithBankInformationResponse processWithdrawRequest(UUID refundTicketId, boolean isApproved, String reason);
+
+    MessageWithBankInformationResponse processWithdrawRequestNewPhase(UUID withdrawTicketId, boolean isApproved, String denyReason);
+
     MessageResponse uploadTransferBill(UUID withdrawTicketId, MultipartFile multipartFile);
 
     IPNResponse ipnCallback(HttpServletRequest request);
