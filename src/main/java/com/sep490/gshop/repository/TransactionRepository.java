@@ -1,5 +1,6 @@
 package com.sep490.gshop.repository;
 
+import com.sep490.gshop.common.enums.TransactionStatus;
 import com.sep490.gshop.common.enums.TransactionType;
 import com.sep490.gshop.entity.Transaction;
 import org.springframework.data.domain.Page;
@@ -16,12 +17,14 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
         WHERE t.customer.id = :customerId 
           AND t.createdAt BETWEEN :createdAtAfter AND :createdAtBefore
           AND (:type IS NULL OR t.type = :type)
+              AND (:status IS NULL OR t.status = :status)
     """)
     Page<Transaction> findAllByCustomerIdAndCreatedAtBetweenAndType(
             @Param("customerId") UUID customerId,
             @Param("createdAtAfter") long createdAtAfter,
             @Param("createdAtBefore") long createdAtBefore,
             @Param("type") TransactionType type,
+            @Param("status") TransactionStatus status,
             Pageable pageable
     );
     Transaction findByCustomerId(UUID customerId);
@@ -33,9 +36,11 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
     SELECT t FROM Transaction t
     WHERE t.createdAt BETWEEN :from AND :to
       AND (:type IS NULL OR t.type = :type)
+      AND (:status IS NULL OR t.status = :status)
 """)
     Page<Transaction> findAllByTypeAndCreatedAtBetween(
             @Param("type") TransactionType type,
+            @Param("status") TransactionStatus status,
             @Param("from") Long from,
             @Param("to") Long to,
             Pageable pageable
