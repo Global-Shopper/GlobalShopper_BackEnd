@@ -82,7 +82,7 @@ public class BusinessManagerController {
         return ResponseEntity.ok(revenue);
     }
 
-    @GetMapping("/export-revenue-by-month")
+    @GetMapping("/export-report")
     @PreAuthorize("hasRole('BUSINESS_MANAGER')")
     public ResponseEntity<byte[]> exportRevenueByMonth(@RequestParam int year) throws Exception {
         log.info("Start exportRevenueByMonth | year={}", year);

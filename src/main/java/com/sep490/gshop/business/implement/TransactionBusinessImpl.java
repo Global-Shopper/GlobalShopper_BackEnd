@@ -1,6 +1,7 @@
 package com.sep490.gshop.business.implement;
 
 import com.sep490.gshop.business.TransactionBusiness;
+import com.sep490.gshop.common.enums.TransactionStatus;
 import com.sep490.gshop.common.enums.TransactionType;
 import com.sep490.gshop.entity.Transaction;
 import com.sep490.gshop.repository.TransactionRepository;
@@ -22,10 +23,10 @@ public class TransactionBusinessImpl extends BaseBusinessImpl<Transaction, Trans
     }
 
     @Override
-    public Page<Transaction> findTransactionsByCustomerId(UUID customerId, long from, long to, TransactionType type, Pageable pageable) {
-        return repository.findAllByCustomerIdAndCreatedAtBetweenAndType(customerId, from, to, type, pageable);
-    }
+    public Page<Transaction> findTransactionsByCustomerId(UUID customerId, long from, long to, TransactionType type, TransactionStatus status, Pageable pageable) {
+        return repository.findAllByCustomerIdAndCreatedAtBetweenAndType(customerId, from, to, type, status, pageable);
 
+    }
     @Override
     public Page<Transaction> findTransactionsBetweenDate(long startDate, long endDate, Pageable pageable) {
         return repository.findAllByCreatedAtBetween(startDate, endDate, pageable);
@@ -52,7 +53,7 @@ public class TransactionBusinessImpl extends BaseBusinessImpl<Transaction, Trans
     }
 
     @Override
-    public Page<Transaction> findAllBetweenDatesAndFilterStatus(TransactionType type, Long startDate, Long endDate, Pageable pageable) {
-        return repository.findAllByTypeAndCreatedAtBetween(type, startDate, endDate, pageable);
+    public Page<Transaction> findAllBetweenDatesAndFilterStatus(TransactionType type, TransactionStatus status, Long startDate, Long endDate, Pageable pageable) {
+        return repository.findAllByTypeAndCreatedAtBetween(type, status, startDate, endDate, pageable);
     }
 }
