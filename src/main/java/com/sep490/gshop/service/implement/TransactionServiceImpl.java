@@ -3,6 +3,7 @@ package com.sep490.gshop.service.implement;
 import com.sep490.gshop.business.CustomerBusiness;
 import com.sep490.gshop.business.TransactionBusiness;
 import com.sep490.gshop.business.UserBusiness;
+import com.sep490.gshop.common.enums.TransactionStatus;
 import com.sep490.gshop.common.enums.TransactionType;
 import com.sep490.gshop.common.enums.UserRole;
 import com.sep490.gshop.config.handler.AppException;
@@ -100,7 +101,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public Page<TransactionDTO> getByCurrentUserIsNull(
-            long from, long to, TransactionType type,
+            long from, long to, TransactionType type, TransactionStatus status,
             int page, int size, Sort.Direction direction) {
 
         log.debug("Start getByCurrenUserIsNull: from={}, to={}, type={}, page={}, size={}, direction={}",
@@ -122,11 +123,11 @@ public class TransactionServiceImpl implements TransactionService {
             Page<TransactionDTO> transactionDTOs;
             if (currentUser.getRole().equals(UserRole.CUSTOMER)) {
                 var transactions = transactionBusiness.findTransactionsByCustomerId(
-                        currentUser.getId(), from, to, type, pageable);
+                        currentUser.getId(), from, to, type, status, pageable);
                 transactionDTOs = transactions.map(tx -> modelMapper.map(tx, TransactionDTO.class));
             } else {
                 var transactions = transactionBusiness.findAllBetweenDatesAndFilterStatus(
-                        type, from, to, pageable);
+                        type, status, from, to, pageable);
                 transactionDTOs = transactions.map(tx -> modelMapper.map(tx, TransactionDTO.class));
             }
 

@@ -1,6 +1,7 @@
 package com.sep490.gshop.controller;
 
 import com.sep490.gshop.common.constants.URLConstant;
+import com.sep490.gshop.common.enums.TransactionStatus;
 import com.sep490.gshop.common.enums.TransactionType;
 import com.sep490.gshop.payload.dto.TransactionDTO;
 import com.sep490.gshop.service.TransactionService;
@@ -70,6 +71,7 @@ public class TransactionController {
             @RequestParam long from,
             @RequestParam long to,
             @RequestParam(required = false) TransactionType type,
+            @RequestParam(required = false) TransactionStatus status,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "direction", defaultValue = "DESC") Sort.Direction direction) {
@@ -77,7 +79,7 @@ public class TransactionController {
         log.info("GET /api/transactions/filter - Bắt đầu lấy giao dịch: from={}, to={}, type={}, page={}, size={}, direction={}",
                 from, to, type, page, size, direction);
 
-        Page<TransactionDTO> transactions = transactionService.getByCurrentUserIsNull(from, to, type, page, size, direction);
+        Page<TransactionDTO> transactions = transactionService.getByCurrentUserIsNull(from, to, type, status, page, size, direction);
 
         log.info("GET /api/transactions/filter - Kết thúc, tổng số giao dịch: {}", transactions.getTotalElements());
 
