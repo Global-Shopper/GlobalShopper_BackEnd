@@ -2,6 +2,7 @@ package com.sep490.gshop.service.implement;
 
 import com.sep490.gshop.business.BusinessManagerBusiness;
 import com.sep490.gshop.common.enums.RequestType;
+import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.Configuration;
 import com.sep490.gshop.entity.Order;
 import com.sep490.gshop.entity.OrderItem;
@@ -28,6 +29,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.Year;
 import java.time.ZoneId;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
@@ -163,6 +165,12 @@ public class BusinessManagerServiceImpl implements BusinessManagerService {
 
     @Override
     public byte[] exportRevenueByMonth(int year) throws IOException {
+        int currentYear = Year.now().getValue();
+        if (year > currentYear) {
+            throw AppException.builder().message("Không thể xuất dữ liệu của năm lớn hơn năm hiện tại (" + currentYear + ")").code(400).build();
+        }
+
+
         List<MonthlyRevenue> revenues = getRevenueSummaryByMonth(year);
 
         XSSFWorkbook workbook = new XSSFWorkbook();
@@ -204,7 +212,7 @@ public class BusinessManagerServiceImpl implements BusinessManagerService {
 
         XDDFLineChartData.Series seriesTotal = (XDDFLineChartData.Series) lineData.addSeries(months, totals);
         seriesTotal.setTitle("Tổng doanh thu", null);
-        seriesTotal.setSmooth(false);
+        seriesTotal.setSmooth(true);
         seriesTotal.setMarkerStyle(MarkerStyle.CIRCLE);
         leftAxis1.setCrosses(AxisCrosses.AUTO_ZERO);
         leftAxis1.setMinimum(0.0);
