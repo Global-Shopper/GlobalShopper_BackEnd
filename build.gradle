@@ -64,9 +64,11 @@ dependencies {
 	implementation 'com.google.firebase:firebase-admin:9.5.0'
 
 	// https://mvnrepository.com/artifact/org.apache.poi/poi
-	implementation("org.apache.poi:poi:5.2.3")
+	implementation("org.apache.poi:poi:5.3.0")
 	// https://mvnrepository.com/artifact/org.apache.poi/poi-ooxml
-	implementation("org.apache.poi:poi-ooxml:5.2.3")
+	implementation("org.apache.poi:poi-ooxml:5.3.0")
+	implementation "org.apache.poi:poi-ooxml-full:5.3.0"
+
 }
 
 dependencyManagement {
