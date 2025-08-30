@@ -2,6 +2,7 @@ package com.sep490.gshop.payload.dto;
 
 import com.sep490.gshop.common.enums.TransactionStatus;
 import com.sep490.gshop.common.enums.TransactionType;
+import com.sep490.gshop.entity.Customer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +22,8 @@ public class TransactionDTO {
     private double balanceBefore;
     private double balanceAfter;
     private TransactionStatus status;
+    private CustomerDTO customer;
+    private String referenceCode;
     protected long createdAt;
     protected long updatedAt;
 }
