@@ -6,7 +6,7 @@ import com.sep490.gshop.payload.request.TaxRateCreateAndUpdateRequest;
 import com.sep490.gshop.payload.request.TaxRateRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.TaxCalculationResult;
-import com.sep490.gshop.payload.response.TaxRateImportedResponse;
+import com.sep490.gshop.payload.response.ImportedResponse;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -21,5 +21,5 @@ public interface TaxRateService {
 
     MessageResponse importTaxRatesCSV(MultipartFile file);
 
-    TaxRateImportedResponse importTaxRatesNewPhaseCSV(List<TaxRateRequest> list);
+    ImportedResponse importTaxRatesNewPhaseCSV(List<TaxRateRequest> list);
 }

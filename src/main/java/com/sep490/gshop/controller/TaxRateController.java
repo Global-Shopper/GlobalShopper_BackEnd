@@ -5,7 +5,7 @@ import com.sep490.gshop.payload.dto.TaxRateSnapshotDTO;
 import com.sep490.gshop.payload.request.TaxRateCreateAndUpdateRequest;
 import com.sep490.gshop.payload.request.TaxRateRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
-import com.sep490.gshop.payload.response.TaxRateImportedResponse;
+import com.sep490.gshop.payload.response.ImportedResponse;
 import com.sep490.gshop.service.TaxRateService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -97,15 +97,15 @@ public class TaxRateController  {
     }
 
     @PostMapping("/import-by-list")
-    public ResponseEntity<TaxRateImportedResponse> importTaxRatesNewPhase(@Valid @RequestBody List<TaxRateRequest> requests) {
+    public ResponseEntity<ImportedResponse> importTaxRatesNewPhase(@Valid @RequestBody List<TaxRateRequest> requests) {
         log.info("Start importTaxRates | totalRequests={}", requests.size());
 
-        TaxRateImportedResponse response = taxRateService.importTaxRatesNewPhaseCSV(requests);
+        ImportedResponse response = taxRateService.importTaxRatesNewPhaseCSV(requests);
 
         log.info("End importTaxRates | Inserted={} | Updated={} | Duplicated={}",
-                response.getTaxRateImported(),
-                response.getTaxRateUpdated(),
-                response.getTaxRateDuplicated());
+                response.getImported(),
+                response.getUpdated(),
+                response.getDuplicated());
 
         return ResponseEntity.ok(response);
     }

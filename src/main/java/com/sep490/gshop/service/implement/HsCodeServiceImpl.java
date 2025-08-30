@@ -6,10 +6,10 @@ import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.HsCode;
 import com.sep490.gshop.entity.TaxRate;
 import com.sep490.gshop.payload.dto.HsCodeDTO;
-import com.sep490.gshop.payload.dto.HsCodeSearchDTO;
 import com.sep490.gshop.payload.dto.HsTreeNodeDTO;
 import com.sep490.gshop.payload.dto.TaxRateSnapshotDTO;
 import com.sep490.gshop.payload.request.HsCodeRequest;
+import com.sep490.gshop.payload.response.ImportedResponse;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.service.HsCodeService;
 import jakarta.transaction.Transactional;
@@ -240,6 +240,50 @@ public class HsCodeServiceImpl implements HsCodeService {
                     .isSuccess(false)
                     .build();
         }
+    }
+
+    @Override
+    public ImportedResponse importHsCodeNewPhase(List<HsCodeRequest> requests) {
+        log.debug("=== Start Import HSCode List, size: {} ===", requests.size());
+
+        List<HsCode> newParse = new ArrayList<>();
+        List<String> duplicates = new ArrayList<>();
+
+        for (HsCodeRequest request : requests) {
+            HsCodeDTO hsCodeDTO = HsCodeDTO.builder()
+                    .hsCode(request.getHsCode())
+                    .parentCode(request.getParentCode())
+                    .unit(request.getUnit())
+                    .description(request.getDescription())
+                    .build();
+
+            HsCode addHsCode = modelMapper.map(hsCodeDTO, HsCode.class);
+
+            boolean exists = hsCodeBusiness.existByHsCode(addHsCode.getHsCode());
+            if (exists) {
+                duplicates.add(addHsCode.getHsCode());
+            } else {
+                newParse.add(addHsCode);
+            }
+        }
+
+        if (!newParse.isEmpty()) {
+            hsCodeBusiness.saveAll(newParse);
+        }
+
+        int importedCount = newParse.size();
+        int duplicateCount = duplicates.size();
+
+        log.debug("=== End Import HSCode List: {} imported, {} duplicates ===",
+                importedCount, duplicateCount);
+
+        return ImportedResponse.builder()
+                .success(true)
+                .message("Cập nhật thành công bảng HsCode")
+                .imported(importedCount)
+                .updated(0)
+                .duplicated(duplicateCount)
+                .build();
     }
 
 
