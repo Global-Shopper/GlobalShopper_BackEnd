@@ -5,10 +5,13 @@ import com.sep490.gshop.common.enums.*;
 import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.config.security.services.UserDetailsImpl;
 import com.sep490.gshop.entity.*;
+import com.sep490.gshop.payload.dto.RefundReasonDTO;
 import com.sep490.gshop.payload.dto.RefundTicketDTO;
+import com.sep490.gshop.payload.request.CreateReasonRequest;
 import com.sep490.gshop.payload.request.refund.ProcessRefundModel;
 import com.sep490.gshop.payload.request.refund.RefundTicketRequest;
 import com.sep490.gshop.payload.request.refund.RejectRefundModel;
+import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.service.RefundTicketService;
 import com.sep490.gshop.utils.AuthUtils;
 import com.sep490.gshop.utils.CalculationUtil;
@@ -22,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -33,7 +37,7 @@ public class RefundTicketServiceImpl implements RefundTicketService {
     private final OrderBusiness orderBusiness;
     private final WalletBusiness walletBusiness;
     private final TransactionBusiness transactionBusiness;
-    private UserBusiness userBusiness;
+    private final UserBusiness userBusiness;
 
     @Autowired
     public RefundTicketServiceImpl(RefundTicketBusiness refundTicketBusiness, ModelMapper modelMapper, OrderBusiness orderBusiness, WalletBusiness walletBusiness, TransactionBusiness transactionBusiness, UserBusiness userBusiness) {
@@ -249,6 +253,68 @@ public class RefundTicketServiceImpl implements RefundTicketService {
         }
     }
 
+    @Override
+    public List<RefundReasonDTO> getRefundReasons() {
+        try {
+            log.debug("getRefundReasons() RefundTicketServiceImpl Start");
+            List<RefundReasonDTO> reasons = refundTicketBusiness.getAllRefundReasons()
+                    .stream()
+                    .map(reason -> modelMapper.map(reason, RefundReasonDTO.class))
+                    .toList();
+            log.debug("getRefundReasons() RefundTicketServiceImpl End | Size: {}", reasons.size());
+            return reasons;
+        } catch (Exception e) {
+            log.error("getRefundReasons() RefundTicketServiceImpl Exception | message: {}", e.getMessage());
+            throw e;
+        }
+    }
 
+    @Override
+    public RefundReasonDTO createRefundReason(CreateReasonRequest reason) {
+        try {
+            log.debug("createRefundReason() RefundTicketServiceImpl Start | reason: {}", reason);
+            RefundReason newReason = new RefundReason(reason.getReason(), reason.getRate(), true);
+            RefundReasonDTO dto = modelMapper.map(refundTicketBusiness.createRefundReason(newReason), RefundReasonDTO.class);
+            log.debug("createRefundReason() RefundTicketServiceImpl End | dto: {}", dto);
+            return dto;
+        } catch (Exception e) {
+            log.error("createRefundReason() RefundTicketServiceImpl Exception | entity: {}, message: {}", reason, e.getMessage());
+            throw e;
+        }
+    }
 
+    @Override
+    public MessageResponse deleteReason(String id) {
+        try {
+            log.debug("deleteReason() RefundTicketServiceImpl Start | id: {}", id);
+
+            refundTicketBusiness.deleteReasonById(UUID.fromString(id));
+            log.debug("deleteReason() RefundTicketServiceImpl End | id: {}", id);
+            return MessageResponse.builder()
+                    .message("Xoá lí do hoàn tiền thành công")
+                    .isSuccess(true)
+                    .build();
+        } catch (Exception e) {
+            log.error("deleteReason() RefundTicketServiceImpl  Exception | id: {}, message: {}", id, e.getMessage());
+            return MessageResponse.builder()
+                    .message("Xoá lí do hoàn tiền thất bại: " + e.getMessage())
+                    .isSuccess(false)
+                    .build();
+        }
+    }
+
+    @Override
+    public RefundReasonDTO changeIsActive(String id) {
+        try {
+            log.debug("changeIsActive() RefundTicketServiceImpl Start | id: {}", id);
+            RefundReason reason = refundTicketBusiness.getReasonById(UUID.fromString(id));
+            reason.setActive(!reason.getActive());
+            RefundReasonDTO dto = modelMapper.map(refundTicketBusiness.updateRefundReason(reason), RefundReasonDTO.class);
+            log.debug("changeIsActive() RefundTicketServiceImpl End | dto: {}", dto);
+            return dto;
+        } catch (Exception e) {
+            log.error("changeIsActive() RefundTicketServiceImpl Exception | id: {}, message: {}", id, e.getMessage());
+            throw e;
+        }
+    }
 }
