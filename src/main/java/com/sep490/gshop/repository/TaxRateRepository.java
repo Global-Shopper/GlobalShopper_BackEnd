@@ -7,6 +7,7 @@ import com.sep490.gshop.entity.TaxRate;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface TaxRateRepository extends JpaRepository<TaxRate, UUID> {
@@ -14,5 +15,6 @@ public interface TaxRateRepository extends JpaRepository<TaxRate, UUID> {
     List<TaxRate> findAllByHsCode(HsCode hsCode);
 
     boolean existsByHsCodeAndTaxTypeAndRegion(HsCode hsCode, TaxType taxType, TaxRegion region);
+    Optional<TaxRate> getByHsCodeAndRegionAndTaxType(HsCode hsCode, TaxRegion region, TaxType taxType);
 
 }
