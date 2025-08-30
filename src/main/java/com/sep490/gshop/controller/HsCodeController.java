@@ -5,9 +5,11 @@ import com.sep490.gshop.payload.dto.HsCodeDTO;
 import com.sep490.gshop.payload.dto.HsCodeSearchDTO;
 import com.sep490.gshop.payload.dto.HsTreeNodeDTO;
 import com.sep490.gshop.payload.request.HsCodeRequest;
+import com.sep490.gshop.payload.response.ImportedResponse;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.service.HsCodeService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
@@ -22,11 +24,14 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
 @RequestMapping(URLConstant.HS_CODE)
 @CrossOrigin("*")
 @Log4j2
 @Validated
+@Tag(name = "HSCode", description = "API quản lý HSCode")
 public class HsCodeController {
 
     private final HsCodeService hsCodeService;
@@ -84,12 +89,23 @@ public class HsCodeController {
     public ResponseEntity<MessageResponse> importHsCodes(@RequestPart("file") MultipartFile file) {
         log.info("[START] Import HSCode API called. File: {}", file.getOriginalFilename());
 
-        long start = System.currentTimeMillis();
         MessageResponse response = hsCodeService.importHsCodeCSV(file);
-        long end = System.currentTimeMillis();
 
-        log.info("[END] Import HSCode API finished. Success: {}, Duration: {} ms",
-                response.isSuccess(), (end - start));
+        log.info("[END] Import HSCode API finished. Success: {}",
+                response.isSuccess());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Import HSCode từ danh sách request")
+    @PostMapping("/import-with-list")
+    public ResponseEntity<ImportedResponse> importHsCode(
+            @Valid @RequestBody List<HsCodeRequest> requests) {
+
+        log.info("=== Start API importHsCode, size: {} ===", requests.size());
+        ImportedResponse response = hsCodeService.importHsCodeNewPhase(requests);
+        log.info("=== End API importHsCode: imported={}, updated={}, duplicated={} ===",
+                response.getImported(), response.getUpdated(), response.getDuplicated());
 
         return ResponseEntity.ok(response);
     }
