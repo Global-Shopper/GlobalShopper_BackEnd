@@ -9,10 +9,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TaxRateImportedResponse {
+public class ImportedResponse {
     boolean success;
     String message;
-    int taxRateImported;
-    int taxRateUpdated;
-    int taxRateDuplicated;
+    int imported;
+    int updated;
+    int duplicated;
 }

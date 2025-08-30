@@ -12,7 +12,7 @@ import com.sep490.gshop.payload.request.TaxRateCreateAndUpdateRequest;
 import com.sep490.gshop.payload.request.TaxRateRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.TaxCalculationResult;
-import com.sep490.gshop.payload.response.TaxRateImportedResponse;
+import com.sep490.gshop.payload.response.ImportedResponse;
 import com.sep490.gshop.service.TaxRateService;
 import jakarta.transaction.Transactional;
 import lombok.extern.log4j.Log4j2;
@@ -311,7 +311,7 @@ public class TaxRateServiceImpl implements TaxRateService {
     }
 
     @Override
-    public TaxRateImportedResponse importTaxRatesNewPhaseCSV(List<TaxRateRequest> list) {
+    public ImportedResponse importTaxRatesNewPhaseCSV(List<TaxRateRequest> list) {
         log.debug("=== Start Import Tax Rates List: {} ===", list.size());
 
         int insertCount = 0;
@@ -341,7 +341,6 @@ public class TaxRateServiceImpl implements TaxRateService {
                     continue;
                 } else {
                     existing.setRate(request.getRate());
-                    existing.setTaxName(request.getTaxName());
                     saveList.add(existing);
                     updateCount++;
                     log.debug("Updating TaxRate | id={}, hsCode={}, newRate={}",
@@ -368,23 +367,19 @@ public class TaxRateServiceImpl implements TaxRateService {
         }
 
         String message = String.format(
-                "End Import Tax Rates: %d rows processed | Inserted: %d | Updated: %d | Duplicates: %d",
-                list.size(), insertCount, updateCount, duplicateCount
+                "Cập nhật thành công Tax Rates: %d loại thuế đã được xử lý",
+                list.size()
         );
 
         log.debug(message);
-
-        return TaxRateImportedResponse.builder()
+        return ImportedResponse.builder()
                 .success(true)
                 .message(message)
-                .taxRateImported(insertCount)
-                .taxRateUpdated(updateCount)
-                .taxRateDuplicated(duplicateCount)
+                .imported(insertCount)
+                .updated(updateCount)
+                .duplicated(duplicateCount)
                 .build();
     }
-
-
-
 
     private TaxRegion parseRegion(String regionStr) {
         try {
