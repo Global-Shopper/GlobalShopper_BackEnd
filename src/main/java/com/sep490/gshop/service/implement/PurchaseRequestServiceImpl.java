@@ -132,11 +132,8 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
     private List<SubRequest> buildSubRequests(List<RequestItem> items, PurchaseRequest purchaseRequest) {
         Map<SellerPlatformKey, List<RequestItem>> grouped = items.stream()
                 .collect(Collectors.groupingBy(item -> {
-                    String platform = (item.getEcommercePlatform() == null || item.getEcommercePlatform().isBlank()) ? null : item.getEcommercePlatform();
-                    String seller = (item.getSeller() == null || item.getSeller().isBlank())
-                            ? null
-                            : item.getSeller();
-
+                    String platform = item.getEcommercePlatform();
+                    String seller = item.getSeller();
                     return new SellerPlatformKey(platform, seller);
                 }));
 
@@ -145,36 +142,55 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
             SellerPlatformKey key = entry.getKey();
             String platform = key.platform();
             String seller = key.seller();
+            List<RequestItem> requestItems = entry.getValue();
 
-            if (seller == null) {
-
-                for (RequestItem item : entry.getValue()) {
-                    item.setPurchaseRequest(purchaseRequest);
-                    item.setEcommercePlatform(platform);
-                    item.setSeller(null);
-                    item.setSubRequest(null);
-                }
-            } else {
-                SubRequest subRequest = SubRequest.builder()
+            if (requestItems.size() == 1) {
+                SubRequest onlyItemSubRequest = SubRequest.builder()
                         .ecommercePlatform(platform)
                         .seller(seller)
                         .status(SubRequestStatus.PENDING)
                         .build();
 
-                for (RequestItem item : entry.getValue()) {
-                    item.setPurchaseRequest(purchaseRequest);
-                    item.setEcommercePlatform(platform);
-                    item.setSeller(seller);
-                    item.setSubRequest(subRequest);
-                }
+                RequestItem item = requestItems.get(0);
+                item.setPurchaseRequest(purchaseRequest);
+                item.setEcommercePlatform(platform);
+                item.setSeller(seller);
+                item.setSubRequest(onlyItemSubRequest);
 
-                subRequest.setRequestItems(entry.getValue());
-                subRequests.add(subRequest);
+                onlyItemSubRequest.setRequestItems(requestItems);
+                subRequests.add(onlyItemSubRequest);
+
+            } else {
+                if (seller == null) {
+                    for (RequestItem item : requestItems) {
+                        item.setPurchaseRequest(purchaseRequest);
+                        item.setEcommercePlatform(platform);
+                        item.setSeller(null);
+                        item.setSubRequest(null);
+                    }
+                } else {
+                    SubRequest anyItemSubRequest = SubRequest.builder()
+                            .ecommercePlatform(platform)
+                            .seller(seller)
+                            .status(SubRequestStatus.PENDING)
+                            .build();
+
+                    for (RequestItem item : requestItems) {
+                        item.setPurchaseRequest(purchaseRequest);
+                        item.setEcommercePlatform(platform);
+                        item.setSeller(seller);
+                        item.setSubRequest(anyItemSubRequest);
+                    }
+
+                    anyItemSubRequest.setRequestItems(requestItems);
+                    subRequests.add(anyItemSubRequest);
+                }
             }
         }
 
         return subRequests;
     }
+
 
     @Override
     public PurchaseRequestResponse<SubRequestDTO> createOfflinePurchaseRequest(OfflineRequest offlineRequest) {

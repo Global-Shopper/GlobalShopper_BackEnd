@@ -9,6 +9,8 @@ import com.sep490.gshop.repository.TaxRateRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
+
 @Component
 public class TaxRateBusinessImpl extends BaseBusinessImpl<TaxRate, TaxRateRepository> implements TaxRateBusiness {
     protected TaxRateBusinessImpl(TaxRateRepository repository) {
@@ -28,6 +30,11 @@ public class TaxRateBusinessImpl extends BaseBusinessImpl<TaxRate, TaxRateReposi
     @Override
     public boolean existsByHsCodeAndRegionAndTaxType(HsCode hsCode, TaxRegion region, TaxType taxType) {
         return repository.existsByHsCodeAndTaxTypeAndRegion(hsCode, taxType, region);
+    }
+
+    @Override
+    public Optional<TaxRate> findByHsCodeAndRegionAndTaxType(HsCode hsCode, TaxRegion region, TaxType taxType) {
+        return repository.getByHsCodeAndRegionAndTaxType(hsCode, region, taxType);
     }
 
 

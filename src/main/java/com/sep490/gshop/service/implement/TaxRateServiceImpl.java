@@ -9,10 +9,11 @@ import com.sep490.gshop.entity.HsCode;
 import com.sep490.gshop.entity.TaxRate;
 import com.sep490.gshop.payload.dto.TaxRateSnapshotDTO;
 import com.sep490.gshop.payload.request.TaxRateCreateAndUpdateRequest;
+import com.sep490.gshop.payload.request.TaxRateRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.payload.response.TaxCalculationResult;
+import com.sep490.gshop.payload.response.TaxRateImportedResponse;
 import com.sep490.gshop.service.TaxRateService;
-import jakarta.persistence.*;
 import jakarta.transaction.Transactional;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.csv.CSVFormat;
@@ -227,44 +228,74 @@ public class TaxRateServiceImpl implements TaxRateService {
                 BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));
                 CSVParser csvParser = new CSVParser(br, CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim())
         ) {
-            List<TaxRate> newParse = new ArrayList<>();
+            List<TaxRate> saveList = new ArrayList<>();
             List<String> duplicateParse = new ArrayList<>();
+            int insertCount = 0;
+            int updateCount = 0;
+
             for (CSVRecord csvRecord : csvParser) {
-                TaxRate tax = new TaxRate();
+                TaxRate tax;
 
-
-                tax.setTaxName(csvRecord.get("id"));
-                if(csvRecord.get("id")==null) {
+                String idValue = csvRecord.get("id");
+                if (idValue != null && !idValue.isBlank()) {
+                    var taxPresent = taxRateBusiness.getById(UUID.fromString(idValue));
+                    if (taxPresent.isPresent()) {
+                        tax = taxPresent.get();
+                        updateCount++;
+                        log.debug("Updating existing TaxRate with id: {}", idValue);
+                    } else {
+                        tax = new TaxRate();
+                        tax.setId(UUID.fromString(idValue));
+                        insertCount++;
+                    }
+                } else {
+                    tax = new TaxRate();
                     tax.setId(UUID.randomUUID());
+                    insertCount++;
                 }
-                if(csvRecord.get("taxType")!=null) {
+
+                if (csvRecord.get("taxType") != null) {
                     tax.setTaxType(parseTaxType(csvRecord.get("taxType")));
                 }
-                if(csvRecord.get("region")!=null) {
+                if (csvRecord.get("region") != null) {
                     tax.setRegion(parseRegion(csvRecord.get("region")));
                 }
-
-                if(csvRecord.get("hsCode")!=null) {
-                    var hsCode = hsCodeBusiness.getById(csvRecord.get("hsCode")).orElseThrow(() -> AppException.builder().message("Không tìm thấy HSCode").code(404).build());
+                if (csvRecord.get("hsCode") != null) {
+                    var hsCode = hsCodeBusiness.getById(csvRecord.get("hsCode"))
+                            .orElseThrow(() -> AppException.builder()
+                                    .message("Không tìm thấy HSCode")
+                                    .code(404)
+                                    .build());
                     tax.setHsCode(hsCode);
                 }
                 tax.setTaxName(csvRecord.get("taxName"));
+
                 double taxParse = Double.parseDouble(csvRecord.get("rate"));
-                boolean exists = taxRateBusiness.existsByHsCodeAndRegionAndTaxType(tax.getHsCode(), tax.getRegion(), tax.getTaxType());
-                if(exists && tax.getRate().equals(taxParse)) {
+                tax.setRate(taxParse);
+
+                boolean exists = taxRateBusiness.existsByHsCodeAndRegionAndTaxType(
+                        tax.getHsCode(), tax.getRegion(), tax.getTaxType()
+                );
+
+                if (exists && tax.getRate().equals(taxParse)) {
                     duplicateParse.add(tax.getHsCode().getHsCode());
-                }else {
-                    newParse.add(tax);
+                } else {
+                    saveList.add(tax);
                 }
             }
 
-            taxRateBusiness.saveAll(newParse);
-            String message = "End Import Tax Rates CSV: " + newParse.size() +  " rows imported , duplicates: " +duplicateParse.size() +" rows";
+            taxRateBusiness.saveAll(saveList);
+
+            String message = String.format(
+                    "End Import Tax Rates CSV: %d rows processed | Inserted: %d | Updated: %d | Duplicates: %d",
+                    saveList.size(), insertCount, updateCount, duplicateParse.size()
+            );
 
             if (!duplicateParse.isEmpty()) {
                 message += " | Duplicate hsCodes: " + String.join(", ", duplicateParse);
             }
-            log.debug("End Import Tax Rates CSV: {} rows imported", newParse.size());
+
+            log.debug(message);
 
             return MessageResponse.builder()
                     .message(message)
@@ -278,6 +309,81 @@ public class TaxRateServiceImpl implements TaxRateService {
                     .build();
         }
     }
+
+    @Override
+    public TaxRateImportedResponse importTaxRatesNewPhaseCSV(List<TaxRateRequest> list) {
+        log.debug("=== Start Import Tax Rates List: {} ===", list.size());
+
+        int insertCount = 0;
+        int updateCount = 0;
+        int duplicateCount = 0;
+
+        List<TaxRate> saveList = new ArrayList<>();
+
+        for (TaxRateRequest request : list) {
+            var hsCode = hsCodeBusiness.getById(request.getHsCode())
+                    .orElseThrow(() -> AppException.builder()
+                            .message("Không tìm thấy HSCode: " + request.getHsCode())
+                            .code(404)
+                            .build());
+
+            Optional<TaxRate> taxRateOpt = taxRateBusiness.findByHsCodeAndRegionAndTaxType(
+                    hsCode, request.getRegion(), request.getTaxType()
+            );
+
+            if (taxRateOpt.isPresent()) {
+                TaxRate existing = taxRateOpt.get();
+
+                if (existing.getRate().equals(request.getRate())) {
+                    duplicateCount++;
+                    log.debug("Duplicate TaxRate found | hsCode={}, region={}, taxType={}",
+                            hsCode.getHsCode(), request.getRegion(), request.getTaxType());
+                    continue;
+                } else {
+                    existing.setRate(request.getRate());
+                    existing.setTaxName(request.getTaxName());
+                    saveList.add(existing);
+                    updateCount++;
+                    log.debug("Updating TaxRate | id={}, hsCode={}, newRate={}",
+                            existing.getId(), hsCode.getHsCode(), request.getRate());
+                }
+            } else {
+                TaxRate newTax = TaxRate.builder()
+                        .id(UUID.randomUUID())
+                        .hsCode(hsCode)
+                        .region(request.getRegion())
+                        .taxType(request.getTaxType())
+                        .rate(request.getRate())
+                        .taxName(request.getTaxName())
+                        .build();
+                saveList.add(newTax);
+                insertCount++;
+                log.debug("Inserting new TaxRate | hsCode={}, region={}, taxType={}, rate={}",
+                        hsCode.getHsCode(), request.getRegion(), request.getTaxType(), request.getRate());
+            }
+        }
+
+        if (!saveList.isEmpty()) {
+            taxRateBusiness.saveAll(saveList);
+        }
+
+        String message = String.format(
+                "End Import Tax Rates: %d rows processed | Inserted: %d | Updated: %d | Duplicates: %d",
+                list.size(), insertCount, updateCount, duplicateCount
+        );
+
+        log.debug(message);
+
+        return TaxRateImportedResponse.builder()
+                .success(true)
+                .message(message)
+                .taxRateImported(insertCount)
+                .taxRateUpdated(updateCount)
+                .taxRateDuplicated(duplicateCount)
+                .build();
+    }
+
+
 
 
     private TaxRegion parseRegion(String regionStr) {

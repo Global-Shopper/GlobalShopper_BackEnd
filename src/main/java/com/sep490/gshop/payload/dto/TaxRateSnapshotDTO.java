@@ -6,10 +6,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class TaxRateSnapshotDTO {
+    private UUID id;
     private TaxRegion region;
     private TaxType taxType;
     private Double rate;

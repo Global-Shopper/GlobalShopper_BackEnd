@@ -3,7 +3,9 @@ package com.sep490.gshop.controller;
 import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.payload.dto.TaxRateSnapshotDTO;
 import com.sep490.gshop.payload.request.TaxRateCreateAndUpdateRequest;
+import com.sep490.gshop.payload.request.TaxRateRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
+import com.sep490.gshop.payload.response.TaxRateImportedResponse;
 import com.sep490.gshop.service.TaxRateService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -80,7 +82,7 @@ public class TaxRateController  {
         return ResponseEntity.ok(result);
     }
 
-    @PostMapping(path = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(path = "/import-by-csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<MessageResponse> importTaxRates(@RequestPart("file") MultipartFile file) {
         log.info("[START] Import Tax Rates API called. File: {}", file.getOriginalFilename());
 
@@ -90,6 +92,20 @@ public class TaxRateController  {
 
         log.info("[END] Import Tax Rates API finished. Success: {}, Duration: {} ms",
                 response.isSuccess(), (end - start));
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/import-by-list")
+    public ResponseEntity<TaxRateImportedResponse> importTaxRatesNewPhase(@Valid @RequestBody List<TaxRateRequest> requests) {
+        log.info("Start importTaxRates | totalRequests={}", requests.size());
+
+        TaxRateImportedResponse response = taxRateService.importTaxRatesNewPhaseCSV(requests);
+
+        log.info("End importTaxRates | Inserted={} | Updated={} | Duplicated={}",
+                response.getTaxRateImported(),
+                response.getTaxRateUpdated(),
+                response.getTaxRateDuplicated());
 
         return ResponseEntity.ok(response);
     }

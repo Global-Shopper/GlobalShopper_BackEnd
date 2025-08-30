@@ -23,7 +23,8 @@ public class TaxRateRequest {
     @NotNull(message = "Thuế suất không được để trống")
     @DecimalMin(value = "0.0", message = "Thuế suất phải lớn hơn hoặc bằng 0")
     private Double rate;
-
     private String taxName;
+    @NotNull(message = "Hs Code không được để trống")
+    private String hsCode;
 }
 
