@@ -2,11 +2,9 @@ package com.sep490.gshop.entity;
 
 import com.sep490.gshop.common.enums.OrderStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
+@EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "order_history")
 @Data

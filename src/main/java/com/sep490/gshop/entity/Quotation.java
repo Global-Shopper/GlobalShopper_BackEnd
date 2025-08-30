@@ -3,7 +3,6 @@ package com.sep490.gshop.entity;
 import com.sep490.gshop.common.enums.PackageType;
 import com.sep490.gshop.common.enums.QuotationType;
 import com.sep490.gshop.entity.converter.FeeListConverter;
-import com.sep490.gshop.entity.converter.StringListConverter;
 import com.sep490.gshop.entity.subclass.Fee;
 import com.sep490.gshop.entity.subclass.RecipientInformation;
 import com.sep490.gshop.entity.subclass.ShipperInformation;

@@ -1,0 +1,15 @@
+package com.sep490.gshop.payload.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class RefundReasonDTO {
+    private String id;
+    private String reason;
+    private Double rate;
+    private Boolean active;
+}

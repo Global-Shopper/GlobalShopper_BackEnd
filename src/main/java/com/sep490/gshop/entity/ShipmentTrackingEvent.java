@@ -2,11 +2,9 @@ package com.sep490.gshop.entity;
 
 import com.sep490.gshop.common.enums.ShipmentStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
+@EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "shipment_tracking_event")
 @Data

@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "users",
         uniqueConstraints = {

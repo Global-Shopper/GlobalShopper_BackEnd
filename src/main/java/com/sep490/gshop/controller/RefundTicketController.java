@@ -2,10 +2,13 @@ package com.sep490.gshop.controller;
 
 import com.sep490.gshop.common.constants.URLConstant;
 import com.sep490.gshop.common.enums.RefundStatus;
+import com.sep490.gshop.payload.dto.RefundReasonDTO;
 import com.sep490.gshop.payload.dto.RefundTicketDTO;
+import com.sep490.gshop.payload.request.CreateReasonRequest;
 import com.sep490.gshop.payload.request.refund.ProcessRefundModel;
 import com.sep490.gshop.payload.request.refund.RefundTicketRequest;
 import com.sep490.gshop.payload.request.refund.RejectRefundModel;
+import com.sep490.gshop.payload.response.MessageResponse;
 import com.sep490.gshop.service.RefundTicketService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -19,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -111,6 +115,41 @@ public class RefundTicketController {
         log.info("[API] getRefundTicketByOrderId() SUCCESS | orderId: {}, ticketId: {}",
                 orderId, dto != null ? dto.getId() : null);
 
+        return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping("/reasons")
+    public ResponseEntity<List<RefundReasonDTO>> getRefundReasons() {
+        log.info("getRefundReasons() RefundTicketController Start");
+        List<RefundReasonDTO> reasons = refundTicketService.getRefundReasons();
+        log.info("getRefundReasons() RefundTicketController End | reasons: {}", reasons.size());
+        return ResponseEntity.ok(reasons);
+    }
+
+    @PostMapping("/reasons")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('BUSINESS_MANAGER')")
+    public ResponseEntity<RefundReasonDTO> createRefundReason(@RequestBody CreateReasonRequest reason) {
+        log.info("createRefundReason() RefundTicketController Start | reason: {}", reason);
+        RefundReasonDTO dto = refundTicketService.createRefundReason(reason);
+        log.info("createRefundReason() RefundTicketController End | dto: {}", dto);
+        return ResponseEntity.ok(dto);
+    }
+
+    @DeleteMapping("/reasons/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('BUSINESS_MANAGER')")
+    public ResponseEntity<MessageResponse> deleteRefundReason(@PathVariable String id) {
+        log.info("deleteRefundReason() RefundTicketController Start | id: {}", id);
+        MessageResponse response = refundTicketService.deleteReason(id);
+        log.info("deleteRefundReason() RefundTicketController End | id: {}", id);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/reasons/{id}/activate")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('BUSINESS_MANAGER')")
+    public ResponseEntity<RefundReasonDTO> activateReason(@PathVariable String id) {
+        log.info("activateReason() RefundTicketController Start | id: {}", id);
+        RefundReasonDTO dto = refundTicketService.changeIsActive(id);
+        log.info("activateReason() RefundTicketController End | dto: {}", dto);
         return ResponseEntity.ok(dto);
     }
 
