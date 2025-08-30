@@ -1,18 +1,20 @@
 package com.sep490.gshop.entity;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @EqualsAndHashCode(callSuper = false)
-@Data
 @Entity
+@Table(name = "refund_reasons")
 @AllArgsConstructor
 @NoArgsConstructor
-public class Variant extends BaseEntity {
-    private String name;
-    private Boolean isActive = true;
-
+@Data
+public class RefundReason extends BaseEntity {
+    private String reason;
+    private Double rate;
+    private Boolean active;
 }

@@ -4,14 +4,12 @@ import com.sep490.gshop.common.enums.PurchaseRequestStatus;
 import com.sep490.gshop.common.enums.RequestType;
 import com.sep490.gshop.entity.subclass.AddressSnapshot;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "purchase_requests")
 @Data
