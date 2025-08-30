@@ -4,6 +4,7 @@ import com.sep490.gshop.common.enums.TaxRegion;
 import com.sep490.gshop.common.enums.TaxType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UuidGenerator;
@@ -15,6 +16,7 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class TaxRate {
     @Id
     @UuidGenerator
