@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -202,39 +203,39 @@ public class QuotationServiceImpl implements QuotationService {
         dto.setShipper(input.getShipper()); //
         dto.setRecipient(input.getRecipient()); //
         dto.setNote(input.getNote());
-        dto.setExpiredDate(input.getExpiredDate());
+        dto.setExpiredDate(Instant.now().toEpochMilli()+ input.getExpiredTime());
         dto.setRegion(region.toString());
         dto.setCurrency(input.getCurrency());
         return dto;
     }
 
 
-        private TaxRegion parse(String shipmentCountryCode) {
-            if (shipmentCountryCode == null || shipmentCountryCode.isEmpty()) {
-                throw AppException.builder().message("Không tìm thấy region dựa trên countryCode").code(404).build();
-            }
-
-            // Kiểm tra và trả về TaxRegion tương ứng với mã quốc gia
-            switch (shipmentCountryCode.toUpperCase()) {
-                case "GB":
-                    return TaxRegion.UK;
-
-                case "US":
-                    return TaxRegion.US;
-
-                case "CN":
-                    return TaxRegion.CHN;
-
-                case "KR":
-                    return TaxRegion.KR;
-
-                case "JP":
-                    return TaxRegion.JP;
-
-                default:
-                    throw AppException.builder().message("shipment country code " + shipmentCountryCode + " không có region hợp lệ tương ứng").code(400).build();
-            }
+    private TaxRegion parse(String shipmentCountryCode) {
+        if (shipmentCountryCode == null || shipmentCountryCode.isEmpty()) {
+            throw AppException.builder().message("Không tìm thấy region dựa trên countryCode").code(404).build();
         }
+
+        // Kiểm tra và trả về TaxRegion tương ứng với mã quốc gia
+        switch (shipmentCountryCode.toUpperCase()) {
+            case "GB":
+                return TaxRegion.UK;
+
+            case "US":
+                return TaxRegion.US;
+
+            case "CN":
+                return TaxRegion.CHN;
+
+            case "KR":
+                return TaxRegion.KR;
+
+            case "JP":
+                return TaxRegion.JP;
+
+            default:
+                throw AppException.builder().message("shipment country code " + shipmentCountryCode + " không có region hợp lệ tương ứng").code(400).build();
+        }
+    }
 
 
     @Override
@@ -299,11 +300,8 @@ public class QuotationServiceImpl implements QuotationService {
     @Transactional
     public OnlineQuotationDTO createOnlineQuotation(@Valid OnlineQuotationRequest request){
         try {
-
             log.debug("createOnlineQuotation() - Start | subRequestId: {}", request.getSubRequestId());
-
             UUID subRequestId = UUID.fromString(request.getSubRequestId());
-
             // 1. Check SubRequest tồn tại
             SubRequest sub = subRequestBusiness.getById(subRequestId)
                     .orElseThrow(() -> AppException.builder()
@@ -337,7 +335,7 @@ public class QuotationServiceImpl implements QuotationService {
             Quotation quotation = new Quotation();
             quotation.setSubRequest(sub);
             quotation.setNote(request.getNote());
-            quotation.setExpiredDate(request.getExpiredDate());
+            quotation.setExpiredDate(Instant.now().toEpochMilli()+ request.getExpiredTime());
             quotation.setQuotationType(QuotationType.ONLINE);
 
             List<QuotationDetail> detailEntities = new ArrayList<>();
@@ -475,10 +473,6 @@ public class QuotationServiceImpl implements QuotationService {
         }
     }
 
-
-
-
-
     @Override
     @Transactional
     public OfflineQuotationDTO createOfflineQuotation(@Valid OffineQuotationRequest input) {
@@ -517,7 +511,7 @@ public class QuotationServiceImpl implements QuotationService {
             Quotation quotation = new Quotation();
             quotation.setSubRequest(sub);
             quotation.setNote(input.getNote());
-            quotation.setExpiredDate(input.getExpiredDate());
+            quotation.setExpiredDate(Instant.now().toEpochMilli()+ input.getExpiredTime());
             quotation.setShippingEstimate(input.getShippingEstimate());
             quotation.setTotalWeightEstimate(input.getTotalWeightEstimate());
             quotation.setPackageType(input.getPackageType());
