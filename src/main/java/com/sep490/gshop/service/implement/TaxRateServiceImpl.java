@@ -334,7 +334,7 @@ public class TaxRateServiceImpl implements TaxRateService {
                                 .region(request.getRegion())
                                 .taxType(request.getTaxType())
                                 .rate(request.getRate())
-                                .taxName(request.getTaxName())
+                                .taxName(taxRateToName(request.getTaxType()))
                                 .build();
 
                         errors.add(new ErrorImportResponse<>(dummy, "Không tìm thấy HSCode: " + request.getHsCode()));
@@ -379,7 +379,7 @@ public class TaxRateServiceImpl implements TaxRateService {
                                 .region(request.getRegion())
                                 .taxType(request.getTaxType())
                                 .rate(request.getRate())
-                                .taxName(request.getTaxName())
+                                .taxName(taxRateToName(request.getTaxType()))
                                 .build();
                         saveList.add(newTax);
                         insertCount++;
@@ -395,7 +395,7 @@ public class TaxRateServiceImpl implements TaxRateService {
                             .region(request.getRegion())
                             .taxType(request.getTaxType())
                             .rate(request.getRate())
-                            .taxName(request.getTaxName())
+                            .taxName(taxRateToName(request.getTaxType()))
                             .build();
 
                     errors.add(new ErrorImportResponse<>(failedDTO, "Exception: " + ex.getMessage()));
@@ -422,7 +422,7 @@ public class TaxRateServiceImpl implements TaxRateService {
                     .totalRequestData(list.size())
                     .build();
         } catch (Exception e) {
-            log.error("Error Import Tax Rates CSV: {}", e.getMessage(), e);
+            log.error("Error Import Tax Rates CSV: {}", e.getMessage());
             return ImportedResponse.<TaxRateSnapshotDTO>builder()
                     .success(false)
                     .message("Error Import Tax Rates CSV: " + e.getMessage())
@@ -432,6 +432,23 @@ public class TaxRateServiceImpl implements TaxRateService {
         }
     }
 
+    private String taxRateToName(TaxType type) {
+        if (type == null) return null;
+        return switch (type) {
+            case ACFTA -> "Hiệp định Khu vực Mậu dịch Tự do ASEAN - Trung Quốc (ACFTA)";
+            case AJCEP -> "Hiệp định Đối tác Kinh tế Toàn diện ASEAN - Nhật Bản (AJCEP)";
+            case AKFTA -> "Hiệp định Thương mại Tự do ASEAN - Hàn Quốc (AKFTA)";
+            case CPTPP -> "Hiệp định Đối tác Toàn diện và Tiến bộ xuyên Thái Bình Dương (CPTPP)";
+            case MFN -> "Thuế nhập khẩu tối huệ quốc (MFN – Most Favoured Nation)";
+            case RCEPT -> "Hiệp định Đối tác Kinh tế Toàn diện Khu vực (RCEP)";
+            case TTDB -> "Thuế Tiêu thụ đặc biệt (TTĐB)";
+            case UKVFTA -> "Hiệp định Thương mại Tự do Việt Nam - Vương quốc Anh (UKVFTA)";
+            case VAT -> "Thuế Giá trị gia tăng (VAT)";
+            case VJEPA -> "Hiệp định Đối tác Kinh tế Việt Nam - Nhật Bản (VJEPA)";
+            case VKFTA -> "Hiệp định Thương mại Tự do Việt Nam - Hàn Quốc (VKFTA)";
+            default -> type.name();
+        };
+    }
 
 
 
