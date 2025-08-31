@@ -11,6 +11,7 @@ import jakarta.validation.constraints.*;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Data
 @AllArgsConstructor
@@ -32,8 +33,8 @@ public class OffineQuotationRequest {
 
     private String currency;
 
-    @Positive(message = "expiredDate phải lớn hơn 0")
-    private long expiredDate;
+    @Positive(message = "expiredTime phải lớn hơn 0")
+    private long expiredTime = TimeUnit.DAYS.toMillis(3); //in milliseconds
 
     @PositiveOrZero(message = "totalWeightEstimate phải là số dương hoặc bằng 0")
     private Double totalWeightEstimate;
