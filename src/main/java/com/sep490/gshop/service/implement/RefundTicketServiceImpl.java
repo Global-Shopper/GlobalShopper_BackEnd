@@ -58,6 +58,7 @@ public class RefundTicketServiceImpl implements RefundTicketService {
             RefundTicket newRefundTicket = RefundTicket.builder()
                     .reason(refundTicket.getReason())
                     .evidence(refundTicket.getEvidence())
+                    .refundRate(refundTicket.getRate())
                     .status(RefundStatus.PENDING)
                     .order(order)
                     .build();
@@ -315,6 +316,49 @@ public class RefundTicketServiceImpl implements RefundTicketService {
         } catch (Exception e) {
             log.error("changeIsActive() RefundTicketServiceImpl Exception | id: {}, message: {}", id, e.getMessage());
             throw e;
+        }
+    }
+
+    @Override
+    public MessageResponse approveRefundTicket(String ticketId) {
+        try {
+            log.debug("approveRefundTicket() RefundTicketServiceImpl Start | ticketId: {}", ticketId);
+            RefundTicket refundTicket = refundTicketBusiness.getById(UUID.fromString(ticketId))
+                    .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy yêu cầu hoàn tiền với id: " + ticketId));
+            Order order = refundTicket.getOrder();
+            Customer customer = order.getCustomer();
+            Wallet wallet = customer.getWallet();
+            double amount = Math.round((order.getTotalPrice()+ order.getShippingFee())*refundTicket.getRefundRate());
+            refundTicket.setAmount(amount);
+            refundTicket.setStatus(RefundStatus.COMPLETED);
+            Transaction transaction = Transaction.builder()
+                    .amount(amount)
+                    .balanceBefore(wallet.getBalance())
+                    .balanceAfter(wallet.getBalance() + amount)
+                    .type(TransactionType.REFUND)
+                    .description("Hoàn tiền cho đơn hàng " + order.getId())
+                    .status(TransactionStatus.SUCCESS)
+                    .customer(customer)
+                    .build();
+            transactionBusiness.create(transaction);
+            wallet.setBalance(wallet.getBalance() + amount);
+            walletBusiness.update(wallet);
+            RefundTicketDTO dto = modelMapper.map(refundTicketBusiness.update(refundTicket), RefundTicketDTO.class);
+            order.setStatus(OrderStatus.CANCELLED);
+            OrderHistory orderHistory = new OrderHistory(order,"Đã xác nhận hoàn tiền");
+            order.getHistory().add(orderHistory);
+            orderBusiness.update(order);
+            log.debug("approveRefundTicket() RefundTicketServiceImpl End | Updated RefundTicketDTO: {}", dto);
+            return MessageResponse.builder()
+                    .message("Xác nhận hoàn tiền thành công")
+                    .isSuccess(true)
+                    .build();
+        } catch (Exception e) {
+            log.error("approveRefundTicket() RefundTicketServiceImpl Exception | ticketId: {}, message: {}", ticketId, e.getMessage());
+            return MessageResponse.builder()
+                    .message("Xác nhận hoàn tiền thất bại: " + e.getMessage())
+                    .isSuccess(false)
+                    .build();
         }
     }
 }

@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 public class CreateReasonRequest {
     @NotBlank(message = "Vui lòng nhập lý do")
     private String reason;
-    @DecimalMin(value = "0.0", inclusive = false)
-    @DecimalMax(value = "1.0", inclusive = true)
+    @DecimalMin(value = "0.0", inclusive = false, message = "Tỷ lệ hoàn tiền phải lớn hơn 0")
+    @DecimalMax(value = "1.0", inclusive = true, message = "Tỷ lệ hoàn tiền phải nhỏ hơn hoặc bằng 1")
     private double rate;
 }
