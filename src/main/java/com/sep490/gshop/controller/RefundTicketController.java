@@ -154,12 +154,21 @@ public class RefundTicketController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/reasons/{id}/activate")
+    @PatchMapping("/reasons/{id}/activate")
     @PreAuthorize("hasRole('ADMIN') or hasRole('BUSINESS_MANAGER')")
     public ResponseEntity<RefundReasonDTO> activateReason(@PathVariable String id) {
         log.info("activateReason() RefundTicketController Start | id: {}", id);
         RefundReasonDTO dto = refundTicketService.changeIsActive(id);
         log.info("activateReason() RefundTicketController End | dto: {}", dto);
+        return ResponseEntity.ok(dto);
+    }
+
+    @PutMapping("/reasons/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('BUSINESS_MANAGER')")
+    public ResponseEntity<RefundReasonDTO> editReason(@RequestBody CreateReasonRequest request, @PathVariable String id) {
+        log.info("editReason() RefundTicketController Start | id: {}", id);
+        RefundReasonDTO dto = refundTicketService.editReason(id,request);
+        log.info("editReason() RefundTicketController End | dto: {}", dto);
         return ResponseEntity.ok(dto);
     }
 

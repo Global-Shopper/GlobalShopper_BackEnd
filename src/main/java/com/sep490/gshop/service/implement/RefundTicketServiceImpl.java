@@ -361,4 +361,20 @@ public class RefundTicketServiceImpl implements RefundTicketService {
                     .build();
         }
     }
+
+    @Override
+    public RefundReasonDTO editReason(String id, CreateReasonRequest request) {
+        try {
+            log.debug("editReason() RefundTicketServiceImpl Start | id: {}, request: {}", id, request);
+            RefundReason reason = refundTicketBusiness.getReasonById(UUID.fromString(id));
+            reason.setReason(request.getReason());
+            reason.setRate(request.getRate());
+            RefundReasonDTO dto = modelMapper.map(refundTicketBusiness.updateRefundReason(reason), RefundReasonDTO.class);
+            log.debug("editReason() RefundTicketServiceImpl End | dto: {}", dto);
+            return dto;
+        } catch (Exception e) {
+            log.error("editReason() RefundTicketServiceImpl Exception | id: {}, message: {}", id, e.getMessage());
+            throw e;
+        }
+    }
 }

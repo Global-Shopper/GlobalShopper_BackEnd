@@ -35,4 +35,6 @@ public interface RefundTicketService {
     RefundReasonDTO changeIsActive(String id);
 
     MessageResponse approveRefundTicket(String ticketId);
+
+    RefundReasonDTO editReason(String id, CreateReasonRequest request);
 }
