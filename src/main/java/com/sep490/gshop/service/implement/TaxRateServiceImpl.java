@@ -36,11 +36,13 @@ public class TaxRateServiceImpl implements TaxRateService {
     private TaxRateBusiness taxRateBusiness;
     private HsCodeBusiness hsCodeBusiness;
     private ModelMapper modelMapper;
+
     public TaxRateServiceImpl(TaxRateBusiness taxRateBusiness, HsCodeBusiness hsCodeBusiness, ModelMapper modelMapper) {
         this.taxRateBusiness = taxRateBusiness;
         this.hsCodeBusiness = hsCodeBusiness;
         this.modelMapper = modelMapper;
     }
+
     @Override
 
     public TaxCalculationResult calculateTaxes(double basePrice, List<TaxRate> taxRates) {
@@ -310,11 +312,9 @@ public class TaxRateServiceImpl implements TaxRateService {
                     .build();
         }
     }
-
     @Override
     public ImportedResponse<TaxRateSnapshotDTO> importTaxRatesNewPhaseCSV(List<TaxRateRequest> list) {
         log.debug("=== Start Import Tax Rates List: {} ===", list.size());
-
         int insertCount = 0;
         int updateCount = 0;
         int duplicateCount = 0;
@@ -323,85 +323,115 @@ public class TaxRateServiceImpl implements TaxRateService {
         List<TaxRate> saveList = new ArrayList<>();
         List<ErrorImportResponse<TaxRateSnapshotDTO>> errors = new ArrayList<>();
 
-        for (TaxRateRequest request : list) {
-            Optional<HsCode> hsCodeOpt = hsCodeBusiness.getById(request.getHsCode());
-            if (hsCodeOpt.isEmpty()) {
-                log.debug("Không tìm thấy HSCode: {}", request.getHsCode());
+        try {
+            for (TaxRateRequest request : list) {
+                try {
+                    Optional<HsCode> hsCodeOpt = hsCodeBusiness.getById(request.getHsCode());
+                    if (hsCodeOpt.isEmpty()) {
+                        log.debug("Không tìm thấy HSCode: {}", request.getHsCode());
 
-                TaxRateSnapshotDTO dummy = TaxRateSnapshotDTO.builder().id(UUID.randomUUID())
-                        .region(request.getRegion())
-                        .taxType(request.getTaxType())
-                        .rate(request.getRate())
-                        .taxName(request.getTaxName())
-                        .build();
+                        TaxRateSnapshotDTO dummy = TaxRateSnapshotDTO.builder().id(UUID.randomUUID())
+                                .region(request.getRegion())
+                                .taxType(request.getTaxType())
+                                .rate(request.getRate())
+                                .taxName(request.getTaxName())
+                                .build();
 
-                errors.add(new ErrorImportResponse<>(dummy, "Không tìm thấy HSCode: " + request.getHsCode()));
-                notFoundCount++;
-                continue;
+                        errors.add(new ErrorImportResponse<>(dummy, "Không tìm thấy HSCode: " + request.getHsCode()));
+                        notFoundCount++;
+                        continue;
+                    }
+
+                    var hsCode = hsCodeOpt.get();
+
+                    Optional<TaxRate> taxRateOpt = taxRateBusiness.findByHsCodeAndRegionAndTaxType(
+                            hsCode, request.getRegion(), request.getTaxType()
+                    );
+
+                    if (taxRateOpt.isPresent()) {
+                        TaxRate existing = taxRateOpt.get();
+
+                        if (existing.getRate().equals(request.getRate())) {
+                            duplicateCount++;
+                            log.debug("Duplicate TaxRate found | hsCode={}, region={}, taxType={}",
+                                    hsCode.getHsCode(), request.getRegion(), request.getTaxType());
+
+                            errors.add(new ErrorImportResponse<>(
+                                    modelMapper.map(existing, TaxRateSnapshotDTO.class),
+                                    "Duplicate TaxRate"
+                            ));
+                            continue;
+                        } if (taxRateBusiness.existsById(existing.getId())) {
+                            existing.setRate(request.getRate());
+                            saveList.add(existing);
+                            updateCount++;
+                        } else {
+                            log.warn("TaxRate id={} không còn tồn tại trong DB, bỏ qua update", existing.getId());
+                            errors.add(new ErrorImportResponse<>(
+                                    modelMapper.map(existing, TaxRateSnapshotDTO.class),
+                                    "TaxRate không tồn tại trong DB (có thể đã bị xóa)"
+                            ));
+                        }
+
+                    } else {
+                        TaxRate newTax = TaxRate.builder()
+                                .hsCode(hsCode)
+                                .region(request.getRegion())
+                                .taxType(request.getTaxType())
+                                .rate(request.getRate())
+                                .taxName(request.getTaxName())
+                                .build();
+                        saveList.add(newTax);
+                        insertCount++;
+                        log.debug("Inserting new TaxRate | hsCode={}, region={}, taxType={}, rate={}",
+                                hsCode.getHsCode(), request.getRegion(), request.getTaxType(), request.getRate());
+                    }
+                } catch (Exception ex) {
+                    log.error("Lỗi khi xử lý record hsCode={}, region={}, taxType={} | message={}",
+                            request.getHsCode(), request.getRegion(), request.getTaxType(), ex.getMessage());
+
+                    TaxRateSnapshotDTO failedDTO = TaxRateSnapshotDTO.builder()
+                            .id(UUID.randomUUID())
+                            .region(request.getRegion())
+                            .taxType(request.getTaxType())
+                            .rate(request.getRate())
+                            .taxName(request.getTaxName())
+                            .build();
+
+                    errors.add(new ErrorImportResponse<>(failedDTO, "Exception: " + ex.getMessage()));
+                    }
             }
 
-            var hsCode = hsCodeOpt.get();
+            if (!saveList.isEmpty()) {
+                taxRateBusiness.saveAll(saveList);
+            }
 
-            Optional<TaxRate> taxRateOpt = taxRateBusiness.findByHsCodeAndRegionAndTaxType(
-                    hsCode, request.getRegion(), request.getTaxType()
+            String message = String.format(
+                    "Xử lý xong danh sách thuế: %d bản ghi | Inserted: %d | Updated: %d | Duplicates: %d | HSCode Not Found: %d",
+                    list.size(), insertCount, updateCount, duplicateCount, notFoundCount
             );
 
-            if (taxRateOpt.isPresent()) {
-                TaxRate existing = taxRateOpt.get();
-
-                if (existing.getRate().equals(request.getRate())) {
-                    duplicateCount++;
-                    log.debug("Duplicate TaxRate found | hsCode={}, region={}, taxType={}",
-                            hsCode.getHsCode(), request.getRegion(), request.getTaxType());
-
-                    errors.add(new ErrorImportResponse<>(
-                            modelMapper.map(existing, TaxRateSnapshotDTO.class),
-                            "Duplicate TaxRate"
-                    ));
-                    continue;
-                } else {
-                    existing.setRate(request.getRate());
-                    saveList.add(existing);
-                    updateCount++;
-                    log.debug("Updating TaxRate | id={}, hsCode={}, newRate={}",
-                            existing.getId(), hsCode.getHsCode(), request.getRate());
-                }
-            } else {
-                TaxRate newTax = TaxRate.builder()
-                        .id(UUID.randomUUID())
-                        .hsCode(hsCode)
-                        .region(request.getRegion())
-                        .taxType(request.getTaxType())
-                        .rate(request.getRate())
-                        .taxName(request.getTaxName())
-                        .build();
-                saveList.add(newTax);
-                insertCount++;
-                log.debug("Inserting new TaxRate | hsCode={}, region={}, taxType={}, rate={}",
-                        hsCode.getHsCode(), request.getRegion(), request.getTaxType(), request.getRate());
-            }
+            log.debug(message);
+            return ImportedResponse.<TaxRateSnapshotDTO>builder()
+                    .success(true)
+                    .message(message)
+                    .imported(insertCount)
+                    .updated(updateCount)
+                    .duplicated(duplicateCount)
+                    .errors(errors)
+                    .totalRequestData(list.size())
+                    .build();
+        } catch (Exception e) {
+            log.error("Error Import Tax Rates CSV: {}", e.getMessage(), e);
+            return ImportedResponse.<TaxRateSnapshotDTO>builder()
+                    .success(false)
+                    .message("Error Import Tax Rates CSV: " + e.getMessage())
+                    .errors(errors)
+                    .totalRequestData(list.size())
+                    .build();
         }
-
-        if (!saveList.isEmpty()) {
-            taxRateBusiness.saveAll(saveList);
-        }
-
-        String message = String.format(
-                "Xử lý xong danh sách thuế: %d bản ghi | Inserted: %d | Updated: %d | Duplicates: %d | HSCode Not Found: %d",
-                list.size(), insertCount, updateCount, duplicateCount, notFoundCount
-        );
-
-        log.debug(message);
-        return ImportedResponse.<TaxRateSnapshotDTO>builder()
-                .success(true)
-                .message(message)
-                .imported(insertCount)
-                .updated(updateCount)
-                .duplicated(duplicateCount)
-                .errors(errors)
-                .totalRequestData(list.size())
-                .build();
     }
+
 
 
 
