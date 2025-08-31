@@ -1,6 +1,7 @@
 package com.sep490.gshop.controller;
 
 import com.sep490.gshop.common.constants.URLConstant;
+import com.sep490.gshop.entity.TaxRate;
 import com.sep490.gshop.payload.dto.TaxRateSnapshotDTO;
 import com.sep490.gshop.payload.request.TaxRateCreateAndUpdateRequest;
 import com.sep490.gshop.payload.request.TaxRateRequest;
@@ -97,10 +98,10 @@ public class TaxRateController  {
     }
 
     @PostMapping("/import-by-list")
-    public ResponseEntity<ImportedResponse> importTaxRatesNewPhase(@Valid @RequestBody List<TaxRateRequest> requests) {
+    public ResponseEntity<ImportedResponse<TaxRateSnapshotDTO>> importTaxRatesNewPhase(@Valid @RequestBody List<TaxRateRequest> requests) {
         log.info("Start importTaxRates | totalRequests={}", requests.size());
 
-        ImportedResponse response = taxRateService.importTaxRatesNewPhaseCSV(requests);
+        ImportedResponse<TaxRateSnapshotDTO> response = taxRateService.importTaxRatesNewPhaseCSV(requests);
 
         log.info("End importTaxRates | Inserted={} | Updated={} | Duplicated={}",
                 response.getImported(),

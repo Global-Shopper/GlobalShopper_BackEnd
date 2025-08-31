@@ -8,6 +8,7 @@ import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.HsCode;
 import com.sep490.gshop.entity.TaxRate;
 import com.sep490.gshop.payload.dto.TaxRateSnapshotDTO;
+import com.sep490.gshop.payload.request.ErrorImportResponse;
 import com.sep490.gshop.payload.request.TaxRateCreateAndUpdateRequest;
 import com.sep490.gshop.payload.request.TaxRateRequest;
 import com.sep490.gshop.payload.response.MessageResponse;
@@ -311,21 +312,35 @@ public class TaxRateServiceImpl implements TaxRateService {
     }
 
     @Override
-    public ImportedResponse importTaxRatesNewPhaseCSV(List<TaxRateRequest> list) {
+    public ImportedResponse<TaxRateSnapshotDTO> importTaxRatesNewPhaseCSV(List<TaxRateRequest> list) {
         log.debug("=== Start Import Tax Rates List: {} ===", list.size());
 
         int insertCount = 0;
         int updateCount = 0;
         int duplicateCount = 0;
+        int notFoundCount = 0;
 
         List<TaxRate> saveList = new ArrayList<>();
+        List<ErrorImportResponse<TaxRateSnapshotDTO>> errors = new ArrayList<>();
 
         for (TaxRateRequest request : list) {
-            var hsCode = hsCodeBusiness.getById(request.getHsCode())
-                    .orElseThrow(() -> AppException.builder()
-                            .message("Không tìm thấy HSCode: " + request.getHsCode())
-                            .code(404)
-                            .build());
+            Optional<HsCode> hsCodeOpt = hsCodeBusiness.getById(request.getHsCode());
+            if (hsCodeOpt.isEmpty()) {
+                log.debug("Không tìm thấy HSCode: {}", request.getHsCode());
+
+                TaxRateSnapshotDTO dummy = TaxRateSnapshotDTO.builder().id(UUID.randomUUID())
+                        .region(request.getRegion())
+                        .taxType(request.getTaxType())
+                        .rate(request.getRate())
+                        .taxName(request.getTaxName())
+                        .build();
+
+                errors.add(new ErrorImportResponse<>(dummy, "Không tìm thấy HSCode: " + request.getHsCode()));
+                notFoundCount++;
+                continue;
+            }
+
+            var hsCode = hsCodeOpt.get();
 
             Optional<TaxRate> taxRateOpt = taxRateBusiness.findByHsCodeAndRegionAndTaxType(
                     hsCode, request.getRegion(), request.getTaxType()
@@ -338,6 +353,11 @@ public class TaxRateServiceImpl implements TaxRateService {
                     duplicateCount++;
                     log.debug("Duplicate TaxRate found | hsCode={}, region={}, taxType={}",
                             hsCode.getHsCode(), request.getRegion(), request.getTaxType());
+
+                    errors.add(new ErrorImportResponse<>(
+                            modelMapper.map(existing, TaxRateSnapshotDTO.class),
+                            "Duplicate TaxRate"
+                    ));
                     continue;
                 } else {
                     existing.setRate(request.getRate());
@@ -367,19 +387,23 @@ public class TaxRateServiceImpl implements TaxRateService {
         }
 
         String message = String.format(
-                "Cập nhật thành công Tax Rates: %d loại thuế đã được xử lý",
-                list.size()
+                "Xử lý xong danh sách thuế: %d bản ghi | Inserted: %d | Updated: %d | Duplicates: %d | HSCode Not Found: %d",
+                list.size(), insertCount, updateCount, duplicateCount, notFoundCount
         );
 
         log.debug(message);
-        return ImportedResponse.builder()
+        return ImportedResponse.<TaxRateSnapshotDTO>builder()
                 .success(true)
                 .message(message)
                 .imported(insertCount)
                 .updated(updateCount)
                 .duplicated(duplicateCount)
+                .errors(errors)
+                .totalRequestData(list.size())
                 .build();
     }
+
+
 
     private TaxRegion parseRegion(String regionStr) {
         try {

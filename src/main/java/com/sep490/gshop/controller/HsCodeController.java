@@ -1,9 +1,12 @@
 package com.sep490.gshop.controller;
 
 import com.sep490.gshop.common.constants.URLConstant;
+import com.sep490.gshop.entity.HsCode;
 import com.sep490.gshop.payload.dto.HsCodeDTO;
+import com.sep490.gshop.payload.dto.HsCodeErrorResponse;
 import com.sep490.gshop.payload.dto.HsCodeSearchDTO;
 import com.sep490.gshop.payload.dto.HsTreeNodeDTO;
+import com.sep490.gshop.payload.request.HsCodeListRequest;
 import com.sep490.gshop.payload.request.HsCodeRequest;
 import com.sep490.gshop.payload.response.ImportedResponse;
 import com.sep490.gshop.payload.response.MessageResponse;
@@ -99,11 +102,11 @@ public class HsCodeController {
 
     @Operation(summary = "Import HSCode từ danh sách request")
     @PostMapping("/import-with-list")
-    public ResponseEntity<ImportedResponse> importHsCode(
-            @Valid @RequestBody List<HsCodeRequest> requests) {
+    public ResponseEntity<ImportedResponse<HsCodeErrorResponse>> importHsCode(
+            @Valid @RequestBody List<HsCodeListRequest> requests) {
 
         log.info("=== Start API importHsCode, size: {} ===", requests.size());
-        ImportedResponse response = hsCodeService.importHsCodeNewPhase(requests);
+        ImportedResponse<HsCodeErrorResponse> response = hsCodeService.importHsCodeNewPhase(requests);
         log.info("=== End API importHsCode: imported={}, updated={}, duplicated={} ===",
                 response.getImported(), response.getUpdated(), response.getDuplicated());
 
