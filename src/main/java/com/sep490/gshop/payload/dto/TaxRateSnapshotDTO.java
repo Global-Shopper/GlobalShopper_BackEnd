@@ -3,6 +3,7 @@ package com.sep490.gshop.payload.dto;
 import com.sep490.gshop.common.enums.TaxRegion;
 import com.sep490.gshop.common.enums.TaxType;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,6 +12,7 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class TaxRateSnapshotDTO {
     private UUID id;
     private TaxRegion region;
