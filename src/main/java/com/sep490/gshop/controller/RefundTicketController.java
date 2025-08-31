@@ -95,6 +95,16 @@ public class RefundTicketController {
         return ResponseEntity.ok(dto);
     }
 
+    @PostMapping("/approve/{ticketId}")
+    @Operation(summary = "Process refund ticket")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<MessageResponse> approveRefundTicket(@PathVariable String ticketId) {
+        log.info("approveRefundTicket() RefundTicketController Start | ticketId: {}", ticketId);
+        MessageResponse message = refundTicketService.approveRefundTicket(ticketId);
+        log.info("approveRefundTicket() RefundTicketController End | ticketId: {}, message: {}", ticketId, message);
+        return ResponseEntity.ok(message);
+    }
+
     @PostMapping("/reject/{ticketId}")
     @Operation(summary = "Reject refund ticket")
     @PreAuthorize("hasRole('ADMIN')")
