@@ -29,7 +29,7 @@ public class TaxRateController  {
 
     @GetMapping("/by-hscode/{hsCode}")
     @Operation(summary = "Tìm tất cả thuế bằng hs code")
-    @PreAuthorize("hasRole('BUSINESS_MANAGER')")
+    @PreAuthorize("hasRole('BUSINESS_MANAGER') or hasRole('ADMIN')")
     public ResponseEntity<List<TaxRateSnapshotDTO>> getTaxRatesByHsCode(@PathVariable String hsCode) {
         log.info("getTaxRatesByHsCode() - Start | hsCode: {}", hsCode);
         List<TaxRateSnapshotDTO> result = taxRateService.getTaxRatesByHsCode(hsCode);
@@ -39,7 +39,7 @@ public class TaxRateController  {
 
     @GetMapping("/{id}")
     @Operation(summary = "Tìm tax rate bằng id")
-    @PreAuthorize("hasRole('BUSINESS_MANAGER')")
+    @PreAuthorize("hasRole('BUSINESS_MANAGER') or hasRole('ADMIN')")
     public ResponseEntity<TaxRateSnapshotDTO> getTaxRateById(@PathVariable String id) {
         log.info("getTaxRateById() - Start | id: {}", id);
         TaxRateSnapshotDTO dto = taxRateService.getTaxRateById(id);
