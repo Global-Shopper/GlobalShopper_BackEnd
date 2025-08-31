@@ -1,8 +1,11 @@
 package com.sep490.gshop.service;
 
+import com.sep490.gshop.entity.HsCode;
 import com.sep490.gshop.payload.dto.HsCodeDTO;
+import com.sep490.gshop.payload.dto.HsCodeErrorResponse;
 import com.sep490.gshop.payload.dto.HsCodeSearchDTO;
 import com.sep490.gshop.payload.dto.HsTreeNodeDTO;
+import com.sep490.gshop.payload.request.HsCodeListRequest;
 import com.sep490.gshop.payload.request.HsCodeRequest;
 import com.sep490.gshop.payload.response.ImportedResponse;
 import com.sep490.gshop.payload.response.MessageResponse;
@@ -22,5 +25,5 @@ public interface HsCodeService {
 
     MessageResponse importHsCodeCSV(MultipartFile file);
 
-    ImportedResponse importHsCodeNewPhase(List<HsCodeRequest> requests);
+    ImportedResponse<HsCodeErrorResponse> importHsCodeNewPhase(List<HsCodeListRequest> requests);
 }

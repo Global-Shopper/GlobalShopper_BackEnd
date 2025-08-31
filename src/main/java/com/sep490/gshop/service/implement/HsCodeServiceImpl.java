@@ -6,8 +6,11 @@ import com.sep490.gshop.config.handler.AppException;
 import com.sep490.gshop.entity.HsCode;
 import com.sep490.gshop.entity.TaxRate;
 import com.sep490.gshop.payload.dto.HsCodeDTO;
+import com.sep490.gshop.payload.dto.HsCodeErrorResponse;
 import com.sep490.gshop.payload.dto.HsTreeNodeDTO;
 import com.sep490.gshop.payload.dto.TaxRateSnapshotDTO;
+import com.sep490.gshop.payload.request.ErrorImportResponse;
+import com.sep490.gshop.payload.request.HsCodeListRequest;
 import com.sep490.gshop.payload.request.HsCodeRequest;
 import com.sep490.gshop.payload.response.ImportedResponse;
 import com.sep490.gshop.payload.response.MessageResponse;
@@ -243,13 +246,14 @@ public class HsCodeServiceImpl implements HsCodeService {
     }
 
     @Override
-    public ImportedResponse importHsCodeNewPhase(List<HsCodeRequest> requests) {
+    public ImportedResponse<HsCodeErrorResponse> importHsCodeNewPhase(List<HsCodeListRequest> requests) {
         log.debug("=== Start Import HSCode List, size: {} ===", requests.size());
 
         List<HsCode> newParse = new ArrayList<>();
         List<String> duplicates = new ArrayList<>();
+        List<ErrorImportResponse<HsCodeErrorResponse>> errors = new ArrayList<>();
 
-        for (HsCodeRequest request : requests) {
+        for (HsCodeListRequest request : requests) {
             HsCodeDTO hsCodeDTO = HsCodeDTO.builder()
                     .hsCode(request.getHsCode())
                     .parentCode(request.getParentCode())
@@ -262,7 +266,9 @@ public class HsCodeServiceImpl implements HsCodeService {
             boolean exists = hsCodeBusiness.existByHsCode(addHsCode.getHsCode());
             if (exists) {
                 duplicates.add(addHsCode.getHsCode());
-            } else {
+                errors.add(new ErrorImportResponse<>(modelMapper.map(addHsCode, HsCodeErrorResponse.class), "Duplicate HSCode"));
+            }
+            else {
                 newParse.add(addHsCode);
             }
         }
@@ -277,14 +283,16 @@ public class HsCodeServiceImpl implements HsCodeService {
         log.debug("=== End Import HSCode List: {} imported, {} duplicates ===",
                 importedCount, duplicateCount);
 
-        return ImportedResponse.builder()
+        return ImportedResponse.<HsCodeErrorResponse>builder()
                 .success(true)
                 .message("Cập nhật thành công bảng HsCode")
                 .imported(importedCount)
                 .updated(0)
                 .duplicated(duplicateCount)
+                .errors(errors).totalRequestData(requests.size())
                 .build();
     }
+
 
 
 

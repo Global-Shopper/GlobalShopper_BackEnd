@@ -21,5 +21,5 @@ public interface TaxRateService {
 
     MessageResponse importTaxRatesCSV(MultipartFile file);
 
-    ImportedResponse importTaxRatesNewPhaseCSV(List<TaxRateRequest> list);
+    ImportedResponse<TaxRateSnapshotDTO> importTaxRatesNewPhaseCSV(List<TaxRateRequest> list);
 }
