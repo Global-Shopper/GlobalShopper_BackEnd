@@ -19,4 +19,5 @@ public class TaxRateSnapshotDTO {
     private TaxType taxType;
     private Double rate;
     private String taxName;
+    private String hsCode;
 }

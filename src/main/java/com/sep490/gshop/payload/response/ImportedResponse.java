@@ -18,7 +18,7 @@ public class ImportedResponse<T> {
     private int imported;
     private int updated;
     private int duplicated;
-
+    private int errorCount;
     private List<ErrorImportResponse<T>> errors;
 }
 

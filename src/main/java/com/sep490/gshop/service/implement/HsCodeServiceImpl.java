@@ -190,6 +190,40 @@ public class HsCodeServiceImpl implements HsCodeService {
         }
     }
 
+    @Transactional
+    @Override
+    public MessageResponse deleteHsCodePrefix(String hsCode) {
+        log.debug("deleteHsCode() - Start | hsCode: {}", hsCode);
+        try {
+            List<HsCode> relatedCodes = hsCodeBusiness.findAllByHsCodeStartingWith(hsCode);
+
+            if (relatedCodes.isEmpty()) {
+                throw AppException.builder()
+                        .message("Không tìm thấy hsCode hoặc cây con liên quan")
+                        .code(404)
+                        .build();
+            }
+
+            for (HsCode code : relatedCodes) {
+                List<TaxRate> taxRates = taxRateBusiness.findAllByHsCode(code);
+                for (TaxRate tax : taxRates) {
+                    taxRateBusiness.delete(tax.getId());
+                }
+
+                boolean deleted = hsCodeBusiness.delete(code.getHsCode());
+                log.debug("Đã xoá hsCode={} | deleted={}", code.getHsCode(), deleted);
+            }
+
+            return MessageResponse.builder()
+                    .message("Xoá HSCode " + hsCode + " và toàn bộ cây con thành công")
+                    .isSuccess(true)
+                    .build();
+        } catch (Exception e) {
+            log.error("deleteHsCode() - Exception | hsCode: {}, error: {}", hsCode, e.getMessage());
+            throw e;
+        }
+    }
+
 
 
     @Override
@@ -325,11 +359,6 @@ public class HsCodeServiceImpl implements HsCodeService {
                     .build();
         }
     }
-
-
-
-
-
 
     private Map<String, HsTreeNodeDTO> buildNodeMap(List<HsCode> all) {
         Map<String, HsTreeNodeDTO> nodeByCode = new HashMap<>();
