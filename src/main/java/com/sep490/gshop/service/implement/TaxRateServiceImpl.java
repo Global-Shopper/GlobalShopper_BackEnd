@@ -315,10 +315,12 @@ public class TaxRateServiceImpl implements TaxRateService {
     @Override
     public ImportedResponse<TaxRateSnapshotDTO> importTaxRatesNewPhaseCSV(List<TaxRateRequest> list) {
         log.debug("=== Start Import Tax Rates List: {} ===", list.size());
+
         int insertCount = 0;
         int updateCount = 0;
         int duplicateCount = 0;
         int notFoundCount = 0;
+        int invalidCount = 0;
 
         List<TaxRate> saveList = new ArrayList<>();
         List<ErrorImportResponse<TaxRateSnapshotDTO>> errors = new ArrayList<>();
@@ -326,11 +328,32 @@ public class TaxRateServiceImpl implements TaxRateService {
         try {
             for (TaxRateRequest request : list) {
                 try {
+                    // Validate region vs taxType
+                    if (!isValidTaxTypeForRegion(request.getRegion(), request.getTaxType())) {
+                        log.warn("Invalid TaxType for Region | region={}, taxType={}",
+                                request.getRegion(), request.getTaxType());
+
+                        TaxRateSnapshotDTO invalidDTO = TaxRateSnapshotDTO.builder()
+                                .id(UUID.randomUUID())
+                                .region(request.getRegion())
+                                .taxType(request.getTaxType())
+                                .rate(request.getRate())
+                                .taxName(taxRateToName(request.getTaxType()))
+                                .build();
+
+                        errors.add(new ErrorImportResponse<>(invalidDTO,
+                                "TaxType " + request.getTaxType() + " không hợp lệ cho region " + request.getRegion()));
+                        invalidCount++;
+                        continue;
+                    }
+
+                    // Check HSCode tồn tại
                     Optional<HsCode> hsCodeOpt = hsCodeBusiness.getById(request.getHsCode());
                     if (hsCodeOpt.isEmpty()) {
                         log.debug("Không tìm thấy HSCode: {}", request.getHsCode());
 
-                        TaxRateSnapshotDTO dummy = TaxRateSnapshotDTO.builder().id(UUID.randomUUID())
+                        TaxRateSnapshotDTO dummy = TaxRateSnapshotDTO.builder()
+                                .id(UUID.randomUUID())
                                 .region(request.getRegion())
                                 .taxType(request.getTaxType())
                                 .rate(request.getRate())
@@ -344,6 +367,7 @@ public class TaxRateServiceImpl implements TaxRateService {
 
                     var hsCode = hsCodeOpt.get();
 
+                    // Check đã có taxRate hay chưa
                     Optional<TaxRate> taxRateOpt = taxRateBusiness.findByHsCodeAndRegionAndTaxType(
                             hsCode, request.getRegion(), request.getTaxType()
                     );
@@ -361,7 +385,9 @@ public class TaxRateServiceImpl implements TaxRateService {
                                     "Duplicate TaxRate"
                             ));
                             continue;
-                        } if (taxRateBusiness.existsById(existing.getId())) {
+                        }
+
+                        if (taxRateBusiness.existsById(existing.getId())) {
                             existing.setRate(request.getRate());
                             saveList.add(existing);
                             updateCount++;
@@ -372,8 +398,8 @@ public class TaxRateServiceImpl implements TaxRateService {
                                     "TaxRate không tồn tại trong DB (có thể đã bị xóa)"
                             ));
                         }
-
                     } else {
+                        // Tạo mới taxRate
                         TaxRate newTax = TaxRate.builder()
                                 .hsCode(hsCode)
                                 .region(request.getRegion())
@@ -399,16 +425,18 @@ public class TaxRateServiceImpl implements TaxRateService {
                             .build();
 
                     errors.add(new ErrorImportResponse<>(failedDTO, "Exception: " + ex.getMessage()));
-                    }
+                }
             }
 
+            // Lưu DB
             if (!saveList.isEmpty()) {
                 taxRateBusiness.saveAll(saveList);
             }
 
+            // Tổng hợp message
             String message = String.format(
-                    "Xử lý xong danh sách thuế: %d bản ghi | Inserted: %d | Updated: %d | Duplicates: %d | HSCode Not Found: %d",
-                    list.size(), insertCount, updateCount, duplicateCount, notFoundCount
+                    "Xử lý xong danh sách thuế: %d bản ghi | Inserted: %d | Updated: %d | Duplicates: %d | HSCode Not Found: %d | Invalid Region-TaxType: %d",
+                    list.size(), insertCount, updateCount, duplicateCount, notFoundCount, invalidCount
             );
 
             log.debug(message);
@@ -432,6 +460,7 @@ public class TaxRateServiceImpl implements TaxRateService {
         }
     }
 
+
     private String taxRateToName(TaxType type) {
         if (type == null) return null;
         return switch (type) {
@@ -449,6 +478,28 @@ public class TaxRateServiceImpl implements TaxRateService {
             default -> type.name();
         };
     }
+
+    private boolean isValidTaxTypeForRegion(TaxRegion region, TaxType taxType) {
+        if (region == null || taxType == null) return false;
+
+        return switch (region) {
+            case US -> Set.of(TaxType.MFN, TaxType.VAT, TaxType.TTDB)
+                    .contains(taxType);
+
+            case UK -> Set.of(TaxType.MFN, TaxType.UKVFTA, TaxType.VAT, TaxType.TTDB)
+                    .contains(taxType);
+
+            case JP -> Set.of(TaxType.MFN, TaxType.VJEPA, TaxType.AJCEP, TaxType.CPTPP, TaxType.VAT, TaxType.TTDB)
+                    .contains(taxType);
+
+            case KR -> Set.of(TaxType.MFN, TaxType.VKFTA, TaxType.AKFTA, TaxType.CPTPP, TaxType.VAT, TaxType.TTDB)
+                    .contains(taxType);
+
+            case CHN -> Set.of(TaxType.MFN, TaxType.ACFTA, TaxType.RCEPT, TaxType.CPTPP, TaxType.VAT, TaxType.TTDB)
+                    .contains(taxType);
+        };
+    }
+
 
 
 
