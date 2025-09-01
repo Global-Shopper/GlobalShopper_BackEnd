@@ -9,6 +9,7 @@ import com.sep490.gshop.payload.request.HsCodeListRequest;
 import com.sep490.gshop.payload.request.HsCodeRequest;
 import com.sep490.gshop.payload.response.ImportedResponse;
 import com.sep490.gshop.payload.response.MessageResponse;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -22,6 +23,9 @@ public interface HsCodeService {
     HsCodeDTO createHsCodeIncludeTaxes(HsCodeRequest hsCodeRequest);
     HsCodeDTO getByHsCode(String hsCode);
     MessageResponse deleteHsCode(String hsCode);
+
+    @Transactional
+    MessageResponse deleteHsCodePrefix(String hsCode);
 
     MessageResponse importHsCodeCSV(MultipartFile file);
 

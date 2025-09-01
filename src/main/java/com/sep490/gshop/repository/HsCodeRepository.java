@@ -49,6 +49,6 @@ AND (COALESCE(:desc, '') = '' OR to_tsvector('simple', unaccent(description)) @@
 
     boolean existsByHsCode(String hsCode);
 
-
+    List<HsCode> findAllByHsCodeStartingWith(String prefix);
 
 }

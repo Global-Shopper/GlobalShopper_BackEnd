@@ -112,4 +112,13 @@ public class HsCodeController {
 
         return ResponseEntity.ok(response);
     }
+
+    @DeleteMapping("/{hsCode}/prefix")
+    public ResponseEntity<MessageResponse> deleteHsCodePrefix(@PathVariable String hsCode) {
+        log.info("START - DELETE /api/hscodes/{}", hsCode);
+        MessageResponse response = hsCodeService.deleteHsCodePrefix(hsCode);
+        log.info("END - DELETE /api/hscodes/{} | result: {}", hsCode, response.isSuccess());
+        return ResponseEntity.ok(response);
+    }
+
 }
