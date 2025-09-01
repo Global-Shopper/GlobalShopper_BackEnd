@@ -112,9 +112,16 @@ public class TaxRateServiceImpl implements TaxRateService {
 
             List<TaxRate> taxRates = taxRateBusiness.findAllByHsCode(hsCodeEntity);
 
-            List<TaxRateSnapshotDTO> dtos = taxRates.stream()
-                    .map(tr -> modelMapper.map(tr, TaxRateSnapshotDTO.class))
-                    .collect(Collectors.toList());
+//            List<TaxRateSnapshotDTO> dtos = taxRates.stream()
+//                    .map(tr -> modelMapper.map(tr, TaxRateSnapshotDTO.class))
+//                    .collect(Collectors.toList());
+            List<TaxRateSnapshotDTO> dtos = new ArrayList<>();
+            for (TaxRate taxRate : taxRates) {
+                TaxRateSnapshotDTO dto = TaxRateSnapshotDTO.builder().id(taxRate.getId())
+                        .hsCode(taxRate.getHsCode().getHsCode()).rate(taxRate.getRate()).taxName(taxRate.getTaxName())
+                        .taxType(taxRate.getTaxType()).region(taxRate.getRegion()).build();
+                dtos.add(dto);
+            }
 
             log.debug("getTaxRatesByHsCode() - End | hsCode: {}, count: {}", hsCode, dtos.size());
             return dtos;
