@@ -455,7 +455,9 @@ public class QuotationServiceImpl implements QuotationService {
             String subject = "Báo giá mới cho yêu cầu mua hàng";
             Context context = new Context();
             context.setVariable("name", purchaseRequest.getCustomer().getName());
-            context.setVariable("totalPrice", CalculationUtil.roundToNearestThousand(quotation.getTotalPriceEstimate()) + " VND");
+            double rounded = CalculationUtil.roundToNearestThousand(quotation.getTotalPriceEstimate());
+            String totalPrice = String.format("%,.2f", rounded);
+            context.setVariable("totalPrice", totalPrice + " VND");
             String quotationUrl = "https://gshop.io.vn/account-center/purchase-request/" + purchaseRequest.getId();
             context.setVariable("quotationUrl", quotationUrl);
 
@@ -652,11 +654,14 @@ public class QuotationServiceImpl implements QuotationService {
             SubRequest subRequest = subRequestBusiness.getById(subRequestId).get();
             String quotationInfo = subRequest.getContactInfo().get(0).split(": ")[1];
             sendNotification(purchaseRequest.getCustomer().getId(),"Báo giá mới cho yêu cầu mua hàng ", "Bạn có báo giá mới cho yêu cầu mua hàng từ " + quotationInfo + ". Vui lòng kiểm tra.");
+            double rounded = CalculationUtil.roundToNearestThousand(quotation.getTotalPriceEstimate());
+            String totalPrice = String.format("%,.2f", rounded);
 
             String subject = "Báo giá mới cho yêu cầu mua hàng";
             Context context = new Context();
             context.setVariable("name", purchaseRequest.getCustomer().getName());
-            context.setVariable("totalPrice", CalculationUtil.roundToNearestThousand(quotation.getTotalPriceEstimate()) + " VND");
+
+            context.setVariable("totalPrice", totalPrice + " VND");
             String quotationUrl = "https://gshop.io.vn/account-center/purchase-request/" + purchaseRequest.getId();
             context.setVariable("quotationUrl", quotationUrl);
 
