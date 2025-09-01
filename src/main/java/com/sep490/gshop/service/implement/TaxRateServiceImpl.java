@@ -435,8 +435,8 @@ public class TaxRateServiceImpl implements TaxRateService {
 
             // Tổng hợp message
             String message = String.format(
-                    "Xử lý xong danh sách thuế: %d bản ghi | Inserted: %d | Updated: %d | Duplicates: %d | HSCode Not Found: %d | Invalid Region-TaxType: %d",
-                    list.size(), insertCount, updateCount, duplicateCount, notFoundCount, invalidCount
+                    "Xử lý xong danh sách thuế: %d bản ghi đã được xử lý",
+                    list.size()
             );
 
             log.debug(message);
@@ -453,7 +453,7 @@ public class TaxRateServiceImpl implements TaxRateService {
             log.error("Error Import Tax Rates CSV: {}", e.getMessage());
             return ImportedResponse.<TaxRateSnapshotDTO>builder()
                     .success(false)
-                    .message("Error Import Tax Rates CSV: " + e.getMessage())
+                    .message("Lỗi import Tax Rates CSV: " + e.getMessage())
                     .errors(errors)
                     .totalRequestData(list.size())
                     .build();

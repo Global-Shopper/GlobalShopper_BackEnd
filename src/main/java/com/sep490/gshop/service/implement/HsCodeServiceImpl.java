@@ -253,45 +253,79 @@ public class HsCodeServiceImpl implements HsCodeService {
         List<String> duplicates = new ArrayList<>();
         List<ErrorImportResponse<HsCodeErrorResponse>> errors = new ArrayList<>();
 
-        for (HsCodeListRequest request : requests) {
-            HsCodeDTO hsCodeDTO = HsCodeDTO.builder()
-                    .hsCode(request.getHsCode())
-                    .parentCode(request.getParentCode())
-                    .unit(request.getUnit())
-                    .description(request.getDescription())
+        int importedCount = 0;
+        int duplicateCount = 0;
+        int errorCount = 0;
+
+        try {
+            for (HsCodeListRequest request : requests) {
+                try {
+                    HsCodeDTO hsCodeDTO = HsCodeDTO.builder()
+                            .hsCode(request.getHsCode())
+                            .parentCode(request.getParentCode())
+                            .unit(request.getUnit())
+                            .description(request.getDescription())
+                            .build();
+
+                    HsCode addHsCode = modelMapper.map(hsCodeDTO, HsCode.class);
+
+                    boolean exists = hsCodeBusiness.existByHsCode(addHsCode.getHsCode());
+                    if (exists) {
+                        duplicates.add(addHsCode.getHsCode());
+                        errors.add(new ErrorImportResponse<>(
+                                modelMapper.map(addHsCode, HsCodeErrorResponse.class),
+                                "Duplicate HSCode"
+                        ));
+                        duplicateCount++;
+                    } else {
+                        newParse.add(addHsCode);
+                    }
+                } catch (Exception ex) {
+                    log.error("Lỗi khi xử lý HSCode={} | message={}", request.getHsCode(), ex.getMessage());
+
+                    HsCodeErrorResponse failedDTO = HsCodeErrorResponse.builder()
+                            .hsCode(request.getHsCode())
+                            .parentCode(request.getParentCode())
+                            .unit(request.getUnit())
+                            .description(request.getDescription())
+                            .build();
+
+                    errors.add(new ErrorImportResponse<>(failedDTO, "Exception: " + ex.getMessage()));
+                    errorCount++;
+                }
+            }
+
+            if (!newParse.isEmpty()) {
+                hsCodeBusiness.saveAll(newParse);
+                importedCount = newParse.size();
+            }
+
+            log.debug("=== End Import HSCode List: {} imported, {} duplicates, {} errors ===",
+                    importedCount, duplicateCount, errorCount);
+
+            return ImportedResponse.<HsCodeErrorResponse>builder()
+                    .success(true)
+                    .message(String.format("Cập nhật HSCode xong: %d bản ghi đã được xử lý",
+                            requests.size()))
+                    .imported(importedCount)
+                    .updated(0)
+                    .duplicated(duplicateCount)
+                    .errors(errors)
+                    .totalRequestData(requests.size())
                     .build();
 
-            HsCode addHsCode = modelMapper.map(hsCodeDTO, HsCode.class);
+        } catch (Exception e) {
+            log.error("Error Import HSCode List: {}", e.getMessage());
 
-            boolean exists = hsCodeBusiness.existByHsCode(addHsCode.getHsCode());
-            if (exists) {
-                duplicates.add(addHsCode.getHsCode());
-                errors.add(new ErrorImportResponse<>(modelMapper.map(addHsCode, HsCodeErrorResponse.class), "Duplicate HSCode"));
-            }
-            else {
-                newParse.add(addHsCode);
-            }
+            return ImportedResponse.<HsCodeErrorResponse>builder()
+                    .success(false)
+                    .message("Lỗi import Hs Code: " + e.getMessage())
+                    .errors(errors)
+                    .totalRequestData(requests.size())
+                    .build();
         }
-
-        if (!newParse.isEmpty()) {
-            hsCodeBusiness.saveAll(newParse);
-        }
-
-        int importedCount = newParse.size();
-        int duplicateCount = duplicates.size();
-
-        log.debug("=== End Import HSCode List: {} imported, {} duplicates ===",
-                importedCount, duplicateCount);
-
-        return ImportedResponse.<HsCodeErrorResponse>builder()
-                .success(true)
-                .message("Cập nhật thành công bảng HsCode")
-                .imported(importedCount)
-                .updated(0)
-                .duplicated(duplicateCount)
-                .errors(errors).totalRequestData(requests.size())
-                .build();
     }
+
 
 
 
