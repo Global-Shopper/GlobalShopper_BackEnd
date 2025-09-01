@@ -319,9 +319,7 @@ public class TaxRateServiceImpl implements TaxRateService {
         int insertCount = 0;
         int updateCount = 0;
         int duplicateCount = 0;
-        int notFoundCount = 0;
-        int invalidCount = 0;
-
+        int errorCount = 0;
         List<TaxRate> saveList = new ArrayList<>();
         List<ErrorImportResponse<TaxRateSnapshotDTO>> errors = new ArrayList<>();
 
@@ -339,11 +337,13 @@ public class TaxRateServiceImpl implements TaxRateService {
                                 .taxType(request.getTaxType())
                                 .rate(request.getRate())
                                 .taxName(taxRateToName(request.getTaxType()))
+                                .hsCode(request.getHsCode())
                                 .build();
 
                         errors.add(new ErrorImportResponse<>(invalidDTO,
                                 "TaxType " + request.getTaxType() + " không hợp lệ cho region " + request.getRegion()));
-                        invalidCount++;
+                        errorCount++;
+
                         continue;
                     }
 
@@ -358,10 +358,11 @@ public class TaxRateServiceImpl implements TaxRateService {
                                 .taxType(request.getTaxType())
                                 .rate(request.getRate())
                                 .taxName(taxRateToName(request.getTaxType()))
+                                .hsCode(request.getHsCode())
                                 .build();
 
                         errors.add(new ErrorImportResponse<>(dummy, "Không tìm thấy HSCode: " + request.getHsCode()));
-                        notFoundCount++;
+                        errorCount++;
                         continue;
                     }
 
@@ -379,9 +380,9 @@ public class TaxRateServiceImpl implements TaxRateService {
                             duplicateCount++;
                             log.debug("Duplicate TaxRate found | hsCode={}, region={}, taxType={}",
                                     hsCode.getHsCode(), request.getRegion(), request.getTaxType());
-
+                            var dto = TaxRateSnapshotDTO.builder().rate(existing.getRate()).taxName(existing.getTaxName()).taxType(existing.getTaxType()).region(existing.getRegion()).hsCode(existing.getHsCode().getHsCode()).rate(existing.getRate()).id(existing.getId()).build();
                             errors.add(new ErrorImportResponse<>(
-                                    modelMapper.map(existing, TaxRateSnapshotDTO.class),
+                                    dto,
                                     "Duplicate TaxRate"
                             ));
                             continue;
@@ -397,6 +398,7 @@ public class TaxRateServiceImpl implements TaxRateService {
                                     modelMapper.map(existing, TaxRateSnapshotDTO.class),
                                     "TaxRate không tồn tại trong DB (có thể đã bị xóa)"
                             ));
+                            errorCount++;
                         }
                     } else {
                         // Tạo mới taxRate
@@ -422,9 +424,11 @@ public class TaxRateServiceImpl implements TaxRateService {
                             .taxType(request.getTaxType())
                             .rate(request.getRate())
                             .taxName(taxRateToName(request.getTaxType()))
+                            .hsCode(request.getHsCode())
                             .build();
 
                     errors.add(new ErrorImportResponse<>(failedDTO, "Exception: " + ex.getMessage()));
+                    errorCount++;
                 }
             }
 
@@ -445,7 +449,7 @@ public class TaxRateServiceImpl implements TaxRateService {
                     .message(message)
                     .imported(insertCount)
                     .updated(updateCount)
-                    .duplicated(duplicateCount)
+                    .duplicated(duplicateCount).errorCount(errorCount)
                     .errors(errors)
                     .totalRequestData(list.size())
                     .build();

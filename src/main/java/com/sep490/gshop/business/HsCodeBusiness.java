@@ -12,4 +12,6 @@ public interface HsCodeBusiness extends BaseBusinessGeneric<HsCode, String>{
     Page<HsCode> searchByHsCodeAndDescriptionForRoots(String hsCodeSearch, String descSearch,Pageable pageable);
 
     boolean existByHsCode(String hsCode);
+
+    List<HsCode> findAllByHsCodeStartingWith(String prefix);
 }
