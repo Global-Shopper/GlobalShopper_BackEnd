@@ -18,6 +18,8 @@ import com.sep490.gshop.payload.response.PaymentURLResponse;
 import com.sep490.gshop.service.OrderService;
 import com.sep490.gshop.utils.AuthUtils;
 import com.sep490.gshop.utils.RandomUtil;
+import com.sep490.gshop.utils.TrackingMoreUtil;
+import com.trackingmore.model.tracking.Tracking;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +48,7 @@ public class OrderServiceImpl implements OrderService {
     private final UserBusiness userBusiness;
     private final FeedbackBusiness feedbackBusiness;
     private final VNPayServiceImpl vNPayServiceImpl;
+    private final TrackingMoreUtil trackingMoreUtil;
 
     @Autowired
     public OrderServiceImpl(OrderBusiness orderBusiness,
@@ -58,7 +61,7 @@ public class OrderServiceImpl implements OrderService {
                             WalletBusiness walletBusiness,
                             TransactionBusiness transactionBusiness,
                             UserBusiness userBusiness,
-                            FeedbackBusiness feedbackBusiness, VNPayServiceImpl vNPayServiceImpl) {
+                            FeedbackBusiness feedbackBusiness, VNPayServiceImpl vNPayServiceImpl, TrackingMoreUtil trackingMoreUtil) {
         this.orderBusiness = orderBusiness;
         this.modelMapper = modelMapper;
         this.shippingAddressBusiness = shippingAddressBusiness;
@@ -71,6 +74,7 @@ public class OrderServiceImpl implements OrderService {
         this.userBusiness = userBusiness;
         this.feedbackBusiness = feedbackBusiness;
         this.vNPayServiceImpl = vNPayServiceImpl;
+        this.trackingMoreUtil = trackingMoreUtil;
     }
 
     @Override
@@ -392,10 +396,17 @@ public class OrderServiceImpl implements OrderService {
             order.setShippingCarrier(shippingInformationModel.getName());
             order.setOrderCode(shippingInformationModel.getOrderCode());
             order.setTrackingNumber(shippingInformationModel.getTrackingNumber());
-            order.setStatus(OrderStatus.PURCHASED);
             OrderHistory history = new OrderHistory(order,"Đơn hàng đã được mua");
             order.getHistory().add(history);
             Order updatedOrder = orderBusiness.update(order);
+            Tracking tracking = trackingMoreUtil.getTracking(order.getShippingCarrier(), order.getTrackingNumber());
+            if (tracking != null) {
+                OrderStatus newStatus = TrackingMoreUtil.mapToOrderStatus(tracking.getDeliveryStatus(), tracking.getSubstatus(), tracking.getDestinationCity());
+                order.setStatus(newStatus);
+                OrderHistory trackingStatusHistory = new OrderHistory(order, newStatus.getDescription());
+                order.getHistory().add(trackingStatusHistory);
+                log.info("Order {} status updated", order.getOrderCode());
+            }
             log.debug("updateShippingInfo() End | updatedOrder: {}", updatedOrder);
             return modelMapper.map(updatedOrder, OrderDTO.class);
         } catch (Exception e) {
