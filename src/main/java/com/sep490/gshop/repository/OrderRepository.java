@@ -1,6 +1,7 @@
 package com.sep490.gshop.repository;
 
 import com.sep490.gshop.common.enums.OrderStatus;
+import com.sep490.gshop.common.enums.RequestType;
 import com.sep490.gshop.entity.Order;
 import com.sep490.gshop.payload.response.subclass.PRStatus;
 import org.springframework.data.domain.Page;
@@ -35,5 +36,7 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     List<PRStatus> countByStatus(Long startDate, Long endDate);
 
     long countByCreatedAtBetween(Long startDate, Long endDate);
+
+    List<Order> findByTypeAndStatusIsNotAndTrackingNumberIsNotNullAndShippingCarrierIsNotNull(RequestType type, OrderStatus status);
 }
 
