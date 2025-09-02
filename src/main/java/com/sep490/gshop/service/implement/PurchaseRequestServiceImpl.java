@@ -21,6 +21,7 @@ import com.sep490.gshop.service.PurchaseRequestService;
 import com.sep490.gshop.service.TaxRateService;
 import com.sep490.gshop.utils.AuthUtils;
 import lombok.extern.log4j.Log4j2;
+import org.checkerframework.checker.units.qual.A;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -314,6 +315,45 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
             throw e;
         }
     }
+
+    @Override
+    public MessageResponse cancelPurchaseRequest(String id, PurchaseRequestStatus status) {
+        log.debug("=== cancelPurchaseRequest START | id: {}, targetStatus: {} ===", id, status);
+        try {
+            var found = purchaseRequestBusiness.getById(UUID.fromString(id))
+                    .orElseThrow(() -> AppException.builder()
+                            .message("Không tìm thấy yêu cầu")
+                            .code(404)
+                            .build());
+
+            if (found.getStatus() != PurchaseRequestStatus.SENT) {
+                throw AppException.builder()
+                        .message("Yêu cầu này không thể huỷ ở trạng thái hiện tại")
+                        .code(400)
+                        .build();
+            }
+
+            if (status != PurchaseRequestStatus.CANCELLED) {
+                throw AppException.builder()
+                        .message("Bạn không thể chuyển sang trạng thái khác")
+                        .code(400)
+                        .build();
+            }
+
+            log.debug("=== cancelPurchaseRequest SUCCESS | id: {} ===", id);
+            return MessageResponse.builder()
+                    .message("Huỷ yêu cầu thành công")
+                    .isSuccess(true)
+                    .build();
+
+        }catch (Exception e) {
+            log.error("cancelPurchaseRequest ERROR | id: {}, exception: {}", id, e.getMessage());
+            throw e;
+        } finally {
+            log.debug("=== cancelPurchaseRequest END | id: {} ===", id);
+        }
+    }
+
 
     @Override
     @Transactional

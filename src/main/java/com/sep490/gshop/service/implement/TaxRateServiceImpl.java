@@ -50,11 +50,10 @@ public class TaxRateServiceImpl implements TaxRateService {
         Map<String, Double> taxAmounts = new HashMap<>();
 
         double importTax = 0, exciseTax = 0, vatTax = 0;
-        double vatBase = basePrice;
 
         TaxRate importTaxRate = null;
 
-        // Tìm thuế nhập khẩu có mức thấp nhất trong các loại: MFN, UKVFTA, ACFTA, v.v.
+        // 1. Tìm thuế nhập khẩu có mức thấp nhất trong các loại: MFN, UKVFTA, ACFTA, VJEPA, AJCEP, VKFTA, AKFTA, RCEPT
         for (TaxRate tax : taxRates) {
             TaxType type = tax.getTaxType();
             if (type == TaxType.MFN || type == TaxType.UKVFTA || type == TaxType.ACFTA || type == TaxType.VJEPA
@@ -65,38 +64,38 @@ public class TaxRateServiceImpl implements TaxRateService {
             }
         }
 
-        // Áp thuế nhập khẩu
+        // 2. Áp thuế nhập khẩu
         if (importTaxRate != null) {
             double rate = importTaxRate.getRate();
             importTax = basePrice * rate / 100;
             taxAmountsEnum.put(importTaxRate.getTaxType(), importTax);
             taxAmounts.put(importTaxRate.getTaxType().name(), importTax);
-            vatBase += importTax;
         }
 
-        // Áp thuế tiêu thụ đặc biệt (TTDB)
+        // 3. Áp thuế tiêu thụ đặc biệt (TTDB)
         for (TaxRate tax : taxRates) {
             if (tax.getTaxType() == TaxType.TTDB) {
                 double rate = tax.getRate();
-                exciseTax = basePrice * rate / 100;
+                exciseTax = (basePrice + importTax) * rate / 100;
                 taxAmountsEnum.put(TaxType.TTDB, exciseTax);
                 taxAmounts.put("TTDB", exciseTax);
-                vatBase += exciseTax;
             }
         }
 
-        // Áp VAT
+        // 4. Áp VAT
         for (TaxRate tax : taxRates) {
             if (tax.getTaxType() == TaxType.VAT) {
                 double rate = tax.getRate();
-                vatTax = vatBase * rate / 100;
+                vatTax = (basePrice + importTax + exciseTax) * rate / 100;
                 taxAmountsEnum.put(TaxType.VAT, vatTax);
                 taxAmounts.put("VAT", vatTax);
             }
         }
 
+        // 5. Tổng thuế
         double totalTax = taxAmounts.values().stream().mapToDouble(Double::doubleValue).sum();
 
+        // 6. Trả về kết quả
         TaxCalculationResult result = new TaxCalculationResult();
         result.setTaxAmounts(taxAmounts);
         result.setTotalTax(totalTax);
@@ -111,10 +110,6 @@ public class TaxRateServiceImpl implements TaxRateService {
                     .orElseThrow(() -> AppException.builder().message("Không tìm thấy HSCode").code(404).build());
 
             List<TaxRate> taxRates = taxRateBusiness.findAllByHsCode(hsCodeEntity);
-
-//            List<TaxRateSnapshotDTO> dtos = taxRates.stream()
-//                    .map(tr -> modelMapper.map(tr, TaxRateSnapshotDTO.class))
-//                    .collect(Collectors.toList());
             List<TaxRateSnapshotDTO> dtos = new ArrayList<>();
             for (TaxRate taxRate : taxRates) {
                 TaxRateSnapshotDTO dto = TaxRateSnapshotDTO.builder().id(taxRate.getId())

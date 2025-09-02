@@ -155,4 +155,14 @@ public class PurchaseRequestController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/{id}/cancel")
+    public ResponseEntity<MessageResponse> cancelPurchaseRequest(@PathVariable("id") String id) {
+        log.debug("=== cancelPurchaseRequest API START | id: {} ===", id);
+            MessageResponse response = purchaseRequestService.cancelPurchaseRequest(id, PurchaseRequestStatus.CANCELLED);
+            log.debug("=== cancelPurchaseRequest API SUCCESS | id: {} ===", id);
+            return ResponseEntity.ok(response);
+
+    }
+
+
 }
