@@ -131,8 +131,17 @@ public class HsCodeServiceImpl implements HsCodeService {
             HsCodeDTO hsCodeDTO = modelMapper.map(hsCodeFound, HsCodeDTO.class);
 
             var taxRateDTOs = taxRates.stream()
-                    .map(taxRate -> modelMapper.map(taxRate, TaxRateSnapshotDTO.class))
+                    .map(taxRate -> TaxRateSnapshotDTO.builder()
+                            .id(taxRate.getId())
+                            .hsCode(taxRate.getHsCode().getHsCode())
+                            .region(taxRate.getRegion())
+                            .taxType(taxRate.getTaxType())
+                            .taxName(taxRate.getTaxName())
+                            .rate(taxRate.getRate())
+                            .build()
+                    )
                     .collect(Collectors.toList());
+
 
             hsCodeDTO.setTaxRates(taxRateDTOs);
 
