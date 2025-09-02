@@ -339,7 +339,15 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                         .code(400)
                         .build();
             }
-
+            List<SubRequest> list = new ArrayList<>();
+            for (RequestItem item : found.getRequestItems()){
+                if(item.getSubRequest()!=null){
+                    item.getSubRequest().setStatus(SubRequestStatus.CANCELLED);
+                    list.add(item.getSubRequest());
+                }
+            }
+            subRequestBusiness.saveAll(list);
+            purchaseRequestBusiness.update(found);
             log.debug("=== cancelPurchaseRequest SUCCESS | id: {} ===", id);
             return MessageResponse.builder()
                     .message("Huỷ yêu cầu thành công")
