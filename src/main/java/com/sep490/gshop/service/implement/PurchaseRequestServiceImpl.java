@@ -347,6 +347,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                 }
             }
             subRequestBusiness.saveAll(list);
+            found.setStatus(PurchaseRequestStatus.CANCELLED);
             purchaseRequestBusiness.update(found);
             log.debug("=== cancelPurchaseRequest SUCCESS | id: {} ===", id);
             return MessageResponse.builder()
