@@ -128,22 +128,27 @@ public class HsCodeServiceImpl implements HsCodeService {
 
             var taxRates = taxRateBusiness.findAllByHsCode(hsCodeFound);
 
-            HsCodeDTO hsCodeDTO = modelMapper.map(hsCodeFound, HsCodeDTO.class);
-
-            var taxRateDTOs = taxRates.stream()
-                    .map(taxRate -> TaxRateSnapshotDTO.builder()
-                            .id(taxRate.getId())
-                            .hsCode(taxRate.getHsCode().getHsCode())
-                            .region(taxRate.getRegion())
-                            .taxType(taxRate.getTaxType())
-                            .taxName(taxRate.getTaxName())
-                            .rate(taxRate.getRate())
-                            .build()
+            HsCodeDTO hsCodeDTO = HsCodeDTO.builder()
+                    .hsCode(hsCodeFound.getHsCode())
+                    .description(hsCodeFound.getDescription())
+                    .unit(hsCodeFound.getUnit())
+                    .parentCode(hsCodeFound.getParentCode())
+                    .taxRates(
+                            hsCodeFound.getTaxRates() != null
+                                    ? hsCodeFound.getTaxRates().stream()
+                                    .map(taxRate -> TaxRateSnapshotDTO.builder()
+                                            .id(taxRate.getId())
+                                            .hsCode(taxRate.getHsCode().getHsCode())
+                                            .region(taxRate.getRegion())
+                                            .taxType(taxRate.getTaxType())
+                                            .taxName(taxRate.getTaxName())
+                                            .rate(taxRate.getRate())
+                                            .build()
+                                    )
+                                    .collect(Collectors.toList())
+                                    : new ArrayList<>()
                     )
-                    .collect(Collectors.toList());
-
-
-            hsCodeDTO.setTaxRates(taxRateDTOs);
+                    .build();
 
             log.debug("getByHsCode() - End | hsCode: {}", hsCodeFound.getHsCode());
 
