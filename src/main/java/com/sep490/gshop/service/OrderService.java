@@ -6,6 +6,7 @@ import com.sep490.gshop.payload.request.CancelModel;
 import com.sep490.gshop.payload.request.OrderRequest;
 import com.sep490.gshop.payload.request.order.CheckOutModel;
 import com.sep490.gshop.payload.request.order.DirectCheckoutModel;
+import com.sep490.gshop.payload.request.order.RePayModel;
 import com.sep490.gshop.payload.request.order.ShippingInformationModel;
 import com.sep490.gshop.payload.response.PaymentURLResponse;
 import org.springframework.data.domain.Page;
@@ -26,5 +27,7 @@ public interface OrderService {
         OrderDTO updateShippingInfo(String orderId, ShippingInformationModel shippingInformationModel);
 
         OrderDTO cancelOrder(UUID orderId, CancelModel cancelModel);
+
+        PaymentURLResponse rePayOrder(RePayModel rePayModel);
 }
 

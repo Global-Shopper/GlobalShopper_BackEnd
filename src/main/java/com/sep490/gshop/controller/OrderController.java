@@ -7,6 +7,7 @@ import com.sep490.gshop.payload.request.CancelModel;
 import com.sep490.gshop.payload.request.OrderRequest;
 import com.sep490.gshop.payload.request.order.CheckOutModel;
 import com.sep490.gshop.payload.request.order.DirectCheckoutModel;
+import com.sep490.gshop.payload.request.order.RePayModel;
 import com.sep490.gshop.payload.request.order.ShippingInformationModel;
 import com.sep490.gshop.payload.response.PaymentURLResponse;
 import com.sep490.gshop.service.OrderService;
@@ -103,6 +104,16 @@ public class OrderController {
         log.info("directCheckoutOrder() OrderController Start | subRequestId: {}", checkOutModel.getSubRequestId());
         PaymentURLResponse response = orderService.directCheckoutOrder(checkOutModel);
         log.info("directCheckoutOrder() OrderController End | orderDTO: {}", response);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/repay-order")
+    @Operation(summary = "Thanh toán lại đơn hàng")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<PaymentURLResponse> repayOrder(@RequestBody RePayModel rePayModel) {
+        log.info("repayOrder() OrderController Start | repayOrder: {}", rePayModel);
+        PaymentURLResponse response = orderService.rePayOrder(rePayModel);
+        log.info("repayOrder() OrderController End | response: {}", response);
         return ResponseEntity.ok(response);
     }
 

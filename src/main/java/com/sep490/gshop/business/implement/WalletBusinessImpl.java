@@ -60,4 +60,15 @@ public class WalletBusinessImpl extends BaseBusinessImpl<Wallet, WalletRepositor
         transactionRepository.save(transaction);
         return repository.save(wallet);
     }
+
+    @Override
+    public Wallet repayOrder(double amount, Wallet wallet, UUID orderId, Transaction transaction) {
+        if (wallet.getBalance() >= amount) {
+            transaction.setStatus(TransactionStatus.SUCCESS);
+            wallet.setBalance(wallet.getBalance() - amount);
+            transactionRepository.save(transaction);
+            return repository.save(wallet);
+        }
+        return null;
+    }
 }

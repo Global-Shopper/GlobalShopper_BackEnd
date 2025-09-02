@@ -551,7 +551,7 @@ public class WalletServiceImpl implements WalletService {
             }
             if ("00".equals(status)) {
                 if (TransactionType.CHECKOUT.equals(transaction.getType())) {
-                    String orderId = transaction.getReferenceCode().split("_")[1];
+                    String orderId = transaction.getReferenceCode();
                     Order order = orderBusiness.getById(UUID.fromString(orderId)).orElse(null);
                     if (order != null) {
                         order.setStatus(OrderStatus.ORDER_REQUESTED);

@@ -13,6 +13,7 @@ import com.sep490.gshop.payload.request.CancelModel;
 import com.sep490.gshop.payload.request.OrderRequest;
 import com.sep490.gshop.payload.request.order.CheckOutModel;
 import com.sep490.gshop.payload.request.order.DirectCheckoutModel;
+import com.sep490.gshop.payload.request.order.RePayModel;
 import com.sep490.gshop.payload.request.order.ShippingInformationModel;
 import com.sep490.gshop.payload.response.PaymentURLResponse;
 import com.sep490.gshop.service.OrderService;
@@ -352,7 +353,7 @@ public class OrderServiceImpl implements OrderService {
             order.setHistory(List.of(history));
             
             Order createdOrder = orderBusiness.create(order);
-            String referenceCode = RandomUtil.randomNumber(6) + "_" + createdOrder.getId().toString();
+            String referenceCode = createdOrder.getId().toString();
             Transaction transaction = Transaction.builder()
                     .type(TransactionType.CHECKOUT)
                     .status(TransactionStatus.PENDING)
@@ -369,6 +370,10 @@ public class OrderServiceImpl implements OrderService {
                 log.error("directCheckoutOrder() OrderServiceImpl VNPay URL creation failed | subRequestId: {}", checkOutModel.getSubRequestId());
                 throw new AppException(500, "Không thể tạo URL thanh toán");
             }
+            purchaseRequest.setStatus(PurchaseRequestStatus.PAID);
+            PurchaseRequestHistory purchaseRequestHistory = new PurchaseRequestHistory(purchaseRequest, "Yêu cầu mua hàng đã được xác nhận");
+            purchaseRequest.getHistory().add(purchaseRequestHistory);
+            purchaseRequestBusiness.update(purchaseRequest);
             PaymentURLResponse response = PaymentURLResponse.builder()
                     .url(url)
                     .message("Vui lòng thanh toán để hoàn tất đơn hàng")
@@ -437,6 +442,73 @@ public class OrderServiceImpl implements OrderService {
             return modelMapper.map(updatedOrder, OrderDTO.class);
         } catch (Exception e) {
             log.error("cancelOrder() Exception | orderId: {}, message: {}", orderId, e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
+    public PaymentURLResponse rePayOrder(RePayModel rePayModel) {
+        try {
+            Order order = orderBusiness.getById(UUID.fromString(rePayModel.getOrderId()))
+                    .orElseThrow(() -> new AppException(404, "Không tìm thấy đơn hàng"));
+            double totalPayment = order.getTotalPrice() + order.getShippingFee();
+            Transaction transaction = transactionBusiness.getTransactionByReferenceCode(rePayModel.getOrderId());
+            Customer customer = (Customer) userBusiness.getByUserId(AuthUtils.getCurrentUserId());
+            if (!OrderStatus.AWAITING_PAYMENT.equals(order.getStatus())) {
+                return PaymentURLResponse.builder()
+                        .isSuccess(false)
+                        .message("Chỉ có thể thanh toán lại cho đơn hàng đang chờ thanh toán")
+                        .url(null)
+                        .build();
+            }
+            if (rePayModel.getPaymentMethod().equals("wallet")) {
+                if (customer.getWallet().getBalance() < totalPayment) {
+                    return PaymentURLResponse.builder()
+                            .isSuccess(false)
+                            .message("Số dư ví không đủ để thanh toán")
+                            .url(null)
+                            .build();
+                }
+                Wallet wallet = walletBusiness.repayOrder(totalPayment, customer.getWallet(), UUID.fromString(rePayModel.getOrderId()), transaction);
+                if (wallet == null) {
+                    return PaymentURLResponse.builder()
+                            .isSuccess(false)
+                            .message("Thanh toán không thành công")
+                            .url(null)
+                            .build();
+                }
+                order.setStatus(OrderStatus.ORDER_REQUESTED);
+                OrderHistory history = new OrderHistory(order, "Đơn hàng đã được thanh toán lại qua ví");
+                order.getHistory().add(history);
+                orderBusiness.update(order);
+                return PaymentURLResponse.builder()
+                        .isSuccess(true)
+                        .message("Thanh toán đơn hàng thành công")
+                        .url(null)
+                        .build();
+            } else {
+                String url = vNPayServiceImpl.createURL(order.getTotalPrice() + order.getShippingFee(),
+                        "Thanh toán lại đơn hàng",
+                        order.getCustomer().getEmail(),
+                        order.getId().toString(),
+                        rePayModel.getRedirectUri().replace(":id", order.getId().toString()));
+                if (url == null || url.isBlank()) {
+                    log.error("rePayOrder() VNPay URL creation failed | orderId: {}", rePayModel.getOrderId());
+                    return PaymentURLResponse.builder()
+                            .isSuccess(false)
+                            .message("Không thể tạo URL thanh toán")
+                            .url(null)
+                            .build();
+                }
+                return PaymentURLResponse.builder()
+                        .isSuccess(true)
+                        .message("Vui lòng thanh toán để hoàn tất đơn hàng")
+                        .url(url)
+                        .build();
+
+            }
+        } catch (Exception e) {
+            log.error("rePayOrder() Exception | rePayModel: {}, message: {}", rePayModel, e.getMessage());
             throw e;
         }
     }
