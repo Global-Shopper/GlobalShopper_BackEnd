@@ -5,4 +5,5 @@ public enum SubRequestStatus {
     QUOTED,
     PAID,
     REJECTED,
+    CANCELLED,  
 }
