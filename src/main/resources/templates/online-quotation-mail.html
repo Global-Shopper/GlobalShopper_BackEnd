@@ -55,16 +55,16 @@
       background: #e3f2fd;
       border-left: 4px solid #1976d2;
       padding: 14px;
-      margin: 16px 0;
+      margin: 12px 0;
       border-radius: 8px;
       font-weight: bold;
       color: #1565c0;
-      font-size: 1.8rem;
       text-align: center;
+      font-size: 1.30rem;
     }
     .button-container {
       text-align: center;
-      margin: 24px 0;
+      margin: 28px 0;
     }
     .action-button {
       background-color: #1976d2;
@@ -119,19 +119,25 @@
 
   <!-- Content -->
   <div class="content">
-    Bạn có một báo giá mới cho yêu cầu mua hàng từ
-    <b>Global Shopper</b>.
+    Bạn có một báo giá mới cho yêu cầu mua hàng từ <b>Global Shopper</b>.
   </div>
 
-  <div class="content">Tổng giá trị dự kiến (Chưa bao gồm phí vận chuyển):</div>
+  <!-- Tổng giá trị dự kiến -->
+  <div class="content">Tổng giá trị dự kiến (chưa bao gồm phí vận chuyển):</div>
   <div class="quotation-box" th:text="${totalPrice}">N/A VND</div>
 
+  <!-- Phí vận chuyển -->
+  <div class="content">Phí vận chuyển dự kiến:</div>
+  <div class="quotation-box" th:text="${shippingFee}">N/A VND</div>
+
+  <!-- Button -->
   <div class="button-container">
     <a th:href="${quotationUrl}" class="action-button" target="_blank" rel="noopener noreferrer">
       Xem chi tiết báo giá
     </a>
   </div>
 
+  <!-- Footer -->
   <div class="footer">
     <div class="warning">Đây là email tự động, vui lòng không trả lời.</div>
     <div style="margin-top:10px; font-size:0.95rem; color:#444;">

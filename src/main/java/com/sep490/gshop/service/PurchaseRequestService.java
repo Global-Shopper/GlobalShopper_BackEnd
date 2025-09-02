@@ -27,6 +27,8 @@ public interface PurchaseRequestService {
 
     Page<PurchaseRequestModel> getPurchaseRequests(PurchaseRequestStatus status, String type, RequestType requestType, Pageable pageable);
 
+    MessageResponse cancelPurchaseRequest(String id, PurchaseRequestStatus status);
+
     MessageResponse createSubRequest(SubRequestModel subRequestModel);
 
     MessageResponse updatePurchaseRequest(String id, UpdateRequestModel updateRequestModel);

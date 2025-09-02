@@ -457,7 +457,10 @@ public class QuotationServiceImpl implements QuotationService {
             context.setVariable("name", purchaseRequest.getCustomer().getName());
             double rounded = CalculationUtil.roundToNearestThousand(quotation.getTotalPriceEstimate());
             String totalPrice = String.format("%,.2f", rounded);
+            double shippingFee = CalculationUtil.roundToNearestThousand(quotation.getShippingEstimate());
+            String shippingCase = String.format("%,.2f", shippingFee);
             context.setVariable("totalPrice", totalPrice + " VND");
+            context.setVariable("shippingFee", shippingCase + " VND");
             String quotationUrl = "https://gshop.io.vn/account-center/purchase-request/" + purchaseRequest.getId();
             context.setVariable("quotationUrl", quotationUrl);
 
