@@ -374,6 +374,8 @@ public class OrderServiceImpl implements OrderService {
             PurchaseRequestHistory purchaseRequestHistory = new PurchaseRequestHistory(purchaseRequest, "Yêu cầu mua hàng đã được xác nhận");
             purchaseRequest.getHistory().add(purchaseRequestHistory);
             purchaseRequestBusiness.update(purchaseRequest);
+            subRequest.setStatus(SubRequestStatus.PAID);
+            subRequestBusiness.update(subRequest);
             PaymentURLResponse response = PaymentURLResponse.builder()
                     .url(url)
                     .message("Vui lòng thanh toán để hoàn tất đơn hàng")
@@ -403,7 +405,6 @@ public class OrderServiceImpl implements OrderService {
             order.setTrackingNumber(shippingInformationModel.getTrackingNumber());
             OrderHistory history = new OrderHistory(order,"Đơn hàng đã được mua");
             order.getHistory().add(history);
-            Order updatedOrder = orderBusiness.update(order);
             Tracking tracking = trackingMoreUtil.getTracking(order.getShippingCarrier(), order.getTrackingNumber());
             if (tracking != null) {
                 OrderStatus newStatus = TrackingMoreUtil.mapToOrderStatus(tracking.getDeliveryStatus(), tracking.getSubstatus(), tracking.getDestinationCity());
@@ -412,6 +413,7 @@ public class OrderServiceImpl implements OrderService {
                 order.getHistory().add(trackingStatusHistory);
                 log.info("Order {} status updated", order.getOrderCode());
             }
+            Order updatedOrder = orderBusiness.update(order);
             log.debug("updateShippingInfo() End | updatedOrder: {}", updatedOrder);
             return modelMapper.map(updatedOrder, OrderDTO.class);
         } catch (Exception e) {

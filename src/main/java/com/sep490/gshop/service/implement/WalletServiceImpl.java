@@ -542,7 +542,7 @@ public class WalletServiceImpl implements WalletService {
                         .message("Transaction not found")
                         .build();
             }
-            if (!TransactionStatus.PENDING.equals(transaction.getStatus())) {
+            if (TransactionStatus.SUCCESS.equals(transaction.getStatus())) {
                 log.warn("ipnCallback() WalletServiceImpl | Transaction already processed with status: {}", transaction.getStatus());
                 return IPNResponse.builder()
                         .rspCode("00")

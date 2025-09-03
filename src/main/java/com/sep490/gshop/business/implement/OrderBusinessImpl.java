@@ -3,9 +3,11 @@ package com.sep490.gshop.business.implement;
 import com.sep490.gshop.business.OrderBusiness;
 import com.sep490.gshop.common.enums.OrderStatus;
 import com.sep490.gshop.common.enums.RequestType;
+import com.sep490.gshop.entity.Customer;
 import com.sep490.gshop.entity.Order;
 import com.sep490.gshop.entity.OrderHistory;
 import com.sep490.gshop.repository.OrderRepository;
+import com.sep490.gshop.service.implement.SendNotiService;
 import com.sep490.gshop.utils.TrackingMoreUtil;
 import com.trackingmore.model.tracking.Tracking;
 import lombok.extern.log4j.Log4j2;
@@ -23,10 +25,12 @@ import java.util.UUID;
 public class OrderBusinessImpl extends BaseBusinessImpl<Order, OrderRepository> implements OrderBusiness {
 
     private final TrackingMoreUtil trackingMoreUtil;
+    private final SendNotiService sendNotiService;
 
-    protected OrderBusinessImpl(OrderRepository repository, TrackingMoreUtil trackingMoreUtil) {
+    protected OrderBusinessImpl(OrderRepository repository, TrackingMoreUtil trackingMoreUtil, SendNotiService sendNotiService) {
         super(repository);
         this.trackingMoreUtil = trackingMoreUtil;
+        this.sendNotiService = sendNotiService;
     }
 
     @Override
@@ -65,6 +69,13 @@ public class OrderBusinessImpl extends BaseBusinessImpl<Order, OrderRepository> 
                 Tracking tracking = trackingMoreUtil.getTracking(order.getShippingCarrier(), order.getTrackingNumber());
                 if (tracking != null) {
                     OrderStatus newStatus = TrackingMoreUtil.mapToOrderStatus(tracking.getDeliveryStatus(), tracking.getSubstatus(), tracking.getDestinationCity());
+                    if (newStatus != null && newStatus != order.getStatus()) {
+                        log.info("Order {} status changed from {} to {}", order.getOrderCode(), order.getStatus(), newStatus);
+                        Customer customer = order.getCustomer();
+                        sendNotiService.sendNotiToTokens(customer.getFCMTokenList(),
+                                "Cập nhật quá trình vận chuyển",
+                                newStatus.getDescription());
+                    }
                     order.setStatus(newStatus);
                     OrderHistory history = new OrderHistory(order, newStatus.getDescription());
                     order.getHistory().add(history);

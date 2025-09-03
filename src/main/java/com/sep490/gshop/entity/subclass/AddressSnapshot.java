@@ -28,6 +28,7 @@ public class AddressSnapshot {
         this.location = shippingAddress.getLocation();
         this.provinceCode = shippingAddress.getProvinceCode();
         this.districtCode = shippingAddress.getDistrictCode();
+        this.tag = shippingAddress.getTag();
         this.wardCode = shippingAddress.getWardCode();
         this.addressLine = shippingAddress.getAddressLine();
     }
