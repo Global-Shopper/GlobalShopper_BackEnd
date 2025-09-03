@@ -162,7 +162,7 @@ public class WalletController {
             @RequestParam(required = false) String reason) {
         log.info("POST /api/withdraw-requests/{}/process | isApproved: {}, reason: {}", withdrawTicketId, isApproved, reason);
         try {
-            MessageWithBankInformationResponse response = walletService.processWithdrawRequest(withdrawTicketId, isApproved, reason);
+            MessageWithBankInformationResponse response = walletService.processWithdrawRequestNewPhase(withdrawTicketId, isApproved, reason);
             log.info("processWithdraw() End | isSuccess: {}, message: {}", response.isSuccess(), response.getMessage());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
