@@ -48,8 +48,8 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
     private final ModelMapper modelMapper;
     private TaxRateService taxRateService;
     private EmailService emailService;
-    @Value("${fe.redirect-domain}")
-    private String redirectDomain;
+    //@Value("${fe.redirect-domain}")
+    private String redirectDomain = "https://gshop.io.vn";
     @Autowired
     public PurchaseRequestServiceImpl(PurchaseRequestBusiness purchaseRequestBusiness,
                                       ShippingAddressBusiness shippingAddressBusiness, RequestItemBusiness requestItemBusiness, SubRequestBusiness subRequestBusiness, UserBusiness userBusiness,
