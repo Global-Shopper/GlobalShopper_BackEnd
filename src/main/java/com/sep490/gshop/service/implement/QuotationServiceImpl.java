@@ -664,7 +664,7 @@ public class QuotationServiceImpl implements QuotationService {
             Context context = new Context();
             context.setVariable("name", purchaseRequest.getCustomer().getName());
 
-            context.setVariable("totalPrice", totalPrice + " VND");
+            context.setVariable("totalPrice", "N/A VND");
             String quotationUrl = "https://gshop.io.vn/account-center/purchase-request/" + purchaseRequest.getId();
             context.setVariable("quotationUrl", quotationUrl);
 
